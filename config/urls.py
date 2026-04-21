@@ -21,4 +21,5 @@ urlpatterns = [
     # path('apps/accounts/', include('apps.accounts.urls')),
     # path('apps/todo/', include('apps.todo.urls')),
     path('admin/', admin.site.urls),
+    path("api-auth/", include("rest_framework.urls")),
 ]
