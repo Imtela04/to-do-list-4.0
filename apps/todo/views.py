@@ -38,6 +38,30 @@ def me(request):
 @permission_classes([IsAuthenticated])
 def get_tasks(request):
     todos = Todo.objects.filter(owner=request.user)
+    
+    # ______________filtering______________
+    completed = request.query_params.get('completed')
+    if completed is not None:
+        todos = todos.filter(completed=completed.lower() == 'true')
+    
+    cat_id = request.query_params.get('category')
+    if cat_id:
+        todos = todos.filter(cat_id=cat_id)
+    
+    has_deadline = request.query_params.get('has_deadline')
+    if has_deadline is not None:
+        if has_deadline.lower()=='true':
+            todos = todos.filter(deadline_isnull=False)
+        else:
+            todos = todos.filter(deadline_isnull=True)
+    
+    # _________________sorting________________
+    ALLOWED_SORT = {'created_at', '-created_at', 'deadline', '-deadline', 'title', '-title'}
+    sort = request.query_params.get('sort', '-created_at')
+    if sort not in ALLOWED_SORT:
+        sort = '-created_at'
+    todos = todos.order_by(sort)
+            
     serializer = TodoSerializer(todos, many=True)
     return Response(serializer.data)
 

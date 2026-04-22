@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 # Create your models here.
 class Category(models.Model):
     name = models.CharField(max_length=255)
-    icon = models.CharField(max_length=10)
+    icon = models.CharField(max_length=10, default='🏷️')
 
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='categories')
     def __str__(self):
@@ -13,7 +13,7 @@ class Category(models.Model):
 class Todo(models.Model):
     title = models.CharField(max_length=255)
     completed = models.BooleanField(default=False)
-    description = models.CharField(null=True, blank=True)
+    description = models.TextField(null=True, blank=True)
     deadline = models.DateTimeField(null=True, blank=True)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank= True)
     
