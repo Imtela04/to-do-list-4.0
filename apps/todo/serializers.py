@@ -1,6 +1,6 @@
 from rest_framework import serializers
-from accounts.serializers import UserCreateSerializer, UserPublicSerializer
-from models import Todo, Category
+from apps.accounts.serializers import UserCreateSerializer, UserPublicSerializer
+from apps.todo.models import Todo, Category
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
