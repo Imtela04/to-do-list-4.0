@@ -109,6 +109,11 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+from datetime import timedelta
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=1),  # ← 1 day instead of 5 mins
+}
 
 REST_FRAMEWORK={
     'DEFAULT_AUTHENTICATION_CLASSES':(
