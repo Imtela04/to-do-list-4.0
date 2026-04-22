@@ -108,7 +108,7 @@ def update_task_category(request, task_id):
     task = Todo.objects.filter(id=task_id, owner=request.user).first()
     if not task:
         return Response({'detail': 'Task not found'}, status=status.HTTP_404_NOT_FOUND)
-    task.category_id=resolve_category(request.data.get('category', request.user))
+    task.category_id=resolve_category(request.data.get('category'), request.user)
     task.save()
     return Response(TodoSerializer(task).data)
 
