@@ -1,26 +1,27 @@
 import axios from 'axios';
 
-const BASE_URL = import.meta.env.VITE_API_URL || 'https://localhost:8000/api';
+// console.log('ENV CHECK:', import.meta.env.VITE_API_URL);
+
 const client = axios.create({
-    baseURL: BASE_URL,
+    baseURL: 'http://localhost:8000/api',
     headers: {'Content-Type': 'application/json'},
     withCredentials: true,
 });
 
 client.interceptors.request.use((config) => {
     const token = localStorage.getItem('authToken');
-    if (token) config.headers.Authorization = `Token ${token}`;
+    if (token) config.headers.Authorization = `Bearer ${token}`;
     return config;
-})
+});
 
 client.interceptors.response.use(
     (res) => res,
     (err) => {
-        if (err.response?.status===401){
-            localStorage.removeItem(`authToken`);
+        if (err.response?.status === 401){
+            localStorage.removeItem('authToken');
         }
         return Promise.reject(err);
     }
-)
+);
 
 export default client;

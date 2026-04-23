@@ -1,6 +1,7 @@
 import client from "./client";
 
 // auth
+export const register = (data) => client.post(`/auth/register/`, data)
 export const login = (data) => client.post(`/auth/login/`, data)
 export const logout = () => client.post(`/auth/logout/`)
 export const getProfile = () => client.get(`/auth/profile/`)
@@ -8,9 +9,9 @@ export const getProfile = () => client.get(`/auth/profile/`)
 // tasks
 export const getTasks = (params={}) => client.get(`/tasks/`, {params });
 export const createTasks = (data) => client.post(`/tasks/`, data);
-export const updateTasks = (id, data) => client.patch(`/tasks/${id}`, data);
-export const deleteTasks = (id) => client.delete(`/tasks/${id}`);
-export const toggleTasks = (id,completed) => client.patch(`/tasks/${id}`, { completed });
+export const updateTasks = (id, data) => client.patch(`/tasks/${id}/`, data);
+export const deleteTasks = (id) => client.delete(`/tasks/${id}/`);
+export const toggleTasks = (id,completed) => client.patch(`/tasks/${id}/`, { completed });
 
 // categories
 export const getCategories = () => client.get(`/categories/`);
