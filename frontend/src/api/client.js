@@ -19,6 +19,7 @@ client.interceptors.response.use(
     (err) => {
         if (err.response?.status === 401){
             localStorage.removeItem('authToken');
+            window.location.href = '/login';  // ← redirect to login
         }
         return Promise.reject(err);
     }

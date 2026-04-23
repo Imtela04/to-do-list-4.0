@@ -46,5 +46,52 @@ export default function TaskCard({ task, index }){
     try { await updateTask(task.id, { title: updated.title }); } catch {}
   };
 
+  return (
+    <div className={`${styles.card} ${task.completed ? styles.completed : ''} ${deleting ? styles.deleting : ''}`}>
+        <div className={styles.left}>
+            <button className={styles.toggle} onClick={handleToggle}>
+                {task.completed ? '✓' : '○'}
+            </button>
+        </div>
+
+        <div className={styles.body}>
+            {editing ? (
+                <input
+                    autoFocus
+                    className={styles.editInput}
+                    value={editTitle}
+                    onChange={e => setEditTitle(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleEdit(); if (e.key === 'Escape') setEditing(false); }}
+                />
+            ) : (
+                <p className={`${styles.title} ${task.completed ? styles.strikethrough : ''}`}>
+                    {task.title}
+                </p>
+            )}
+
+            <div className={styles.meta}>
+                {category && <span className={styles.category}>{category.icon} {category.name}</span>}
+                {dueDate && (
+                    <span className={`${styles.due} ${isOverdue ? styles.overdue : ''} ${isDueToday ? styles.today : ''}`}>
+                        {isOverdue ? '⚠ ' : '📅 '}{format(dueDate, 'MMM d')}
+                    </span>
+                )}
+                {task.priority && (
+                    <span className={styles.priority}>
+                        <priority.icon size={14} /> {priority.label}
+                    </span>
+                )}
+            </div>
+        </div>
+
+        <div className={styles.actions}>
+            <button className={styles.editBtn} onClick={handleEdit}>
+                {editing ? '✓' : '✏'}
+            </button>
+            <button className={styles.deleteBtn} onClick={handleDelete}>✕</button>
+        </div>
+    </div>
+);
+
 
 }

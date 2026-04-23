@@ -15,15 +15,13 @@ export default function StickyNotes() {
 
   const handleAdd = async () => {
     if (!newText.trim()) return;
-    const note = { id: Date.now(), note: newText, color: newColor, created_at: new Date().toISOString() };
-    dispatch({ type: 'ADD_NOTE', payload: note });
-    setNewText('');
     setAdding(false);
     try {
-      const res = await createStickyNote({ note: newText, color: newColor });
-      dispatch({ type: 'UPDATE_NOTE', payload: { ...note, id: res.data.id } });
+        const res = await createStickyNote({ note: newText, color: newColor });
+        dispatch({ type: 'ADD_NOTE', payload: res.data });  // use real data directly
+        setNewText('');
     } catch {}
-  };
+};
 
   const handleDelete = async (id) => {
     dispatch({ type: 'DELETE_NOTE', payload: id });
