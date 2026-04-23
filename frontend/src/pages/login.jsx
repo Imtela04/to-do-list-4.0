@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { login } from "../api/services";
-// import Navbar from "../components/layout/navbar";
 
 export default function Login() {
     const [form, setForm]       = useState({ username: "", password: "" });
@@ -18,9 +17,9 @@ export default function Login() {
         }
         setLoading(true);
         try {
-            await login({ username: form.username, password: form.password });
-              localStorage.setItem("authToken", res.data.access); // ← save the token
-            navigate("/");
+            const res = await login({ username: form.username, password: form.password });
+            localStorage.setItem('authToken', res.data.access);
+            navigate('/');
         } catch (err) {
             setError(err.message || "Invalid credentials");
         } finally {

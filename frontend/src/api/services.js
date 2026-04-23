@@ -4,14 +4,14 @@ import client from "./client";
 export const register = (data) => client.post(`/auth/register/`, data)
 export const login = (data) => client.post(`/auth/login/`, data)
 export const logout = () => client.post(`/auth/logout/`)
-export const getProfile = () => client.get(`/auth/profile/`)
+export const getProfile = () => client.get('/me/');
 
 // tasks
 export const getTasks = (params={}) => client.get(`/tasks/`, {params });
-export const createTasks = (data) => client.post(`/tasks/`, data);
-export const updateTasks = (id, data) => client.patch(`/tasks/${id}/`, data);
-export const deleteTasks = (id) => client.delete(`/tasks/${id}/`);
-export const toggleTasks = (id,completed) => client.patch(`/tasks/${id}/`, { completed });
+export const createTask = (data) => client.post(`/tasks/`, data);
+export const updateTask = (id, data) => client.patch(`/tasks/${id}/`, data);
+export const deleteTask = (id) => client.delete(`/tasks/${id}/`);
+export const toggleTask = (id,completed) => client.patch(`/tasks/${id}/`, { completed });
 
 // categories
 export const getCategories = () => client.get(`/categories/`);

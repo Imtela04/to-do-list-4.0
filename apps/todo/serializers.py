@@ -1,6 +1,6 @@
 from rest_framework import serializers
-from apps.accounts.serializers import UserCreateSerializer, UserPublicSerializer
-from apps.todo.models import Todo, Category
+from apps.accounts.serializers import UserPublicSerializer
+from apps.todo.models import Todo, Category, StickyNotes
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -14,3 +14,9 @@ class TodoSerializer(serializers.ModelSerializer):
         model = Todo
         fields = ['id', 'title', 'completed', 'description', 'deadline', 'category', 'owner']
         read_only_fields = ['id', 'owner']
+class StickyNoteSerializer(serializers.ModelSerializer):
+    owner = UserPublicSerializer(read_only=True)
+    class Meta:
+        model = StickyNotes
+        fields = ['id', 'note', 'color', 'owner']
+        read_only_fields = ['id']

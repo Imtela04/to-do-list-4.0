@@ -1,8 +1,8 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { AppProvider } from './context/AppContext';
-import Dashboard from './pages/home'
-import Login from './pages/login'
-import Register from './pages/register'
+import { AppProvider } from '@/context/AppContext';
+import Dashboard from '@/pages/home'
+import Login from '@/pages/login'
+import Register from '@/pages/register'
 
 function PrivateRoute({ children }) {
     const token = localStorage.getItem("authToken");

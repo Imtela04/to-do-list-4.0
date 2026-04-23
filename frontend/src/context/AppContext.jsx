@@ -1,5 +1,5 @@
 import { createContext, useContext, useReducer, useEffect } from "react";
-import { getTasks, getCategories, getStickyNotes } from "../api/services";
+import { getTasks, getCategories, getStickyNotes, getProfile } from '../api/services';
 
 const AppContext = createContext(null);
 
@@ -7,11 +7,12 @@ const initialState = {
     tasks: [],  
     categories: [],
     stickyNotes: [],
+    username: '',
     theme: localStorage.getItem('theme'), // || dark,
     loading: { tasks: false, categories: false, notes: false },
     error: null,
     filter: { search: '', category: null, priority: null, status: 'all' },
-    greeting: localStorage.getItem('userName') || 'Friend',
+    greeting: localStorage.getItem('userName') || '',
 };
 
 function reducer(state, action){
@@ -31,6 +32,7 @@ function reducer(state, action){
         case 'SET_LOADING': return { ...state, loading: { ...state.loading, ...action.payload } };
         case 'SET_ERROR': return { ...state, error: action.payload };
         case 'SET_GREETING': return { ...state, greeting: action.payload };
+        case 'SET_USERNAME': return { ...state, username: action.payload };
         case 'SET_THEME': 
             localStorage.setItem('theme', action.payload);    
             return {...state, theme: action.payload};
@@ -69,11 +71,25 @@ export function AppProvider({ children }){
             dispatch({ type: 'SET_NOTES', payload: mockCategories });
         }
     };
+    const loadUsername = async () => {
+        try {
+            const res = await getProfile();  // already in services.js
+            console.log('profile response:', res.data);  // ← add this
+            dispatch({ type: 'SET_USERNAME', payload: res.data.username });
+        } catch (err){
+            console.log('profile error:', err);  // ← and this
+        }
+    };
+
 
     useEffect(()=>{
+        const token = localStorage.getItem('authToken');
+        if (!token) return;  // ← don't fetch if not logged in
+
         loadTasks();
         loadCategories();
         loadNotes();
+        loadUsername();
     }, []);
 
     const filteredTasks = state.tasks.filter(task=>{
@@ -85,6 +101,7 @@ export function AppProvider({ children }){
         if (status === 'completed' && !task.completed) return false;
         return true;
     });
+
     
     return(
         <AppContext.Provider value={{ state, dispatch, filteredTasks, loadTasks, loadCategories, loadNotes }}>

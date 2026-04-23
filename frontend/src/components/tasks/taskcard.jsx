@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { format, isPast, isToday } from 'date-fns';
-import { useApp } from '../context/AppContext';
-import { toggleTask, deleteTask, updateTask } from '../api/services';
-import styles from './TaskCard.module.css';
+import { useApp } from '@/context/AppContext';
+import { toggleTask, deleteTask, updateTask } from '@/api/services';
+import styles from './taskcard.module.css';
 import { SignalLow, SignalMedium, SignalHigh, TriangleAlert } from 'lucide-react';
 
 const PRIORITY_MAP={

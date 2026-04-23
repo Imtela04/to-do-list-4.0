@@ -1,8 +1,8 @@
-import { useApp } from '../context/AppContext';
-import TaskCard from './TaskCard';
-import AddTask from './AddTask';
-import FilterBar from './layout/filterbar';
-import styles from './TaskList.module.css';
+import { useApp } from '@/context/AppContext';
+import TaskCard from './taskcard';
+import AddTask from './addtask';
+import FilterBar from '@/components/layout/filterbar';
+import styles from './tasklist.module.css';
 
 export default function TaskList() {
   const { filteredTasks, state } = useApp();
