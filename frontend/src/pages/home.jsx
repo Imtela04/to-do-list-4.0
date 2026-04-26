@@ -24,10 +24,7 @@ export default function Dashboard() {
         <header className={styles.header}>
           <Greeting />
           <div className={styles.headerRight}>
-            <span className={styles.apiStatus}>
-              <span className={styles.statusDot} />
-              API: localhost:8000
-            </span>
+
           </div>
         </header>
         <section className={styles.tasksSection}><TaskList /></section>

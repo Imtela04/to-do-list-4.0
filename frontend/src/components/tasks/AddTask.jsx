@@ -8,25 +8,23 @@ const PRIORITIES = ['low', 'medium', 'high', 'critical'];
 export default function AddTask() {
   const { state, dispatch } = useApp();
   const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({ title: '', priority: 'medium', category: '', due_date: '' });
+  const [form, setForm] = useState({ title: '', description: '', priority: '', category: '', due_date: '' });
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async () => {
     if (!form.title.trim()) return;
     setLoading(true);
-    const newTask = {
-      ...form,
-      id: Date.now(),
-      completed: false,
-      category: form.category ? parseInt(form.category) : null,
-      created_at: new Date().toISOString(),
-    };
-    dispatch({ type: 'ADD_TASK', payload: newTask });
-    setForm({ title: '', priority: 'medium', category: '', due_date: '' });
-    setOpen(false);
     try {
-      const res = await createTask(form);
-      dispatch({ type: 'UPDATE_TASK', payload: { ...newTask, id: res.data.id } });
+        const res = await createTask({
+            title: form.title,
+            description: form.description,
+            priority: form.priority,
+            category: form.category,
+            deadline: form.due_date,
+        });
+        dispatch({ type: 'ADD_TASK', payload: res.data });
+        setForm({ title: '', priority: '', category: '', due_date: '' });
+        setOpen(false);
     } catch {}
     setLoading(false);
   };
@@ -49,6 +47,13 @@ export default function AddTask() {
             value={form.title}
             onChange={e => set('title', e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') handleSubmit(); if (e.key === 'Escape') setOpen(false); }}
+          />
+          <textarea
+              className={styles.descInput}
+              placeholder="Description (optional)"
+              value={form.description}
+              onChange={e => set('description', e.target.value)}
+              rows={2}
           />
 
           <div className={styles.row}>

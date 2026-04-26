@@ -16,7 +16,7 @@ export const toggleTask = (id,completed) => client.patch(`/tasks/${id}/`, { comp
 // categories
 export const getCategories = () => client.get(`/categories/`);
 export const createCategory = (data) => client.post(`/categories/`, data);
-export const deleteCategory = (id) => client.delete(`/categories/${id}`);
+export const deleteCategory = (id) => client.delete(`/categories/${id}/`);
 
 // sticky notes
 export const getStickyNotes = () => client.get(`/sticky-notes/`);

@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { login } from "../api/services";
+import { useApp } from '@/context/AppContext';
 
 export default function Login() {
     const [form, setForm]       = useState({ username: "", password: "" });
     const [error, setError]     = useState("");
     const [loading, setLoading] = useState(false);
     const navigate              = useNavigate();
+    const { loadTasks, loadCategories, loadNotes, loadUsername } = useApp();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -19,6 +21,12 @@ export default function Login() {
         try {
             const res = await login({ username: form.username, password: form.password });
             localStorage.setItem('authToken', res.data.access);
+            await Promise.all([
+                loadTasks(),
+                loadCategories(),
+                loadNotes(),
+                loadUsername(),
+            ]);
             navigate('/');
         } catch (err) {
             setError(err.message || "Invalid credentials");

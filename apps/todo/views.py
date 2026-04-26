@@ -68,6 +68,7 @@ def tasks(request):
         description=(request.data.get('description') or '').strip() or None,
         deadline=parse_deadline(request.data.get('deadline')),
         category_id=resolve_category(request.data.get('category'), request.user),
+        priority=request.data.get('priority', 'low'),
     )
     return Response(TodoSerializer(task).data, status=status.HTTP_201_CREATED)
 

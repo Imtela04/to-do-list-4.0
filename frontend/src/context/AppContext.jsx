@@ -74,10 +74,10 @@ export function AppProvider({ children }){
     const loadUsername = async () => {
         try {
             const res = await getProfile();  // already in services.js
-            console.log('profile response:', res.data);  // ← add this
+            // console.log('profile response:', res.data);  // ← add this
             dispatch({ type: 'SET_USERNAME', payload: res.data.username });
         } catch (err){
-            console.log('profile error:', err);  // ← and this
+            // console.log('profile error:', err);  // ← and this
         }
     };
 
@@ -95,7 +95,7 @@ export function AppProvider({ children }){
     const filteredTasks = state.tasks.filter(task=>{
         const { search, category, priority, status } = state.filter;
         if (search && !task.title.toLowerCase().includes(search.toLowerCase())) return false;
-        if (category && task.category !== category) return false;
+        if (category && task.category?.id !== category) return false;
         if (priority && task.priority !== priority) return false;
         if (status === 'active' && task.completed) return false;
         if (status === 'completed' && !task.completed) return false;
@@ -104,7 +104,7 @@ export function AppProvider({ children }){
 
     
     return(
-        <AppContext.Provider value={{ state, dispatch, filteredTasks, loadTasks, loadCategories, loadNotes }}>
+        <AppContext.Provider value={{ state, dispatch, filteredTasks, loadTasks, loadCategories, loadNotes, loadUsername }}>
             {children}
         </AppContext.Provider>
     );

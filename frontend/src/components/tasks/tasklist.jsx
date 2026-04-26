@@ -6,9 +6,9 @@ import styles from './tasklist.module.css';
 
 export default function TaskList() {
   const { filteredTasks, state } = useApp();
-  console.log('tasks:', state.tasks);
-  console.log('filteredTasks:', filteredTasks);
-  console.log('loading:', state.loading.tasks);
+  // console.log('tasks:', state.tasks);
+  // console.log('filteredTasks:', filteredTasks);
+  // console.log('loading:', state.loading.tasks);
   return (
     <div className={styles.container}>
       <FilterBar />

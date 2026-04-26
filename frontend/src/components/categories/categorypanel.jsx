@@ -3,25 +3,26 @@ import { useApp } from '@/context/AppContext';
 import { createCategory, deleteCategory } from '@/api/services';
 import styles from './categorypanel.module.css';
 
-const COLORS = ['#7c6aff','#ff6a9e','#6affdc','#ffaa6a','#6ab4ff','#c96aff','#ff6a6a','#6aff9e'];
+const ICONS = ['💼','🏠','💪','💰','📚','📌','🎯','🛒','✈️','🎮'];
 
 export default function Categories() {
   const { state, dispatch } = useApp();
   const [adding, setAdding] = useState(false);
   const [name, setName] = useState('');
-  const [color, setColor] = useState(COLORS[0]);
+  const [icon, setIcon] = useState(ICONS[0]);
 
   const handleAdd = async () => {
-    if (!name.trim()) return;
-    const cat = { id: Date.now(), name: name.trim(), color };
-    dispatch({ type: 'ADD_CATEGORY', payload: cat });
-    setName(''); setAdding(false);
-    try {
-      const res = await createCategory({ name: name.trim(), color });
-      dispatch({ type: 'DELETE_CATEGORY', payload: cat.id });
-      dispatch({ type: 'ADD_CATEGORY', payload: res.data });
-    } catch {}
+      if (!name.trim()) return;
+      const cat = { id: Date.now(), name: name.trim(), icon };
+      dispatch({ type: 'ADD_CATEGORY', payload: cat });
+      setName(''); setAdding(false);
+      try {
+          const res = await createCategory({ name: name.trim(), icon });
+          dispatch({ type: 'DELETE_CATEGORY', payload: cat.id });
+          dispatch({ type: 'ADD_CATEGORY', payload: res.data });
+      } catch {}
   };
+
 
   const handleDelete = async (id) => {
     dispatch({ type: 'DELETE_CATEGORY', payload: id });
@@ -46,14 +47,15 @@ export default function Categories() {
             onKeyDown={e => { if (e.key === 'Enter') handleAdd(); if (e.key === 'Escape') setAdding(false); }}
           />
           <div className={styles.colorRow}>
-            {COLORS.map(c => (
-              <button
-                key={c}
-                className={`${styles.dot} ${color === c ? styles.selected : ''}`}
-                style={{ background: c }}
-                onClick={() => setColor(c)}
-              />
-            ))}
+              {ICONS.map(i => (
+                  <button
+                      key={i}
+                      className={`${styles.dot} ${icon === i ? styles.selected : ''}`}
+                      onClick={() => setIcon(i)}
+                  >
+                      {i}
+                  </button>
+              ))}
           </div>
           <button className={styles.saveBtn} onClick={handleAdd}>Add</button>
         </div>
@@ -61,10 +63,10 @@ export default function Categories() {
 
       <div className={styles.list}>
         {state.categories.map(cat => {
-          const count = state.tasks.filter(t => t.category === cat.id).length;
+        const count = state.tasks.filter(t => t.category?.id === cat.id).length;
           return (
             <div key={cat.id} className={styles.item}>
-              <span className={styles.dot2} style={{ background: cat.color }} />
+              <span>{cat.icon}</span>
               <span className={styles.catName}>{cat.name}</span>
               <span className={styles.count}>{count}</span>
               <button className={styles.delBtn} onClick={() => handleDelete(cat.id)}>✕</button>

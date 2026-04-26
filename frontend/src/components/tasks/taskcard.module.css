@@ -166,3 +166,77 @@
   background: rgba(255, 68, 68, 0.15);
   color: var(--priority-critical);
 }
+
+.tooltip {
+    display: none;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 8px;
+    font-size: 0.75rem;
+    opacity: 0.85;
+}
+
+.tooltip span {
+    display: block;  /* ← add this, forces each item to its own line */
+}
+
+.card:hover .tooltip {
+    display: flex;
+}
+
+.editForm {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+}
+
+.priorities {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.prioBtn {
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid transparent;
+    font-size: 0.7rem;
+    cursor: pointer;
+    background: var(--surface);
+    color: var(--text);
+    text-transform: capitalize;
+    transition: all 0.2s;
+}
+
+.prioActive {
+    opacity: 1;
+    font-weight: 600;
+}
+
+.editActions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    margin-top: 4px;
+}
+
+.cancelBtn {
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: 1px solid var(--surface);
+    background: transparent;
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.75rem;
+}
+
+.saveBtn {
+    padding: 4px 12px;
+    border-radius: 20px;
+    border: none;
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+    font-size: 0.75rem;
+}
