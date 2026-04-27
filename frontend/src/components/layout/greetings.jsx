@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
 import styles from './greetings.module.css';
 
@@ -24,19 +24,26 @@ function getMotivation(completedCount, totalCount) {
 export default function Greeting() {
   const { state, dispatch } = useApp();
   const [editing, setEditing] = useState(false);
-  const [nameInput, setNameInput] = useState(state.greeting||state.username||'');
-  const displayName = state.greeting || state.username || ''; 
+  
+  const displayName = state.greeting || state.username || '';
+  
+  // 👇 derive from state, not frozen initial value
+  const [nameInput, setNameInput] = useState('');
+  
+  // 👇 sync input when state.username arrives (after loadUsername resolves)
+  useEffect(() => {
+    setNameInput(state.greeting || state.username || '');
+  }, [state.username, state.greeting]);
 
   const completed = state.tasks.filter(t => t.completed).length;
   const total = state.tasks.length;
 
   const handleSave = () => {
-    const name = nameInput.trim() || state.username ;
+    const name = nameInput.trim() || state.username;
     dispatch({ type: 'SET_GREETING', payload: name });
-    localStorage.setItem('userName', name);
+    // 👇 removed localStorage.setItem — don't persist across accounts
     setEditing(false);
   };
-
   return (
     <div className={styles.greeting}>
       <div className={styles.topLine}>

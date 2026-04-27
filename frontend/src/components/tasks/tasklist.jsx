@@ -1,19 +1,34 @@
 import { useApp } from '@/context/AppContext';
+import { useState, useEffect } from 'react';
 import TaskCard from './taskcard';
 import AddTask from './addtask';
 import FilterBar from '@/components/layout/filterbar';
 import styles from './tasklist.module.css';
 
+const PAGE_SIZE = 8;
+
 export default function TaskList() {
   const { filteredTasks, state } = useApp();
-  // console.log('tasks:', state.tasks);
-  // console.log('filteredTasks:', filteredTasks);
-  // console.log('loading:', state.loading.tasks);
+  const [addOpen, setAddOpen] = useState(false);
+  const [page, setPage] = useState(1);
+
+  // Reset to page 1 whenever filters change
+  useEffect(() => { setPage(1); }, [state.filter]);
+
+  const totalPages = Math.ceil(filteredTasks.length / PAGE_SIZE);
+  const paginated  = filteredTasks.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
   return (
     <div className={styles.container}>
       <FilterBar />
 
-      <AddTask />
+      {filteredTasks.length > 0 && (
+        <p className={styles.count}>
+          {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''}
+          {state.filter.status !== 'all' ? ` ${state.filter.status}` : ''}
+          {totalPages > 1 ? ` · page ${page} of ${totalPages}` : ''}
+        </p>
+      )}
 
       <div className={styles.list}>
         {state.loading.tasks ? (
@@ -29,22 +44,80 @@ export default function TaskList() {
                 ? 'No tasks match your filters'
                 : state.filter.status === 'completed'
                 ? 'No completed tasks yet'
-                : 'All clear! Add a task above.'}
+                : 'All clear! Add a task below.'}
             </p>
           </div>
         ) : (
-          filteredTasks.map((task, i) => (
+          paginated.map((task, i) => (
             <TaskCard key={task.id} task={task} index={i} />
           ))
         )}
       </div>
 
-      {filteredTasks.length > 0 && (
-        <p className={styles.count}>
-          {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''}
-          {state.filter.status !== 'all' ? ` ${state.filter.status}` : ''}
-        </p>
+      {/* Pagination controls */}
+      {totalPages > 1 && (
+        <div className={styles.pagination}>
+          <button
+            className={styles.pageBtn}
+            onClick={() => setPage(1)}
+            disabled={page === 1}
+            title="First page"
+          >
+            «
+          </button>
+          <button
+            className={styles.pageBtn}
+            onClick={() => setPage(p => p - 1)}
+            disabled={page === 1}
+            title="Previous page"
+          >
+            ‹
+          </button>
+
+          {/* Page number pills */}
+          {Array.from({ length: totalPages }, (_, i) => i + 1)
+            .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+            .reduce((acc, p, idx, arr) => {
+              // insert ellipsis where there are gaps
+              if (idx > 0 && p - arr[idx - 1] > 1) acc.push('...');
+              acc.push(p);
+              return acc;
+            }, [])
+            .map((p, i) =>
+              p === '...' ? (
+                <span key={`ellipsis-${i}`} className={styles.ellipsis}>…</span>
+              ) : (
+                <button
+                  key={p}
+                  className={`${styles.pageBtn} ${page === p ? styles.pageActive : ''}`}
+                  onClick={() => setPage(p)}
+                >
+                  {p}
+                </button>
+              )
+            )}
+
+          <button
+            className={styles.pageBtn}
+            onClick={() => setPage(p => p + 1)}
+            disabled={page === totalPages}
+            title="Next page"
+          >
+            ›
+          </button>
+          <button
+            className={styles.pageBtn}
+            onClick={() => setPage(totalPages)}
+            disabled={page === totalPages}
+            title="Last page"
+          >
+            »
+          </button>
+        </div>
       )}
+
+      <AddTask open={addOpen} setOpen={setAddOpen} />
+      <button className={styles.fab} onClick={() => setAddOpen(true)}>+</button>
     </div>
   );
 }

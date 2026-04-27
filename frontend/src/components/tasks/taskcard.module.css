@@ -3,7 +3,7 @@
   align-items: flex-start;
   gap: 12px;
   padding: 14px 16px;
-  background: var(--bg-card);
+  background: var(----bg-glass);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
   position: relative;
@@ -19,6 +19,7 @@
 }
 
 .card:hover {
+  background: var(--bg-card);
   border-color: var(--border-medium);
   transform: translateY(-1px);
   box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
@@ -240,4 +241,108 @@
     color: #fff;
     cursor: pointer;
     font-size: 0.75rem;
+}
+
+.activeDot {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent-tertiary);
+  box-shadow: 0 0 6px var(--accent-tertiary);
+  animation: pulse 2s ease-in-out infinite;
+}
+.confirmOverlay {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  gap: 12px;
+  animation: fadeIn 150ms ease both;
+  border: 1px solid rgba(255, 68, 68, 0.25);
+  z-index: 10;
+}
+
+.confirmText {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.confirmActions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.confirmCancel {
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: var(--bg-glass);
+  border: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.confirmCancel:hover {
+  color: var(--text-primary);
+  border-color: var(--border-medium);
+}
+
+.confirmDelete {
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  color: white;
+  background: rgba(255, 68, 68, 0.8);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.confirmDelete:hover {
+  background: rgb(255, 68, 68);
+}
+/* Expanded card state */
+.cardExpanded {
+  background: var(--bg-card);
+  border-color: var(--border-medium);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+}
+
+.cardExpanded .actions {
+  opacity: 1;
+}
+
+/* Override hover-only tooltip — now click controlled */
+.card:hover .tooltip {
+  display: none; /* disable old hover behaviour */
+}
+
+.tooltipExpanded {
+  display: flex !important;
+}
+
+/* Always show actions when expanded */
+.actionsVisible {
+  opacity: 1 !important;
+}
+
+/* Countdown */
+.countdown {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--accent-tertiary);
+  margin-top: 2px;
+}
+
+.countdownOverdue {
+  color: var(--danger);
 }

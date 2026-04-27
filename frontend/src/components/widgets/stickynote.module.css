@@ -22,11 +22,7 @@
 .addBtn {
   width: 26px;
   height: 26px;
-  border-radius: var(--radius-sm);
-  background: var(--bg-glass);
-  border: 1px solid var(--border-medium);
   color: var(--text-secondary);
-  font-size: 1.1rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -34,9 +30,7 @@
   line-height: 1;
 }
 .addBtn:hover {
-  background: var(--accent-primary);
-  border-color: var(--accent-primary);
-  color: white;
+  color: var(--accent-primary);
 }
 
 /* ── Note Form ── */
@@ -89,7 +83,7 @@
 .colorDot {
   width: 18px;
   height: 18px;
-  padding: 0;           /* remove padding — it was fighting the size */
+  padding: 0;
   border-radius: 50%;
   border: 2px solid transparent;
   cursor: pointer;

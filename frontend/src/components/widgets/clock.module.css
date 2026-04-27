@@ -125,3 +125,76 @@
   opacity: 0;
   pointer-events: none;
 }
+.calHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.navBtn {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+.navBtn:hover { color: var(--accent-primary); background: var(--bg-glass-hover); }
+
+.monthLabel {
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+.monthLabel:hover { color: var(--accent-primary); background: var(--bg-glass-hover); }
+
+.calCell {
+  position: relative;
+  cursor: pointer;
+}
+
+.selected {
+  background: rgba(124, 106, 255, 0.2) !important;
+  color: var(--accent-primary) !important;
+  font-weight: 600;
+  border: 1px solid rgba(124, 106, 255, 0.4);
+}
+
+.hasDeadline {
+  color: var(--text-primary);
+}
+
+.dot {
+  position: absolute;
+  bottom: 2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--accent-secondary);
+}
+
+.clearDay {
+  margin-top: 10px;
+  width: 100%;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+.clearDay:hover { color: var(--accent-primary); background: var(--bg-glass-hover); }

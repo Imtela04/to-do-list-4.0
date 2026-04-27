@@ -23,3 +23,7 @@ export const getStickyNotes = () => client.get(`/sticky-notes/`);
 export const createStickyNote = (data) => client.post(`/sticky-notes/`, data);
 export const updateStickyNote = (id, data) => client.patch(`/sticky-notes/${id}/`, data);
 export const deleteStickyNote = (id) => client.delete(`/sticky-notes/${id}/`);
+
+// themes
+export const getTheme  = ()           => client.get('/user/theme/');
+export const saveTheme = (payload)    => client.post('/user/theme/', payload);

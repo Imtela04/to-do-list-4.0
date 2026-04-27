@@ -1,5 +1,14 @@
 import { useApp } from '@/context/AppContext';
 import styles from './filterbar.module.css';
+import { CalendarArrowDown, CalendarArrowUp, CircleAlert, CalendarClock, ArrowDownAZ } from 'lucide-react';
+
+const SORT_OPTIONS = [
+  { value: 'newest',   label: 'Newest',   icon: CalendarArrowDown },
+  { value: 'oldest',   label: 'Oldest',   icon: CalendarArrowUp   },
+  { value: 'priority', label: 'Priority', icon: CircleAlert        },
+  { value: 'deadline', label: 'Deadline', icon: CalendarClock      },
+  { value: 'alpha',    label: 'A→Z',      icon: ArrowDownAZ        },
+];
 
 export default function FilterBar() {
   const { state, dispatch } = useApp();
@@ -7,8 +16,11 @@ export default function FilterBar() {
 
   const set = (key, val) => dispatch({ type: 'SET_FILTER', payload: { [key]: val } });
 
+  const hasDateFilter = filter.dateFrom || filter.dateTo;
+
   return (
     <div className={styles.bar}>
+      {/* Search */}
       <div className={styles.searchWrap}>
         <svg className={styles.searchIcon} viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.5">
           <circle cx="6.5" cy="6.5" r="4.5" />
@@ -25,6 +37,7 @@ export default function FilterBar() {
         )}
       </div>
 
+      {/* Status + Priority + Category */}
       <div className={styles.filters}>
         <div className={styles.filterGroup}>
           {['all', 'active', 'completed'].map(s => (
@@ -60,6 +73,54 @@ export default function FilterBar() {
             <option key={c.id} value={c.id}>{c.name}</option>
           ))}
         </select>
+      </div>
+
+      {/* Sort — icon buttons instead of select */}
+      <div className={styles.sortRow}>
+        <span className={styles.sortLabel}>Sort</span>
+        <div className={styles.sortGroup}>
+          {SORT_OPTIONS.map(({ value, label, icon: Icon }) => (
+            <button
+              key={value}
+              className={`${styles.sortBtn} ${filter.sort === value ? styles.sortActive : ''}`}
+              onClick={() => set('sort', value)}
+              title={label}
+            >
+              <Icon size={13} />
+              <span>{label}</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Date filter */}
+      <div className={styles.dateRow}>
+        <span className={styles.sortLabel}>Deadline</span>
+        <div className={styles.dateInputs}>
+          <input
+            type="date"
+            className={`${styles.dateInput} ${filter.dateFrom ? styles.dateActive : ''}`}
+            value={filter.dateFrom || ''}
+            onChange={e => set('dateFrom', e.target.value || null)}
+            title="From date"
+          />
+          <span className={styles.dateSep}>→</span>
+          <input
+            type="date"
+            className={`${styles.dateInput} ${filter.dateTo ? styles.dateActive : ''}`}
+            value={filter.dateTo || ''}
+            onChange={e => set('dateTo', e.target.value || null)}
+            title="To date"
+          />
+          {hasDateFilter && (
+            <button
+              className={styles.clearDate}
+              onClick={() => { set('dateFrom', null); set('dateTo', null); }}
+            >
+              ×
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -2,6 +2,8 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .list {
@@ -65,4 +67,84 @@
   color: var(--text-muted);
   text-align: right;
   padding-right: 4px;
+}
+
+.fab {
+  position: sticky;
+  bottom: 24px;
+  margin-left: auto;
+  width: 60px;
+  height: 60px;
+  border-radius: 30%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-card);
+  border: 1px dashed var(--border-medium);
+  color: var(--text-muted);
+  font-size: 1.9rem;
+  transition: all var(--transition-base);
+  z-index: 10;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.fab:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  background: rgba(124, 106, 255, 0.05);
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 4px 0 8px;
+  flex-wrap: wrap;
+}
+
+.pageBtn {
+  min-width: 30px;
+  height: 30px;
+  padding: 0 6px;
+  border-radius: var(--radius-md);
+  font-size: 0.78rem;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pageBtn:hover:not(:disabled) {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.pageBtn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.pageActive {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: white;
+}
+
+.pageActive:hover {
+  background: var(--accent-primary) !important;
+  color: white !important;
+}
+
+.ellipsis {
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  padding: 0 2px;
+  user-select: none;
 }

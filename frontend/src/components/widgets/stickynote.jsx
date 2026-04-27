@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
 import { createStickyNote, updateStickyNote, deleteStickyNote } from '@/api/services';
 import styles from './stickynote.module.css';
-import { Bubbles, Icon } from 'lucide-react';
+import { Bubbles, Icon, StickyNote } from 'lucide-react';
 
 const NOTE_COLORS = ['#7c6aff', '#ff6a9e', '#6affdc', '#ffaa6a', '#6ab4ff', '#c96aff'];
 const ui = {bubbles: Bubbles}
@@ -96,7 +96,7 @@ export default function StickyNotes() {
     <div className={styles.panel}>
       <div className={styles.header}>
         <span className={styles.title}>Sticky Notes</span>
-        <button className={styles.addBtn} onClick={() => setAdding(true)}>+</button>
+        <button className={styles.addBtn} onClick={() => setAdding(true)}><StickyNote/></button>
       </div>
 
       {adding && (
@@ -134,7 +134,7 @@ export default function StickyNotes() {
 
       <div className={styles.notes}>
         {state.stickyNotes.length === 0 && !adding && (
-          <p className={styles.empty}>No sticky notes yet.</p>
+          <p className={styles.empty}>no notes :(</p>
         )}
         {state.stickyNotes.map((note, i) => (
           <div
