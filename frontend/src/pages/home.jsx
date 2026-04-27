@@ -1,3 +1,4 @@
+
 import { AppProvider } from '@/context/AppContext';
 import Greeting from '@/components/layout/greetings';
 import ClockWidget from '@/components/widgets/clock';
@@ -5,7 +6,9 @@ import TaskList from '@/components/tasks/tasklist';
 import StatsWidget from '@/components/widgets/stats';
 import StickyNotes from '@/components/widgets/stickynote';
 import Categories from '@/components/categories/categorypanel';
+import UserNav from '@/components/layout/usernav';
 import styles from './home.module.css';
+import { ClockAlert } from 'lucide-react';
 
 export default function Dashboard() {
   return (
@@ -13,7 +16,7 @@ export default function Dashboard() {
       <aside className={styles.sidebar}>
         <div className={styles.logo}>
           {/* <span className={styles.logoIcon}></span> */}
-          <span className={styles.logoText}>what-do</span>
+          <span className={styles.logoText}>what-d<ClockAlert className={styles.logoIcon}/></span>
         </div>
         <div className={styles.sideSection}><ClockWidget /></div>
         <div className={styles.sideSection}><StatsWidget /></div>
@@ -31,6 +34,7 @@ export default function Dashboard() {
       </main>
 
       <aside className={styles.rightPanel}>
+        <UserNav/>
         <StickyNotes />
       </aside>
     </div>

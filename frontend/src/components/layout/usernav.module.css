@@ -1,0 +1,6 @@
+.parent{
+  display: flex;
+}
+.parent.log{
+  color: var(--danger);
+}

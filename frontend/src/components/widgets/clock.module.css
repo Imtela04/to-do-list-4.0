@@ -14,6 +14,7 @@
   justify-content: center;
   gap: 2px;
   margin-bottom: 6px;
+  flex-wrap: wrap;
 }
 
 .digits {

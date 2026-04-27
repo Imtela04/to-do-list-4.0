@@ -72,7 +72,10 @@ export default function StickyNotes() {
     setAdding(false);
     try {
       const res = await createStickyNote({ note: content, color: newColor });
-      dispatch({ type: 'ADD_NOTE', payload: res.data });
+      dispatch({ 
+        type: 'ADD_NOTE', 
+        payload: { ...res.data, color: newColor } // ← force local color
+      });
     } catch {}
   };
 
@@ -97,21 +100,28 @@ export default function StickyNotes() {
       </div>
 
       {adding && (
-        <div className={`${styles.noteForm} animate-scale-in`}>
+        <div
+          className={`${styles.noteForm} animate-scale-in`}
+          style={{ borderLeft: `4px solid ${newColor}` }} // or background: newColor + '22'
+        >
           <div
             ref={addEditorRef}
             className={styles.textarea}
             contentEditable
             suppressContentEditableWarning
             onPaste={handlePaste}
-            data-placeholder= "..."
+            data-placeholder="..."
           />
           <div className={styles.colorRow}>
             {NOTE_COLORS.map(c => (
               <button
                 key={c}
                 className={`${styles.colorDot} ${newColor === c ? styles.colorSelected : ''}`}
-                style={{ background: c }}
+                style={{
+                  background: c,
+                  outline: newColor === c ? `2px solid white` : 'none', // fallback if CSS module fails
+                  transform: newColor === c ? 'scale(1.25)' : 'scale(1)',
+                }}
                 onClick={() => setNewColor(c)}
               />
             ))}

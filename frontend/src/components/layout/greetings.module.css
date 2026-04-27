@@ -11,11 +11,13 @@
 }
 
 .timeGreeting {
+  background-color: transparent;
   font-family: var(--font-display);
   font-size: 1.9rem;
   font-weight: 700;
   color: var(--text-primary);
   line-height: 1.1;
+  
 }
 
 .nameLine {

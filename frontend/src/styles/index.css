@@ -22,7 +22,7 @@
   --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.6);
   --font-display: var(--font-mono);
   --font-body: var(--font-mono);
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-mono:  monospace;
   --radius-sm: 8px;
   --radius-md: 14px;
   --radius-lg: 20px;
@@ -35,6 +35,7 @@
   --priority-medium: #ffaa6a;
   --priority-high: #ff6a9e;
   --priority-critical: #ff4444;
+  --danger: red;
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

@@ -87,19 +87,22 @@
 }
 
 .colorDot {
-  width: 14px;
-  height: 14px;
-  padding: 5px;
+  width: 18px;
+  height: 18px;
+  padding: 0;           /* remove padding — it was fighting the size */
   border-radius: 50%;
   border: 2px solid transparent;
-  transition: transform var(--transition-fast);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: transform var(--transition-fast), border-color var(--transition-fast);
 }
 .colorDot:hover { transform: scale(1.2); }
+
 .colorSelected {
   border-color: white;
-  transform: scale(1.15);
+  transform: scale(1.2);
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.4);  /* extra ring for contrast */
 }
-
 .cancelBtn {
   font-size: 0.72rem;
   color: var(--text-muted);
