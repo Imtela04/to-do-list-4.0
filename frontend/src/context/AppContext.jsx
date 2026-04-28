@@ -2,6 +2,10 @@ import { createContext, useContext, useReducer, useEffect } from "react";
 import { getTasks, getCategories, getStickyNotes, getProfile } from '../api/services';
 
 export const AppContext = createContext(null);
+const savedFilter = (() => {
+  try { return JSON.parse(localStorage.getItem('taskFilter')) || {}; }
+  catch { return {}; }
+})();
 
 const initialState = {
     tasks: [],  
@@ -11,7 +15,20 @@ const initialState = {
     theme: localStorage.getItem('theme'), // || dark,
     loading: { tasks: false, categories: false, notes: false },
     error: null,
-    filter: { search: '', category: null, priority: null, status: 'all', sort: 'newest', dateFrom: null, dateTo: null, deadlineDay: null },
+    filter: {
+        search: '',           // never persist search
+        category: null,
+        priority: null,
+        status: 'all',
+        sort: 'newest',
+        deadlineDay: null,    // never persist calendar selection
+        dateFrom: savedFilter.dateFrom || null,
+        dateTo: savedFilter.dateTo || null,
+        ...savedFilter,
+        search: '',           // force clear search on reload
+        deadlineDay: null,    // force clear calendar on reload
+    },
+
     greeting: localStorage.getItem('userName') || '',
 };
 
@@ -27,7 +44,13 @@ function reducer(state, action){
         case 'ADD_NOTE': return { ...state, stickyNotes: [...state.stickyNotes, action.payload] };
         case 'UPDATE_NOTE': return { ...state, stickyNotes: state.stickyNotes.map(n => n.id === action.payload.id ? action.payload : n) };
         case 'DELETE_NOTE': return { ...state, stickyNotes: state.stickyNotes.filter(n => n.id !== action.payload) };
-        case 'SET_FILTER': return { ...state, filter: { ...state.filter, ...action.payload } };
+        case 'SET_FILTER': {
+        const updated = { ...state.filter, ...action.payload };
+            // save everything except search and deadlineDay
+            const { search, deadlineDay, ...toSave } = updated;
+            localStorage.setItem('taskFilter', JSON.stringify(toSave));
+            return { ...state, filter: updated };
+        }   
         case 'SET_LOADING': return { ...state, loading: { ...state.loading, ...action.payload } };
         case 'SET_ERROR': return { ...state, error: action.payload };
         case 'SET_GREETING': return { ...state, greeting: action.payload };

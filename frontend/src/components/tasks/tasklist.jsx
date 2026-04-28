@@ -61,7 +61,7 @@ export default function TaskList() {
                 ? 'No tasks match your filters'
                 : state.filter.status === 'completed'
                 ? 'No completed tasks yet'
-                : 'All clear! Add a task below.'}
+                : 'All clear!'}
             </p>
           </div>
         ) : (
