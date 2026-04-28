@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
 import styles from './greetings.module.css';
+import { isToday } from 'date-fns';
 
 function getTimeGreeting() {
   const h = new Date().getHours();
@@ -35,13 +36,14 @@ export default function Greeting() {
     setNameInput(state.greeting || state.username || '');
   }, [state.username, state.greeting]);
 
-  const completed = state.tasks.filter(t => t.completed).length;
-  const total = state.tasks.length;
+  const todayTasks  = state.tasks.filter(t => t.deadline && isToday(new Date(t.deadline)));
+  const completed   = todayTasks.filter(t => t.completed).length;
+  const total       = todayTasks.length;
+
 
   const handleSave = () => {
     const name = nameInput.trim() || state.username;
     dispatch({ type: 'SET_GREETING', payload: name });
-    // 👇 removed localStorage.setItem — don't persist across accounts
     setEditing(false);
   };
   return (
@@ -78,7 +80,7 @@ export default function Greeting() {
         </div>
       )}
       {total > 0 && (
-        <span className={styles.stats}>{completed}/{total} tasks completed</span>
+        <span className={styles.stats}>{completed}/{total} tasks completed today</span>
       )}
     </div>
   );

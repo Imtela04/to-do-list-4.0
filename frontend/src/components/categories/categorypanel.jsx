@@ -43,6 +43,7 @@ export default function Categories() {
       <div className={styles.header}>
         <span className={styles.title}>Categories</span>
         <button className={styles.addBtn} onClick={() => setAdding(v => !v)}>+</button>
+        
       </div>
 
       {adding && (
@@ -66,7 +67,12 @@ export default function Categories() {
               </button>
             ))}
           </div>
-          <button className={styles.saveBtn} onClick={handleAdd}>Add</button>
+          <div className={styles.formActions}>
+            <button className={styles.cancelFormBtn} onClick={() => { setAdding(false); setName(''); }}>
+              Cancel
+            </button>
+            <button className={styles.saveBtn} onClick={handleAdd}>Add</button>
+          </div>
         </div>
       )}
 

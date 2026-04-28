@@ -3,7 +3,7 @@ import { useApp } from '@/context/AppContext';
 import { createStickyNote, updateStickyNote, deleteStickyNote } from '@/api/services';
 import styles from './stickynote.module.css';
 import { Bubbles, Icon, StickyNote } from 'lucide-react';
-
+import { useDraft } from '../../hooks/useDraft';
 const NOTE_COLORS = ['#7c6aff', '#ff6a9e', '#6affdc', '#ffaa6a', '#6ab4ff', '#c96aff'];
 const ui = {bubbles: Bubbles}
 export default function StickyNotes() {
@@ -14,11 +14,22 @@ export default function StickyNotes() {
   const [expandedId, setExpandedId] = useState(null);
   const addEditorRef = useRef(null);
   const editEditorRef = useRef(null);
+  const { save: saveDraft, load: loadDraft, clear: clearDraft } = useDraft('draft_note');
+  const [hasNoteDraft, setHasNoteDraft] = useState(!!loadDraft());
+
 
   // clear editor when opening add form
   useEffect(() => {
     if (adding && addEditorRef.current) {
-      addEditorRef.current.innerHTML = '';
+      const draft = loadDraft();
+      if (draft) {
+        addEditorRef.current.innerHTML = draft.content || '';
+        setNewColor(draft.color || NOTE_COLORS[0]);
+        setHasNoteDraft(true);
+      } else {
+        addEditorRef.current.innerHTML = '';
+        setHasNoteDraft(false);
+      }
     }
   }, [adding]);
 
@@ -70,12 +81,11 @@ export default function StickyNotes() {
     const hasContent = content.trim() || content.includes('<img');
     if (!hasContent) return;
     setAdding(false);
+    clearDraft();
+    setHasNoteDraft(false);
     try {
       const res = await createStickyNote({ note: content, color: newColor });
-      dispatch({ 
-        type: 'ADD_NOTE', 
-        payload: { ...res.data, color: newColor } // ← force local color
-      });
+      dispatch({ type: 'ADD_NOTE', payload: { ...res.data, color: newColor } });
     } catch {}
   };
 
@@ -95,7 +105,6 @@ export default function StickyNotes() {
   return (
     <div className={styles.panel}>
       <div className={styles.header}>
-        <span className={styles.title}>Sticky Notes</span>
         <button className={styles.addBtn} onClick={() => setAdding(true)}><StickyNote/></button>
       </div>
 
@@ -104,12 +113,28 @@ export default function StickyNotes() {
           className={`${styles.noteForm} animate-scale-in`}
           style={{ borderLeft: `4px solid ${newColor}` }} // or background: newColor + '22'
         >
+          {hasNoteDraft && (
+            <div className={styles.draftBadge}>
+              <span>📝 Draft restored</span>
+              <button className={styles.discardDraft} onClick={() => {
+                clearDraft();
+                setHasNoteDraft(false);
+                if (addEditorRef.current) addEditorRef.current.innerHTML = '';
+              }}>Discard</button>
+            </div>
+          )}
+
           <div
             ref={addEditorRef}
             className={styles.textarea}
             contentEditable
             suppressContentEditableWarning
             onPaste={handlePaste}
+            onInput={() => {
+              const content = addEditorRef.current?.innerHTML || '';
+              if (content.trim()) saveDraft({ content, color: newColor });
+              else clearDraft();
+            }}
             data-placeholder="..."
           />
           <div className={styles.colorRow}>

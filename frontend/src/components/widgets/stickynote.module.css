@@ -4,6 +4,26 @@
   gap: 12px;
 }
 
+.addBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: var(--radius-md);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  background: var(--bg-glass);
+  border: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  width: 100%;
+  justify-content: center;
+}
+.addBtn:hover {
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+
 .header {
   display: flex;
   align-items: center;
@@ -17,20 +37,6 @@
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 1px;
-}
-
-.addBtn {
-  width: 26px;
-  height: 26px;
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all var(--transition-fast);
-  line-height: 1;
-}
-.addBtn:hover {
-  color: var(--accent-primary);
 }
 
 /* ── Note Form ── */
@@ -227,4 +233,29 @@
 .noteBtn:hover {
   background: var(--bg-glass-hover);
   color: var(--text-primary);
+}
+
+.draftBadge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 8px;
+  background: rgba(124, 106, 255, 0.08);
+  border: 1px solid rgba(124, 106, 255, 0.2);
+  border-radius: var(--radius-sm);
+  font-size: 0.72rem;
+  color: var(--accent-primary);
+}
+
+.discardDraft {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  transition: all var(--transition-fast);
+}
+.discardDraft:hover {
+  color: var(--danger);
+  border-color: var(--danger);
 }

@@ -2,81 +2,93 @@
   background: var(--bg-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  padding: 18px;
+  padding: 14px 16px;
   display: flex;
   flex-direction: column;
-  flex-wrap: wrap;
+  gap: 14px;
+}
+
+/* ── Top row ── */
+.topRow {
+  display: flex;
+  align-items: center;
   gap: 16px;
 }
 
-.header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
+/* ── Ring ── */
+.ringWrap {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
 }
 
-.title {
-  font-family: var(--font-display);
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.rate {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  color: var(--accent-tertiary);
-  background: rgba(106, 255, 220, 0.1);
-  padding: 3px 8px;
-  border-radius: var(--radius-full);
-}
-
-.grid {
-  display: flex;
-  grid-template-columns: repeat(4, 1fr);
-  flex-wrap: wrap;
-  width: 100%;
-  gap: 4px;
-}
-
-.stat {
+.ringLabel {
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 10px 4px;
-  background: var(--bg-glass);
-  border-radius: var(--radius-md);
+  justify-content: center;
+  gap: 0;
 }
 
-.statNum {
+.ringPct {
   font-family: var(--font-mono);
-  font-size: 1.4rem;
-  font-weight: 500;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-primary);
   line-height: 1;
 }
 
-.statLabel {
-  font-size: 0.62rem;
+.ringSub {
+  font-size: 0.55rem;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
+/* ── Stats column ── */
+.statsCol {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.statRow {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.statDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.statName {
+  flex: 1;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.statVal {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* ── Breakdown ── */
 .breakdown {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-}
-
-.breakdownLabel {
-  font-size: 0.62rem;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  gap: 6px;
+  padding-top: 7px;
+  border-top: 1px solid var(--border-subtle);
 }
 
 .breakdownRow {
@@ -86,16 +98,16 @@
 }
 
 .breakdownName {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   color: var(--text-muted);
   text-transform: capitalize;
-  width: 50px;
+  width: 46px;
   flex-shrink: 0;
 }
 
 .breakdownBar {
   flex: 1;
-  height: 4px;
+  height: 3px;
   background: var(--border-subtle);
   border-radius: var(--radius-full);
   overflow: hidden;
@@ -105,14 +117,14 @@
   height: 100%;
   border-radius: var(--radius-full);
   transition: width 600ms cubic-bezier(0.4, 0, 0.2, 1);
-  opacity: 0.8;
+  opacity: 0.85;
 }
 
 .breakdownCount {
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.62rem;
   color: var(--text-muted);
-  width: 16px;
+  width: 14px;
   text-align: right;
   flex-shrink: 0;
 }

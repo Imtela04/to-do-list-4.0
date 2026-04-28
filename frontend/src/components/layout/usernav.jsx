@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { User, LogOut, Sun, Moon, Pipette } from 'lucide-react';
+import { Sun, Moon, Pipette, X, User, Power } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
-import { logout } from '@/api/services';
 import { useTheme } from '@/context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import { HexColorPicker } from 'react-colorful';
@@ -14,36 +13,30 @@ const COLOR_PICKERS = [
   { variable: '--bg-primary',       label: 'Background'  },
 ];
 
+function getInitials(username) {
+  if (!username) return '?';
+  const parts = username.trim().split(/[\s_-]+/);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+}
+
 export default function UserNav() {
-  const [open, setOpen] = useState(false);
-  const [pos, setPos] = useState({ top: 0, right: 0 });
-  const { state } = useApp();
-  const { theme, custom, applyTheme, updateCustomColor } = useTheme();
-  const btnRef = useRef(null);
-  const dropdownRef = useRef(null);
-  const navigate = useNavigate();
+  const [open, setOpen]           = useState(false);
   const [openPicker, setOpenPicker] = useState(null);
-  const { resetState } = useApp();
+  const { state, resetState }     = useApp();
+  const { theme, custom, applyTheme, updateCustomColor } = useTheme();
+  const drawerRef                 = useRef(null);
+  const btnRef                    = useRef(null);
+  const navigate                  = useNavigate();
+  const [pos, setPos] = useState({ left: 0, bottom: 0 });
 
-
-  // Calculate position from button whenever dropdown opens
-  useEffect(() => {
-    if (open && btnRef.current) {
-      const rect = btnRef.current.getBoundingClientRect();
-      setPos({
-        top: rect.bottom + 8,
-        right: window.innerWidth - rect.right,
-      });
-    }
-  }, [open]);
-
-  // Close on outside click — checks both button and portalled dropdown
+  // Close drawer on outside click
   useEffect(() => {
     if (!open) return;
     const handler = (e) => {
       if (
-        !btnRef.current?.contains(e.target) &&
-        !dropdownRef.current?.contains(e.target)
+        !drawerRef.current?.contains(e.target) &&
+        !btnRef.current?.contains(e.target)
       ) {
         setOpen(false);
         setOpenPicker(null);
@@ -53,33 +46,61 @@ export default function UserNav() {
     return () => document.removeEventListener('mousedown', handler);
   }, [open]);
 
+  useEffect(() => {
+    if (open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect();
+      setPos({
+        left: rect.right + 8,
+        bottom: window.innerHeight - rect.bottom,
+      });
+    }
+  }, [open]);
+
   const handleLogout = () => {
     localStorage.removeItem('authToken');
-    resetState();                                   // 👈 wipe all state
-    window.dispatchEvent(new Event('auth-change')); // 👈 reset theme
+    resetState();
+    window.dispatchEvent(new Event('auth-change'));
     navigate('/login');
   };
 
+  const initials = getInitials(state.username);
+
   return (
-    // parent no longer needs ref — outside-click is handled above
     <div className={styles.parent}>
-      <button ref={btnRef} className={styles.user} onClick={() => setOpen(o => !o)}>
-        <User size={18} />
+      {/* Avatar button */}
+      <button ref={btnRef} className={styles.avatar} onClick={() => setOpen(o => !o)}>
+        {initials}
       </button>
 
+     
+
+      {/* Inline drawer — portalled to body */}
       {open && createPortal(
-        <div
-          ref={dropdownRef}
-          className={styles.dropdown}
-          style={{ position: 'fixed', top: pos.top, right: pos.right }}
-        >
-          <div className={styles.username}>
-            <User size={14} />
-            {state.username ?? 'User'}
+      <div
+        ref={drawerRef}
+        className={styles.drawer}
+        style={{
+          position: 'fixed',
+          left: pos.left,
+          bottom: pos.bottom,
+        }}
+      >
+      {/* Header */}
+          <div className={styles.drawerHeader}>
+            <div className={styles.drawerAvatar}><User/></div>
+            <div className={styles.drawerUser}>
+              <span className={styles.drawerUsername}>{state.username ?? 'User'}</span>
+              <span className={styles.drawerRole}>Member</span>
+            </div>
+             {/* Logout button — separate, always visible */}
+            <button className={styles.logoutBtn} onClick={handleLogout} title="Logout">
+              <Power size={15} />
+            </button>
           </div>
 
           <div className={styles.divider} />
 
+          {/* Theme */}
           <div className={styles.section}>
             <span className={styles.sectionLabel}>Theme</span>
             <div className={styles.themeRow}>
@@ -97,16 +118,17 @@ export default function UserNav() {
                   <Moon size={14} />
                 </button>
               </div>
-
               <button
                 className={`${styles.customBtn} ${theme === 'custom' ? styles.themeActive : ''}`}
                 onClick={() => applyTheme('custom')}
+                title="Custom"
               >
                 <Pipette size={14} />
               </button>
             </div>
           </div>
 
+          {/* Color pickers — only when custom */}
           {theme === 'custom' && (
             <>
               <div className={styles.divider} />
@@ -124,7 +146,6 @@ export default function UserNav() {
                     </div>
                   ))}
                 </div>
-
                 {openPicker && (
                   <div className={styles.pickerPopup}>
                     <HexColorPicker
@@ -136,14 +157,7 @@ export default function UserNav() {
               </div>
             </>
           )}
-
-          <div className={styles.divider} />
-
-          <button className={styles.logout} onClick={handleLogout}>
-            <LogOut size={14} /> Logout
-          </button>
         </div>,
-
         document.body
       )}
     </div>

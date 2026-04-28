@@ -7,12 +7,12 @@ import StickyNotes from '@/components/widgets/stickynote';
 import Categories from '@/components/categories/categorypanel';
 import UserNav from '@/components/layout/usernav';
 import styles from './home.module.css';
-import { ClockAlert, Menu, X, PanelRight } from 'lucide-react';
+import { ClockAlert, Menu, X, PanelRight, StickyNote } from 'lucide-react';
 import SessionGuard from '@/components/layout/sessionguard';
 
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [rightOpen, setRightOpen]     = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
 
   return (
     <SessionGuard>
@@ -24,19 +24,20 @@ export default function Dashboard() {
         )}
 
         <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ''}`}>
-          <div className={styles.logo}>
-            <span className={styles.logoText}>what-d<ClockAlert className={styles.logoIcon} /></span>
-            {/* Close button — mobile only */}
-            <button className={styles.sidebarClose} onClick={() => setSidebarOpen(false)}>
-              <X size={16} />
-            </button>
-          </div>
+          <span className={styles.logoText}>what-d<ClockAlert className={styles.logoIcon} /></span>
+          <button className={styles.sidebarClose} onClick={() => setSidebarOpen(false)}>
+            <X size={16} />
+          </button>
           <div className={styles.sideSection}><ClockWidget /></div>
           <div className={styles.sideSection}><StatsWidget /></div>
-          <div className={styles.sideSection}><Categories /></div>
-        </aside>
-
-        <main className={styles.main}>
+          <div className={`${styles.sideSection} ${styles.sideSectionGrow}`}>
+            <Categories />
+          </div>
+          <div className={styles.sidebarFooter}>
+            <UserNav />
+          </div>
+        </aside> 
+               <main className={styles.main}>
           <header className={styles.header}>
             {/* Burger — visible on mobile */}
             <button className={styles.burger} onClick={() => setSidebarOpen(true)}>
@@ -46,24 +47,30 @@ export default function Dashboard() {
             <Greeting />
 
             <div className={styles.headerRight}>
-              {/* Right panel toggle — visible when panel is hidden */}
-              <button className={styles.panelToggle} onClick={() => setRightOpen(o => !o)}>
-                <PanelRight size={18} />
+              <button className={styles.notesToggle} onClick={() => setNotesOpen(o => !o)}>
+                <StickyNote size={18} />
               </button>
-              <UserNav />
             </div>
           </header>
           <section className={styles.tasksSection}><TaskList /></section>
         </main>
 
-        {/* Right panel overlay on mobile */}
-        {rightOpen && (
-          <div className={styles.overlay} onClick={() => setRightOpen(false)} />
+        {/* Right panel overlay */}
+        {notesOpen && (
+          <div className={styles.overlay} onClick={() => setNotesOpen(false)} />
         )}
-
-        <aside className={`${styles.rightPanel} ${rightOpen ? styles.rightOpen : ''}`}>
-          <StickyNotes />
+        <aside className={`${styles.notesDrawer} ${notesOpen ? styles.notesDrawerOpen : ''}`}>
+          <div className={styles.notesDrawerHeader}>
+            <span className={styles.notesDrawerTitle}>Sticky Notes</span>
+            <button className={styles.notesDrawerClose} onClick={() => setNotesOpen(false)}>
+              <X size={16} />
+            </button>
+          </div>
+          <div className={styles.notesDrawerBody}>
+            <StickyNotes />
+          </div>
         </aside>
+
       </div>
     </SessionGuard>
     

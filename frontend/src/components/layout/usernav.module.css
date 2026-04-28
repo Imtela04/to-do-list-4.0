@@ -1,27 +1,51 @@
 .parent {
-  position: relative;
-  
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
 }
 
-.user {
+/* Avatar trigger */
+.avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  color: white;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border: 2px solid var(--accent-primary);
+  transition: all var(--transition-fast);
+  box-shadow: 0 0 0 0 rgba(124, 106, 255, 0.4);
+}
+.avatar:hover {
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 3px rgba(124, 106, 255, 0.2);
+}
+
+/* Separate logout button */
+.logoutBtn {
   width: 36px;
   height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--text-muted);
-  transition: all var(--transition-fast);
   cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.logoutBtn:hover {
+  color: var(--danger);
 }
 
-.user:hover {
-  border-color: var(--accent-primary);
-  color: var(--accent-primary);
-}
-
-.dropdown {
-  /* position, top, right are now set inline via style prop */
-  min-width: 210px;
+/* Drawer */
+.drawer {
+  position: fixed;
+  width: 240px;
   background: var(--bg-card);
   border: 1px solid var(--border-accent);
   border-radius: var(--radius-lg);
@@ -31,16 +55,69 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
+  animation: popUp 150ms cubic-bezier(0.4, 0, 0.2, 1) both;
 }
-.username {
+
+@keyframes popUp {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.drawerHeader {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   padding: 8px 10px;
+}
+
+.drawerAvatar {
+  width: 34px;
+  height: 34px;
+  color: var(--accent-primary);
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.drawerUser {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.drawerUsername {
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+
+.drawerRole {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.drawerClose {
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+.drawerClose:hover { color: var(--text-primary); background: var(--bg-glass-hover); }
 
 .divider {
   height: 1px;
@@ -84,19 +161,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 5px;
-  padding: 2px;
+  gap: 4px;
+  padding: 4px 2px;
   border-radius: var(--radius-full);
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: var(--text-muted);
   transition: all var(--transition-fast);
   cursor: pointer;
 }
-
-.toggleBtn:hover {
-  color: var(--text-secondary);
-}
-
+.toggleBtn:hover { color: var(--text-secondary); }
 .toggleActive {
   background: var(--bg-card);
   color: var(--text-primary);
@@ -110,36 +183,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  /* background: var(--bg-primary); */
-  /* border: 1px solid var(--border-medium); */
   color: var(--text-muted);
   transition: all var(--transition-fast);
   cursor: pointer;
   flex-shrink: 0;
 }
-
-.customBtn:hover {
-  border-color: var(--accent-primary);
-  color: var(--accent-primary);
-}
-
-.customBtn.themeActive {
-  /* background: rgba(124, 106, 255, 0.1);z */
-  border-color: var(--accent-primary);
-  color: var(--accent-primary);
-}
-
+.customBtn:hover { color: var(--accent-primary); }
 .themeActive {
   background: rgba(124, 106, 255, 0.1);
-  border-color: var(--accent-primary);
-  color: var(--accent-primary);
-}
-
-.colorGrid {
-  display: flex;
-  flex-direction: row;
-  gap: 8px;
-  padding: 0 2px;
+  color: var(--accent-primary) !important;
 }
 
 .colorGrid {
@@ -155,7 +207,6 @@
   align-items: center;
   gap: 5px;
   flex: 1;
-  position: relative;
 }
 
 .colorSwatch {
@@ -165,12 +216,14 @@
   border: 2px solid var(--border-medium);
   cursor: pointer;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
-  flex-shrink: 0;
 }
-
 .colorSwatch:hover {
   border-color: var(--accent-primary);
   box-shadow: 0 0 8px rgba(124, 106, 255, 0.3);
+}
+.swatchActive {
+  border-color: var(--accent-primary) !important;
+  box-shadow: 0 0 8px rgba(124, 106, 255, 0.4) !important;
 }
 
 .colorLabel {
@@ -185,50 +238,22 @@
   border: 1px solid var(--border-accent);
   border-radius: var(--radius-md);
   padding: 10px;
-  box-shadow: var(--shadow-md);
-
-  /* no position: absolute — sits in flow below swatches */
 }
-
 .pickerPopup .react-colorful {
   width: 100% !important;
   height: 140px !important;
 }
-
 .pickerPopup .react-colorful__saturation {
   border-radius: var(--radius-sm) var(--radius-sm) 0 0 !important;
 }
-
 .pickerPopup .react-colorful__hue {
   border-radius: 0 0 var(--radius-sm) var(--radius-sm) !important;
   height: 12px !important;
   margin-top: 8px !important;
 }
-
 .pickerPopup .react-colorful__pointer {
   width: 16px !important;
   height: 16px !important;
   border: 2px solid white !important;
   box-shadow: 0 0 4px rgba(0,0,0,0.4) !important;
-}
-
-.swatchActive {
-  border-color: var(--accent-primary) !important;
-  box-shadow: 0 0 8px rgba(124, 106, 255, 0.4) !important;
-}
-.logout {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  border-radius: var(--radius-sm);
-  font-size: 0.8rem;
-  color: var(--danger);
-  transition: all var(--transition-fast);
-  cursor: pointer;
-  width: 100%;
-}
-
-.logout:hover {
-  background: rgba(255, 68, 68, 0.08);
 }

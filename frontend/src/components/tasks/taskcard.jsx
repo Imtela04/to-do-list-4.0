@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { format, isPast, isToday } from 'date-fns';
+import { format, isPast, isToday, addDays } from 'date-fns';
 import { useApp } from '@/context/AppContext';
 import { toggleTask, deleteTask, updateTask } from '@/api/services';
 import styles from './taskcard.module.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { Trash, Timer, SquarePen } from 'lucide-react';
+import { Trash, Timer, SquarePen, CalendarPlus } from 'lucide-react';
 
 const PRIORITY_MAP = {
   low:      { color: '#6ab4ff', label: 'Low' },
@@ -24,9 +24,22 @@ function useCountdown(deadline) {
     if (!deadline) return;
 
     const calc = () => {
-      const diff = new Date(deadline) - new Date();
-      if (diff <= 0) { setRemaining(null); return; } // overdue
+      const due  = new Date(deadline);
+      const diff = due - new Date();
+      if (diff <= 0) { setRemaining(null); return; }
 
+      const hasTime = due.getHours() !== 23 || due.getMinutes() !== 59;
+
+      if (!hasTime) {
+        // Date-only — show static human label instead of ticking countdown
+        const days = Math.ceil(diff / 86400000 - 1);
+        if (days === 0)      setRemaining('due today');
+        else if (days === 1) setRemaining('due tomorrow');
+        else                 setRemaining(`${days}d left`);
+        return;
+      }
+
+      // Timed deadline — tick every second
       const d = Math.floor(diff / 86400000);
       const h = Math.floor((diff % 86400000) / 3600000);
       const m = Math.floor((diff % 3600000) / 60000);
@@ -95,6 +108,19 @@ export default function TaskCard({ task }) {
       }, 220);
     }
   };
+
+  const handleMoveToNextDay = async (e) => {
+    e.stopPropagation();
+    // Always move to tomorrow from TODAY, not +1 from the old deadline
+    const tomorrow = addDays(new Date(), 1);
+    tomorrow.setHours(23, 59, 0, 0); // end of tomorrow
+    const newDeadline = tomorrow.toISOString();
+    const updated = { ...task, deadline: newDeadline };
+    dispatch({ type: 'UPDATE_TASK', payload: updated });
+    try { await updateTask(task.id, { deadline: newDeadline }); }
+    catch { dispatch({ type: 'UPDATE_TASK', payload: task }); }
+  };
+
 
   const handleToggle = async (e) => {
     e.stopPropagation();
@@ -254,14 +280,23 @@ export default function TaskCard({ task }) {
       </div>
 
       <div className={`${styles.actions} ${expanded ? styles.actionsVisible : ''}`}>
-        <button className={styles.actionBtn} onClick={editing ? handleSave : openEdit}>
-          {editing ? '✓' : <span><SquarePen size={14}/></span>}
+        {isOverdue && (
+          <button
+            className={`${styles.actionBtn} ${styles.nextDayBtn}`}
+            onClick={handleMoveToNextDay}
+            title="Move to tomorrow"
+          >
+            <CalendarPlus size={14} />
+          </button>
+        )}
+        <button className={styles.editBtn} onClick={editing ? handleSave : openEdit}>
+          {editing ? '✓' : '✏'}
         </button>
         <button
           className={`${styles.actionBtn} ${styles.deleteBtn}`}
           onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
         >
-          <Trash size={14} color='var(--danger)' />
+          <Trash size={14} />
         </button>
       </div>
 

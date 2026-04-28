@@ -139,3 +139,24 @@
   text-align: center;
   flex-shrink: 0;
 }
+
+.formActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.cancelFormBtn {
+  padding: 5px 12px;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  background: var(--bg-glass);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.cancelFormBtn:hover {
+  color: var(--text-primary);
+  border-color: var(--border-medium);
+}

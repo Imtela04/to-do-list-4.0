@@ -357,3 +357,8 @@
 .countdownOverdue {
   color: var(--danger);
 }
+
+.nextDayBtn:hover {
+  background: rgba(106, 180, 255, 0.15);
+  color: #6ab4ff;
+}

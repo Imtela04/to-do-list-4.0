@@ -185,3 +185,21 @@
 }
 .sortOption:hover { background: var(--bg-glass-hover); color: var(--text-primary); }
 .sortOptionActive { color: var(--accent-primary); background: rgba(124, 106, 255, 0.1); }
+
+.draftBadge {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 8px;
+  font-size: 0.8rem;
+  color: var(--accent-secondary);
+}
+
+.discardDraft {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  transition: all var(--transition-fast);
+}
+.discardDraft:hover {
+  color: var(--danger) !important; 
+}

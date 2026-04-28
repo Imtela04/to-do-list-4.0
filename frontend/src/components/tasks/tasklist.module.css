@@ -80,8 +80,8 @@
   align-items: center;
   justify-content: center;
   background: var(--bg-card);
-  border: 1px dashed var(--border-medium);
-  color: var(--text-muted);
+  border: 1px dashed var(--accent-primary);
+  color: var(--accent-primary);
   font-size: 1.9rem;
   transition: all var(--transition-base);
   z-index: 10;
@@ -90,8 +90,8 @@
 }
 
 .fab:hover {
-  border-color: var(--accent-primary);
-  color: var(--accent-primary);
+  border-color: var(--accent-secondary);
+  color: var(--accent-secondary);
   background: rgba(124, 106, 255, 0.05);
 }
 
