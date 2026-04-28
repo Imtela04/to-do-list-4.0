@@ -17,29 +17,34 @@ const PRIORITY_MAP = {
 const PRIORITIES = ['low', 'medium', 'high', 'critical'];
 
 // Countdown hook — ticks every second
-function useCountdown(deadline) {
+// Replace useCountdown entirely
+function useCountdown(deadline, timed) {
   const [remaining, setRemaining] = useState('');
 
   useEffect(() => {
     if (!deadline) return;
 
     const calc = () => {
-      const due  = new Date(deadline);
-      const diff = due - new Date();
-      if (diff <= 0) { setRemaining(null); return; }
+      const due = new Date(deadline);
+      const now = new Date();
 
-      const hasTime = due.getHours() !== 23 || due.getMinutes() !== 59;
+      if (!timed) {
+        // Compare calendar dates only
+        const dueDay   = new Date(due.getFullYear(), due.getMonth(), due.getDate());
+        const today    = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const diffDays = Math.round((dueDay - today) / 86400000);
 
-      if (!hasTime) {
-        // Date-only — show static human label instead of ticking countdown
-        const days = Math.ceil(diff / 86400000 - 1);
-        if (days === 0)      setRemaining('due today');
-        else if (days === 1) setRemaining('due tomorrow');
-        else                 setRemaining(`${days}d left`);
+        if (diffDays < 0)       { setRemaining(null); return; } // overdue
+        else if (diffDays === 0) setRemaining('due today');
+        else if (diffDays === 1) setRemaining('due tomorrow');
+        else                     setRemaining(`${diffDays}d left`);
         return;
       }
 
-      // Timed deadline — tick every second
+      // Timed — tick every second
+      const diff = due - now;
+      if (diff <= 0) { setRemaining(null); return; }
+
       const d = Math.floor(diff / 86400000);
       const h = Math.floor((diff % 86400000) / 3600000);
       const m = Math.floor((diff % 3600000) / 60000);
@@ -51,31 +56,39 @@ function useCountdown(deadline) {
     };
 
     calc();
-    const id = setInterval(calc, 1000);
+    const id = setInterval(calc, timed ? 1000 : 60000);
     return () => clearInterval(id);
-  }, [deadline]);
+  }, [deadline, timed]);
 
   return remaining;
 }
-
 export default function TaskCard({ task }) {
   const { dispatch, state } = useApp();
   const [deleting, setDeleting]           = useState(false);
   const [editing, setEditing]             = useState(false);
   const [expanded, setExpanded]           = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
-  const [editForm, setEditForm]           = useState({
-    title: '', description: '', priority: '', category: '', deadline: null,
+  const [editForm, setEditForm] = useState({
+    title: '', description: '', priority: '', category: '', deadline: null, timed: false,
   });
-
+  
   const cardRef   = useRef(null);
-  const countdown = useCountdown(task.deadline);
-
   const category  = task.category;
   const priority  = PRIORITY_MAP[task.priority] || PRIORITY_MAP.low;
   const dueDate   = task.deadline ? new Date(task.deadline) : null;
-  const isOverdue = dueDate && isPast(dueDate) && !isToday(dueDate) && !task.completed;
   const isDueToday = dueDate && isToday(dueDate);
+  const isTimed = dueDate &&
+    !(dueDate.getHours() === 23 && dueDate.getMinutes() === 59);
+  const isOverdue = dueDate && !task.completed && (
+    isTimed
+      ? isPast(dueDate)
+      : isPast(dueDate) && !isToday(dueDate)
+  );
+
+  // Then pass it to the hook
+  const countdown = useCountdown(task.deadline, isTimed);
+
+  
 
   // Collapse on outside click
   useEffect(() => {
@@ -141,9 +154,14 @@ export default function TaskCard({ task }) {
 
   const openEdit = (e) => {
     e.stopPropagation();
+    const existingDeadline = task.deadline ? new Date(task.deadline) : null;
     setEditForm({
       title: '', description: '', priority: '', category: '',
-      deadline: task.deadline ? new Date(task.deadline) : null,
+      deadline: existingDeadline,
+      timed: existingDeadline
+        ? !(existingDeadline.getHours() === 0 && existingDeadline.getMinutes() === 0) &&
+          !(existingDeadline.getHours() === 23 && existingDeadline.getMinutes() === 59)
+        : false,
     });
     setExpanded(true);
     setEditing(true);
@@ -165,8 +183,14 @@ export default function TaskCard({ task }) {
           ? state.categories.find(c => c.id === parseInt(editForm.category)) || task.category
           : task.category,
       };
+
       dispatch({ type: 'UPDATE_TASK', payload: updated });
       try { await updateTask(task.id, changes); } catch {}
+    }
+    if (editForm.deadline) {
+      const d = new Date(editForm.deadline);
+      if (!editForm.timed) d.setHours(0, 0, 0, 0);
+      changes.deadline = d.toISOString();
     }
     setEditing(false);
   };
@@ -226,17 +250,46 @@ export default function TaskCard({ task }) {
                 <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
               ))}
             </select>
-            <DatePicker
-              selected={editForm.deadline}
-              onChange={date => set('deadline', date)}
-              placeholderText={task.deadline ? format(new Date(task.deadline), 'MMM d, yyyy h:mm aa') : 'Set deadline'}
-              dateFormat="MMM d, yyyy h:mm aa"
-              showTimeSelect
-              timeFormat="HH:mm"
-              timeIntervals={15}
-              className={styles.editInput}
-              popperPlacement="top-start"
-            />
+
+            <div className={styles.dateTimeRow}>
+              <DatePicker
+                selected={editForm.deadline}
+                onChange={date => {
+                  if (!date) { set('deadline', null); set('timed', false); return; }
+                  date.setHours(23, 59, 0, 0);
+                  set('deadline', date);
+                  set('timed', false);
+                }}
+                placeholderText="Set date"
+                dateFormat="MMM d, yyyy"
+                className={styles.editInput}
+                popperPlacement="top-start"
+              />
+              {editForm.deadline && (
+                <DatePicker
+                  selected={editForm.timed ? editForm.deadline : null}
+                  onChange={time => {
+                    if (!time) {
+                      const d = new Date(editForm.deadline);
+                      d.setHours(23, 59, 0, 0);
+                      setEditForm(f => ({ ...f, deadline: d, timed: false }));
+                      return;
+                    }
+                    const d = new Date(editForm.deadline);
+                    d.setHours(time.getHours(), time.getMinutes(), 0, 0);
+                    setEditForm(f => ({ ...f, deadline: d, timed: true }));
+                  }}
+                  placeholderText="+ time"
+                  showTimeSelect
+                  showTimeSelectOnly
+                  timeFormat="HH:mm"
+                  timeIntervals={15}
+                  dateFormat="h:mm aa"
+                  className={styles.editInput}
+                  isClearable
+                />
+              )}
+            </div>
             <div className={styles.editActions}>
               <button className={styles.cancelBtn} onClick={() => setEditing(false)}>Cancel</button>
               <button className={styles.saveBtn} onClick={handleSave}>Save</button>

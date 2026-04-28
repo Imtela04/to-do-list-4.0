@@ -203,3 +203,43 @@
 .discardDraft:hover {
   color: var(--danger) !important; 
 }
+
+.timeToggle {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-glass);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.timeToggle:hover { color: var(--accent-primary); border-color: var(--accent-primary); }
+.timeToggleOn {
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+  background: rgba(124, 106, 255, 0.08);
+}
+
+.timedTag {
+  font-size: 0.6rem;
+  color: var(--accent-primary);
+  background: rgba(124, 106, 255, 0.1);
+  padding: 1px 5px;
+  border-radius: var(--radius-full);
+  margin-left: 4px;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+.optional {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  text-transform: none;
+  letter-spacing: 0;
+  font-weight: 400;
+}

@@ -362,3 +362,34 @@
   background: rgba(106, 180, 255, 0.15);
   color: #6ab4ff;
 }
+
+.timeToggle {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-subtle);
+  background: var(--bg-glass);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  margin-top: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.timeToggle:hover { color: var(--accent-primary); border-color: var(--accent-primary); }
+.timeToggleOn {
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+  background: rgba(124, 106, 255, 0.08);
+}
+
+.dateTimeRow {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.dateTimeRow .editInput {
+  flex: 1;
+}
