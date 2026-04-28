@@ -51,7 +51,7 @@ export default function AddTask({ open, setOpen }) {
         onKeyDown={e => { if (e.key === 'Enter') handleSubmit(); if (e.key === 'Escape') setOpen(false); }}
       />
       <textarea
-        className={styles.descInput}
+        className={styles.titleInput}
         placeholder="Description (optional)"
         value={form.description}
         onChange={e => set('description', e.target.value)}

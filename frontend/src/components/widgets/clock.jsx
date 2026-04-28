@@ -34,7 +34,7 @@ export default function ClockWidget() {
   const deadlineDays = new Set(
     state.tasks
       .filter(t => {
-        if (!t.deadline) return false;
+        if (!t.deadline || t.completed) return false; // 👈 exclude completed
         const d = new Date(t.deadline);
         return d.getFullYear() === year && d.getMonth() === month;
       })

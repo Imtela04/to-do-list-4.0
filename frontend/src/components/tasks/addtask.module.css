@@ -129,3 +129,59 @@
 .datePicker:focus {
   border-color: var(--accent-primary);
 }
+.sortWrap {
+  position: relative;
+}
+
+.sortTrigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+.sortTrigger:hover,
+.sortTriggerOpen {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+
+.sortChevron { color: var(--text-muted); }
+
+.sortDropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  z-index: 100;
+  min-width: 130px;
+  box-shadow: var(--shadow-md);
+}
+
+.sortOption {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: left;
+}
+.sortOption:hover { background: var(--bg-glass-hover); color: var(--text-primary); }
+.sortOptionActive { color: var(--accent-primary); background: rgba(124, 106, 255, 0.1); }

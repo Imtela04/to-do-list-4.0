@@ -4,14 +4,14 @@ import TaskCard from './taskcard';
 import AddTask from './addtask';
 import FilterBar from '@/components/layout/filterbar';
 import styles from './tasklist.module.css';
-
+import { format } from 'date-fns';
+import { Calendar } from 'lucide-react'
 const PAGE_SIZE = 8;
 
 export default function TaskList() {
-  const { filteredTasks, state } = useApp();
+  const { filteredTasks, state, dispatch } = useApp();
   const [addOpen, setAddOpen] = useState(false);
   const [page, setPage] = useState(1);
-
   // Reset to page 1 whenever filters change
   useEffect(() => { setPage(1); }, [state.filter]);
 
@@ -21,7 +21,24 @@ export default function TaskList() {
   return (
     <div className={styles.container}>
       <FilterBar />
-
+      {state.filter.deadlineDay && (
+        <div className={styles.dateChip}>
+          <Calendar/> {format(
+            new Date(
+              state.filter.deadlineDay.year,
+              state.filter.deadlineDay.month,
+              state.filter.deadlineDay.day
+            ),
+            'MMMM d, yyyy'
+          )}
+          <button
+            className={styles.dateChipClear}
+            onClick={() => dispatch({ type: 'SET_FILTER', payload: { deadlineDay: null } })}
+          >
+            -
+          </button>
+        </div>
+      )}
       {filteredTasks.length > 0 && (
         <p className={styles.count}>
           {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''}

@@ -148,3 +148,27 @@
   padding: 0 2px;
   user-select: none;
 }
+
+.dateChip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: rgba(124, 106, 255, 0.1);
+  border: 1px solid rgba(124, 106, 255, 0.25);
+  border-radius: var(--radius-full);
+  font-size: 0.78rem;
+  color: var(--accent-primary);
+  align-self: flex-start;
+  font-family: var(--font-mono);
+}
+
+.dateChipClear {
+  font-size: 1rem;
+  color: var(--accent-primary);
+  opacity: 0.6;
+  line-height: 1;
+  padding: 0 2px;
+  transition: opacity var(--transition-fast);
+}
+.dateChipClear:hover { opacity: 1; }

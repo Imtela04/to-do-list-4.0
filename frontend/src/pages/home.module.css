@@ -47,6 +47,12 @@
   -webkit-text-fill-color: transparent;
   background-clip: text;
   letter-spacing: -0.5px;
+  text-shadow: 
+    0 0 50px var(--accent-secondary), 
+    0 0 10px var(--accent-primary), 
+    0 0 20px var(--accent-primary), 
+    0 0 40px var(--accent-secondary);
+
 }
 
 .sideSection {
