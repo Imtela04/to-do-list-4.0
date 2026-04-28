@@ -91,16 +91,20 @@
 }
 
 .editInput {
-  font-size: 0.9rem;
-  font-weight: 500;
   background: transparent;
   border: none;
-  border-bottom: 1px solid var(--accent-primary);
+  border-bottom: 1px solid var(--border-medium);
   outline: none;
+  font-size: 1rem;
+  font-weight: 500;
   color: var(--text-primary);
+  padding: 8px 0;
   width: 100%;
-  padding: 0 2px 2px;
+  transition: border-color var(--transition-fast);
 }
+
+.editnput:focus { border-bottom-color: var(--accent-primary); }
+.editInput::placeholder { color: var(--text-muted); }
 
 .meta {
   display: flex;
@@ -186,12 +190,19 @@
     display: flex;
 }
 
+
 .editForm {
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  box-shadow: 0 0 40px rgba(124, 106, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  
 }
+
 
 .priorities {
     display: flex;

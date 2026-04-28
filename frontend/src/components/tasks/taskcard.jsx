@@ -5,7 +5,7 @@ import { toggleTask, deleteTask, updateTask } from '@/api/services';
 import styles from './taskcard.module.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { Trash, Timer } from 'lucide-react';
+import { Trash, Timer, SquarePen } from 'lucide-react';
 
 const PRIORITY_MAP = {
   low:      { color: '#6ab4ff', label: 'Low' },
@@ -254,14 +254,14 @@ export default function TaskCard({ task }) {
       </div>
 
       <div className={`${styles.actions} ${expanded ? styles.actionsVisible : ''}`}>
-        <button className={styles.editBtn} onClick={editing ? handleSave : openEdit}>
-          {editing ? '✓' : '✏'}
+        <button className={styles.actionBtn} onClick={editing ? handleSave : openEdit}>
+          {editing ? '✓' : <span><SquarePen size={14}/></span>}
         </button>
         <button
           className={`${styles.actionBtn} ${styles.deleteBtn}`}
           onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
         >
-          <Trash size={14} />
+          <Trash size={14} color='var(--danger)' />
         </button>
       </div>
 
