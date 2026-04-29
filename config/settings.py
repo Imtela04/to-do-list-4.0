@@ -29,7 +29,9 @@ DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 # Application definition
-
+CSRF_TRUSTED_ORIGINS = [
+    'https://what-do.up.railway.app',
+]
 INSTALLED_APPS = [
     'corsheaders',
     'apps.todo.apps.TodoConfig',
