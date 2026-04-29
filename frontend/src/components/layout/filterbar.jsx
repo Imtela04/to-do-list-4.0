@@ -15,7 +15,8 @@ export default function FilterBar() {
   const { state, dispatch } = useApp();
   const { filter, categories } = state;
   const set = (key, val) => dispatch({ type: 'SET_FILTER', payload: { [key]: val } });
-
+  const [filtersPos, setFiltersPos] = useState({ top: 0, right: 0 });
+  const filtersBtnRef = useRef(null);
   const [sortOpen, setSortOpen]       = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
   const sortRef    = useRef(null);
@@ -29,10 +30,13 @@ export default function FilterBar() {
   }, [sortOpen]);
 
   useEffect(() => {
-    if (!filtersOpen) return;
-    const handler = (e) => { if (!filtersRef.current?.contains(e.target)) setFiltersOpen(false); };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    if (filtersOpen && filtersBtnRef.current) {
+      const rect = filtersBtnRef.current.getBoundingClientRect();
+      setFiltersPos({
+        top:   rect.bottom + 6,
+        right: window.innerWidth - rect.right,
+      });
+    }
   }, [filtersOpen]);
 
   const currentSort = SORT_OPTIONS.find(o => o.value === filter.sort);
@@ -100,6 +104,7 @@ export default function FilterBar() {
         {/* Filters dropdown trigger */}
         <div className={styles.filtersWrap} ref={filtersRef}>
           <button
+            ref={filtersBtnRef}
             className={`${styles.filtersTrigger} ${filtersOpen ? styles.filtersTriggerOpen : ''} ${activeFilterCount > 0 ? styles.filtersActive : ''}`}
             onClick={() => setFiltersOpen(o => !o)}
           >
@@ -110,7 +115,10 @@ export default function FilterBar() {
           </button>
 
           {filtersOpen && (
-            <div className={styles.filtersDropdown}>
+            <div
+              className={styles.filtersDropdown}
+              style={{ top: filtersPos.top, right: filtersPos.right }}
+            >
               <div className={styles.filtersDropdownHeader}>
                 <span className={styles.filtersDropdownTitle}>Filters</span>
                 {activeFilterCount > 0 && (

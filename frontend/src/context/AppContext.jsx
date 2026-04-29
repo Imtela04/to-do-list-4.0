@@ -149,23 +149,30 @@ export function AppProvider({ children }){
         return true;
     })
     .sort((a, b) => {
+        // Pinned always first, sorted by created_at ascending among themselves
+        if (a.pinned && !b.pinned) return -1;
+        if (!a.pinned && b.pinned) return 1;
+        if (a.pinned && b.pinned) {
+            return new Date(a.created_at) - new Date(b.created_at);
+        }
+
+        // Regular sort for unpinned
         switch (state.filter.sort) {
-        case 'newest':   return new Date(b.created_at) - new Date(a.created_at);
-        case 'oldest':   return new Date(a.created_at) - new Date(b.created_at);
-        case 'priority': {
+            case 'newest':   return new Date(b.created_at) - new Date(a.created_at);
+            case 'oldest':   return new Date(a.created_at) - new Date(b.created_at);
+            case 'priority': {
             const order = { critical: 0, high: 1, medium: 2, low: 3 };
             return (order[a.priority] ?? 4) - (order[b.priority] ?? 4);
-        }
-        case 'deadline': {
-            // nulls go to the end
+            }
+            case 'deadline': {
             if (!a.deadline) return 1;
             if (!b.deadline) return -1;
             return new Date(a.deadline) - new Date(b.deadline);
+            }
+            case 'alpha': return a.title.localeCompare(b.title);
+            default:      return 0;
         }
-        case 'alpha':    return a.title.localeCompare(b.title);
-        default:         return 0;
-        }
-    });
+    })
     
     return(
 // add resetState to provider value

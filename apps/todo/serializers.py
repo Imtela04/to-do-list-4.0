@@ -12,7 +12,7 @@ class TodoSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     class Meta:
         model = Todo
-        fields = ['id', 'title', 'completed', 'description', 'deadline', 'category', 'priority', 'owner', 'created_at']
+        fields = ['id', 'title', 'completed', 'description', 'deadline', 'category', 'priority', 'owner', 'created_at', 'pinned']
         read_only_fields = ['id', 'owner', 'created_at']
         
 class StickyNoteSerializer(serializers.ModelSerializer):

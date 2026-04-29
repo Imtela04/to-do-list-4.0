@@ -8,8 +8,8 @@ import { HexColorPicker } from 'react-colorful';
 import styles from './usernav.module.css';
 
 const COLOR_PICKERS = [
-  { variable: '--accent-primary',   label: 'Accent'      },
-  { variable: '--accent-secondary', label: 'Accent 2'    },
+  { variable: '--accent-primary',   label: 'Primary Accent'      },
+  { variable: '--accent-secondary', label: 'Secondary Accent'    },
   { variable: '--bg-primary',       label: 'Background'  },
 ];
 

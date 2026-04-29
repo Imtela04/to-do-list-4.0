@@ -393,3 +393,16 @@
 .dateTimeRow .editInput {
   flex: 1;
 }
+
+.pinned {
+  color: var(--accent-primary) !important;
+  background: rgba(124, 106, 255, 0.1);
+}
+.pinnedBadge {
+  position: absolute;
+  top: 8px;
+  left: 8px;  /* changed from right to left */
+  color: var(--accent-primary);
+  opacity: 0.85;
+  pointer-events: none;
+}

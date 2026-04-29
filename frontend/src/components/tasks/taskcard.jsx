@@ -5,7 +5,7 @@ import { toggleTask, deleteTask, updateTask } from '@/api/services';
 import styles from './taskcard.module.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { Trash, Timer, SquarePen, CalendarPlus } from 'lucide-react';
+import { Pin, PinOff, Trash, Timer, SquarePen, CalendarPlus } from 'lucide-react';
 
 const PRIORITY_MAP = {
   low:      { color: '#6ab4ff', label: 'Low' },
@@ -152,6 +152,14 @@ export default function TaskCard({ task }) {
     }, 300);
   };
 
+  const handlePin = async (e) => {
+    e.stopPropagation();
+    const updated = { ...task, pinned: !task.pinned };
+    dispatch({ type: 'UPDATE_TASK', payload: updated });
+    try { await updateTask(task.id, { pinned: !task.pinned }); }
+    catch { dispatch({ type: 'UPDATE_TASK', payload: task }); }
+  };
+
   const openEdit = (e) => {
     e.stopPropagation();
     const existingDeadline = task.deadline ? new Date(task.deadline) : null;
@@ -203,6 +211,12 @@ export default function TaskCard({ task }) {
       className={`${styles.card} ${task.completed ? styles.completed : ''} ${deleting ? styles.deleting : ''} ${expanded ? styles.cardExpanded : ''}`}
       onClick={handleCardClick}
     >
+      {/* Pin badge */}
+      {task.pinned && (
+        <span className={styles.pinnedBadge}>
+          <Pin size={13} />
+        </span>
+      )}
       {/* Toggle button */}
       <div className={styles.left}>
         <button className={styles.toggle} onClick={handleToggle}>
@@ -333,6 +347,13 @@ export default function TaskCard({ task }) {
       </div>
 
       <div className={`${styles.actions} ${expanded ? styles.actionsVisible : ''}`}>
+        <button
+          className={`${styles.actionBtn} ${task.pinned ? styles.pinned : ''}`}
+          onClick={handlePin}
+          title={task.pinned ? 'Unpin' : 'Pin'}
+        >
+          {task.pinned ? <PinOff size={14} /> : <Pin size={14} />}
+        </button>
         {isOverdue && (
           <button
             className={`${styles.actionBtn} ${styles.nextDayBtn}`}
@@ -352,7 +373,6 @@ export default function TaskCard({ task }) {
           <Trash size={14} />
         </button>
       </div>
-
       {confirmDelete && (
         <div className={styles.confirmOverlay}>
           <p className={styles.confirmText}>Delete this task?</p>
