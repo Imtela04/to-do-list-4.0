@@ -11,7 +11,7 @@ export default defineConfig({
   },
   base: '/static/',                              // ← add this
   build: {
-    outDir: '../staticfiles/dist',               // ← was just 'dist'
+    outDir: '../frontend_dist',   // outside staticfiles/
     emptyOutDir: true,
   },
 })

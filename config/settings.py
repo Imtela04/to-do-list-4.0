@@ -70,7 +70,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'staticfiles' / 'dist'],   # ← add this
+        'DIRS': [BASE_DIR / 'frontend_dist'],  # index.html lives here
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -150,13 +150,16 @@ CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOW_CREDENTIALS = True
 CORS_URLS_REGEX = r'^.*$'
 
-WHITENOISE_ROOT = BASE_DIR / 'staticfiles' / 'dist'
-WHITENOISE_INDEX_FILE = True                          # ← SPA fallback
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL  = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_DIRS = [
+    BASE_DIR / 'frontend_dist',  # Vite output, collected into staticfiles/
+]
+
+STATIC_ROOT = BASE_DIR / 'staticfiles'  # where collectstatic puts everything
+WHITENOISE_ROOT = BASE_DIR / 'staticfiles'
+WHITENOISE_INDEX_FILE = True
