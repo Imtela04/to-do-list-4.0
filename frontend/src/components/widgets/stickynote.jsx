@@ -2,8 +2,11 @@ import { useState, useRef, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
 import { createStickyNote, updateStickyNote, deleteStickyNote } from '@/api/services';
 import styles from './stickynote.module.css';
-import { Bubbles, Icon, StickyNote } from 'lucide-react';
+import { Bubbles, Icon, PenLine, Trash, PenBox } from 'lucide-react';
 import { useDraft } from '../../hooks/useDraft';
+
+
+
 const NOTE_COLORS = ['#7c6aff', '#ff6a9e', '#6affdc', '#ffaa6a', '#6ab4ff', '#c96aff'];
 const ui = {bubbles: Bubbles}
 export default function StickyNotes() {
@@ -105,7 +108,7 @@ export default function StickyNotes() {
   return (
     <div className={styles.panel}>
       <div className={styles.header}>
-        <button className={styles.addBtn} onClick={() => setAdding(true)}><StickyNote/></button>
+        <button className={styles.addBtn} onClick={() => setAdding(true)}><PenLine/></button>
       </div>
 
       {adding && (
@@ -203,7 +206,7 @@ export default function StickyNotes() {
                   }
                 }}
               >
-                {editingId === note.id ? '✓' : '✏'}
+                {editingId === note.id ? '✓' : <span><PenBox size={12}/></span>}
               </button>
               <button
                 className={styles.noteBtn}
@@ -212,7 +215,7 @@ export default function StickyNotes() {
                   handleDelete(note.id);
                 }}
               >
-                ✕
+                <Trash size={12} />
               </button>
             </div>
           </div>

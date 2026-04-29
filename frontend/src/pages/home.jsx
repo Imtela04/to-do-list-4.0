@@ -2,23 +2,24 @@ import { useState } from 'react';
 import Greeting from '@/components/layout/greetings';
 import ClockWidget from '@/components/widgets/clock';
 import TaskList from '@/components/tasks/tasklist';
+import CalendarView from '@/components/layout/calendarview';
 import StatsWidget from '@/components/widgets/stats';
 import StickyNotes from '@/components/widgets/stickynote';
 import Categories from '@/components/categories/categorypanel';
 import UserNav from '@/components/layout/usernav';
 import styles from './home.module.css';
-import { ClockAlert, Menu, X, PanelRight, NotebookPen } from 'lucide-react';
+import { ClockAlert, Menu, X, NotebookPen, LayoutList, CalendarDays } from 'lucide-react';
 import SessionGuard from '@/components/layout/sessionguard';
 
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [notesOpen, setNotesOpen] = useState(false);
+  const [notesOpen, setNotesOpen]     = useState(false);
+  const [view, setView]               = useState('list'); // 'list' | 'calendar'
 
   return (
     <SessionGuard>
-        <div className={styles.layout}>
+      <div className={styles.layout}>
 
-        {/* Sidebar overlay on mobile */}
         {sidebarOpen && (
           <div className={styles.overlay} onClick={() => setSidebarOpen(false)} />
         )}
@@ -36,10 +37,10 @@ export default function Dashboard() {
           <div className={styles.sidebarFooter}>
             <UserNav />
           </div>
-        </aside> 
-               <main className={styles.main}>
+        </aside>
+
+        <main className={styles.main}>
           <header className={styles.header}>
-            {/* Burger — visible on mobile */}
             <button className={styles.burger} onClick={() => setSidebarOpen(true)}>
               <Menu size={20} />
             </button>
@@ -47,15 +48,35 @@ export default function Dashboard() {
             <Greeting />
 
             <div className={styles.headerRight}>
+              {/* View toggle */}
+              <div className={styles.viewToggle}>
+                <button
+                  className={`${styles.viewBtn} ${view === 'list' ? styles.viewBtnActive : ''}`}
+                  onClick={() => setView('list')}
+                  title="List view"
+                >
+                  <LayoutList size={16} />
+                </button>
+                <button
+                  className={`${styles.viewBtn} ${view === 'calendar' ? styles.viewBtnActive : ''}`}
+                  onClick={() => setView('calendar')}
+                  title="Calendar view"
+                >
+                  <CalendarDays size={16} />
+                </button>
+              </div>
+
               <button className={styles.notesToggle} onClick={() => setNotesOpen(o => !o)}>
                 <NotebookPen size={18} />
               </button>
             </div>
           </header>
-          <section className={styles.tasksSection}><TaskList /></section>
+
+          <section className={styles.tasksSection}>
+            {view === 'list' ? <TaskList /> : <CalendarView />}
+          </section>
         </main>
 
-        {/* Right panel overlay */}
         {notesOpen && (
           <div className={styles.overlay} onClick={() => setNotesOpen(false)} />
         )}
@@ -73,6 +94,5 @@ export default function Dashboard() {
 
       </div>
     </SessionGuard>
-    
   );
 }

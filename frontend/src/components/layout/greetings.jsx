@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
 import styles from './greetings.module.css';
 import { isToday } from 'date-fns';
+import { PenLine } from 'lucide-react';
 
 function getTimeGreeting() {
   const h = new Date().getHours();
@@ -28,10 +29,10 @@ export default function Greeting() {
   
   const displayName = state.greeting || state.username || '';
   
-  // 👇 derive from state, not frozen initial value
+  //derive from state, not frozen initial value
   const [nameInput, setNameInput] = useState('');
   
-  // 👇 sync input when state.username arrives (after loadUsername resolves)
+  //sync input when state.username arrives (after loadUsername resolves)
   useEffect(() => {
     setNameInput(state.greeting || state.username || '');
   }, [state.username, state.greeting]);
@@ -66,7 +67,7 @@ export default function Greeting() {
         ) : (
           <span className={styles.nameLine}>
             <span className={styles.name}>{displayName}</span>
-            <button className={styles.editBtn} onClick={() => setEditing(true)} title="Edit name">✏</button>
+            <button className={styles.editBtn} onClick={() => setEditing(true)} title="Edit name"><PenLine size={12}/></button>
           </span>
         )}
       </div>

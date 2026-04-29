@@ -81,53 +81,6 @@ export default function ClockWidget() {
         </div>
       </div>
 
-      <div className={styles.calendar}>
-        <div className={styles.calHeader}>
-          <button className={styles.navBtn} onClick={prevMonth}>‹</button>
-          <button className={styles.monthLabel} onClick={goToday}>
-            {MONTHS[month]} {year}
-          </button>
-          <button className={styles.navBtn} onClick={nextMonth}>›</button>
-        </div>
-
-        <div className={styles.calGrid}>
-          {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => (
-            <div key={d} className={styles.calDayName}>{d}</div>
-          ))}
-          {calCells.map((d, i) => {
-            const isToday   = d === todayDate.getDate() &&
-                              month === todayDate.getMonth() &&
-                              year === todayDate.getFullYear();
-            const isSelected = selectedDate?.day === d &&
-                               selectedDate?.month === month &&
-                               selectedDate?.year === year;
-            const hasTasks  = d && deadlineDays.has(d);
-
-            return (
-              <div
-                key={i}
-                className={`
-                  ${styles.calCell}
-                  ${!d ? styles.empty : ''}
-                  ${isToday ? styles.today : ''}
-                  ${isSelected ? styles.selected : ''}
-                  ${hasTasks ? styles.hasDeadline : ''}
-                `}
-                onClick={() => handleDayClick(d)}
-              >
-                {d || ''}
-                {hasTasks && <span className={styles.dot} />}
-              </div>
-            );
-          })}
-        </div>
-
-        {selectedDate && (
-          <button className={styles.clearDay} onClick={goToday}>
-            Clear date filter ×
-          </button>
-        )}
-      </div>
     </div>
   );
 }

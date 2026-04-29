@@ -296,3 +296,35 @@
   gap: 12px;
   flex-shrink: 0;
 }
+
+/* ── View toggle (add to home.module.css) ── */
+.viewToggle {
+  display: flex;
+  align-items: center;
+  background: var(--bg-glass);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 2px;
+  gap: 2px;
+}
+
+.viewBtn {
+  width: 30px;
+  height: 28px;
+  border-radius: calc(var(--radius-sm) - 2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.viewBtn:hover {
+  color: var(--text-primary);
+}
+
+.viewBtnActive {
+  background: var(--accent-primary);
+  color: white !important;
+}
