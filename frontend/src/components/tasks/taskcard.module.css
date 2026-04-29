@@ -146,8 +146,7 @@
 
 .actions {
   display: flex;
-  
-  gap: 4px;
+  align-items: center;  /* add this */
   opacity: 0;
   transition: opacity var(--transition-fast);
 }

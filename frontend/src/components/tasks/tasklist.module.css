@@ -92,7 +92,7 @@
 .fab:hover {
   border-color: var(--accent-secondary);
   color: var(--accent-secondary);
-  background: rgba(124, 106, 255, 0.05);
+  background: var(--accent-primary);
 }
 
 .pagination {

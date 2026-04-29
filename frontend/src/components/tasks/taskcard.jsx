@@ -363,8 +363,12 @@ export default function TaskCard({ task }) {
             <CalendarPlus size={14} />
           </button>
         )}
-        <button className={styles.editBtn} onClick={editing ? handleSave : openEdit}>
-          {editing ? '✓' : '✏'}
+        <button
+          className={styles.actionBtn}
+          onClick={editing ? handleSave : openEdit}
+          title={editing ? 'Save' : 'Edit'}
+        >
+          <SquarePen size={14} />
         </button>
         <button
           className={`${styles.actionBtn} ${styles.deleteBtn}`}

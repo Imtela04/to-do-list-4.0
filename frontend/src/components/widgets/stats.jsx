@@ -38,14 +38,15 @@ export default function StatsWidget() {
             <circle
               cx="36" cy="36" r={RADIUS}
               fill="none"
-              stroke="var(--border-subtle)"
-              strokeWidth="5"
+              stroke="var(--bg-glass)"
+              strokeWidth="6"
             />
+
             <circle
               cx="36" cy="36" r={RADIUS}
               fill="none"
               stroke="url(#grad)"
-              strokeWidth="5"
+              strokeWidth="6"
               strokeLinecap="round"
               strokeDasharray={CIRC}
               strokeDashoffset={offset}

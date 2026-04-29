@@ -7,7 +7,7 @@ import StickyNotes from '@/components/widgets/stickynote';
 import Categories from '@/components/categories/categorypanel';
 import UserNav from '@/components/layout/usernav';
 import styles from './home.module.css';
-import { ClockAlert, Menu, X, PanelRight, StickyNote } from 'lucide-react';
+import { ClockAlert, Menu, X, PanelRight, NotebookPen } from 'lucide-react';
 import SessionGuard from '@/components/layout/sessionguard';
 
 export default function Dashboard() {
@@ -48,7 +48,7 @@ export default function Dashboard() {
 
             <div className={styles.headerRight}>
               <button className={styles.notesToggle} onClick={() => setNotesOpen(o => !o)}>
-                <StickyNote size={18} />
+                <NotebookPen size={18} />
               </button>
             </div>
           </header>
