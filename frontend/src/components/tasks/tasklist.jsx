@@ -5,7 +5,7 @@ import AddTask from './addtask';
 import FilterBar from '@/components/layout/filterbar';
 import styles from './tasklist.module.css';
 import { format } from 'date-fns';
-import { Calendar } from 'lucide-react'
+import { Calendar, Lock, Plus } from 'lucide-react'
 const PAGE_SIZE = 8;
 
 export default function TaskList() {
@@ -17,6 +17,8 @@ export default function TaskList() {
 
   const totalPages = Math.ceil(filteredTasks.length / PAGE_SIZE);
   const paginated  = filteredTasks.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const tasksLocked = state.limits.tasks !== null &&
+    state.tasks.length >= state.limits.tasks;
 
   return (
     <div className={styles.container}>
@@ -134,7 +136,16 @@ export default function TaskList() {
       )}
 
       <AddTask open={addOpen} setOpen={setAddOpen} />
-      <button className={styles.fab} onClick={() => setAddOpen(true)}>+</button>
+      <button
+        className={`${styles.fab} ${tasksLocked ? styles.fabLocked : ''}`}
+        onClick={() => {
+          if (tasksLocked) return; // AddTask's handleSubmit will show the error
+          setAddOpen(true);
+        }}
+        title={tasksLocked ? `Reach Level ${state.level + 1} to add more tasks` : 'Add task'}
+      >
+        {tasksLocked ? <Lock size={20} /> : '+'}
+      </button>
     </div>
   );
 }

@@ -12,6 +12,10 @@ export default function Categories() {
   const [name, setName]           = useState('');
   const [icon, setIcon]           = useState(ICONS[0]);
   const [limitError, setLimitError] = useState(null);
+  
+  const categoriesLocked = state.limits.categories !== null && 
+    state.categories.length >= state.limits.categories;
+
 
   const activeCategory = state.filter.category;
   const setFilter = (val) => dispatch({
@@ -50,12 +54,25 @@ export default function Categories() {
     <div className={styles.panel}>
       <div className={styles.header}>
         <span className={styles.title}>Categories</span>
-        <button className={styles.addBtn} onClick={() => { setAdding(v => !v); setLimitError(null); }}>+</button>
+        <button 
+          className={`${styles.addBtn} ${categoriesLocked ? styles.locked : ''}`}
+          onClick={() => {
+            if (categoriesLocked) {
+              setLimitError(`Reach Level ${state.level + 1} to unlock more categories`);
+              return;
+            }
+            setAdding(v => !v); 
+            setLimitError(null);
+          }}
+        >
+          {categoriesLocked ? <Lock size={14} /> : '+'}
+        </button>
       </div>
+
 
       {adding && (
         <div className={`${styles.form} animate-scale-in`}>
-          {limitError && (
+          {limitError && !adding && (
             <div className={styles.limitError}>
               <Lock size={12} />
               <span>{limitError}</span>

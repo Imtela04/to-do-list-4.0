@@ -19,6 +19,9 @@ export default function StickyNotes() {
   const { save: saveDraft, load: loadDraft, clear: clearDraft } = useDraft('draft_note');
   const [hasNoteDraft, setHasNoteDraft] = useState(!!loadDraft());
 
+  const notesLocked = state.limits.notes !== null && state.counts.notes >= state.limits.notes;
+  const notesAtLimit = state.limits.notes === 0; // level 1 can't create any
+
   useEffect(() => {
     if (adding && addEditorRef.current) {
       const draft = loadDraft();
@@ -106,23 +109,32 @@ export default function StickyNotes() {
   return (
     <div className={styles.panel}>
       <div className={styles.header}>
-        <button className={styles.addBtn} onClick={() => { setAdding(true); setLimitError(null); }}>
-          <PenLine />
-        </button>
+        <span className={styles.title}>STICKY NOTES</span>
+        {notesLocked || notesAtLimit ? (
+          <button
+            className={`${styles.addBtn} ${styles.locked}`}
+            onClick={() => setLimitError(`Reach Level ${state.level + 1} to unlock sticky notes`)}
+            title={`Unlock at Level ${state.level + 1}`}
+          >
+            <Lock size={16} />
+          </button>
+        ) : (
+          <button className={styles.addBtn} onClick={() => { setAdding(true); setLimitError(null); }}>
+            <PenLine size={16} />
+          </button>
+        )}
       </div>
-
       {adding && (
         <div
           className={`${styles.noteForm} animate-scale-in`}
           style={{ borderLeft: `4px solid ${newColor}` }}
         >
-          {limitError && (
-            <div className={styles.limitError}>
-              <Lock size={12} />
-              <span>{limitError}</span>
-            </div>
-          )}
-
+        {limitError && (
+          <div className={styles.limitBanner}>
+            <Lock size={12} />
+            <span>{limitError}</span>
+          </div>
+        )}
           {hasNoteDraft && (
             <div className={styles.draftBadge}>
               <span>📝 Draft restored</span>
