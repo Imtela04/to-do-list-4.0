@@ -95,6 +95,10 @@ def task_detail(request, task_id):
         task.deadline = parse_deadline(request.data['deadline'])
     if 'category' in request.data:
         task.category_id = resolve_category(request.data['category'], request.user)
+    if 'priority' in request.data:
+        task.priority = request.data['priority']
+    if 'pinned' in request.data:
+        task.pinned = request.data['pinned']
     task.save()
     return Response(TodoSerializer(task).data)
 

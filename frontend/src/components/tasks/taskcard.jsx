@@ -161,48 +161,53 @@ export default function TaskCard({ task }) {
   };
 
   const openEdit = (e) => {
-    e.stopPropagation();
-    const existingDeadline = task.deadline ? new Date(task.deadline) : null;
-    setEditForm({
-      title: '', description: '', priority: '', category: '',
-      deadline: existingDeadline,
-      timed: existingDeadline
-        ? !(existingDeadline.getHours() === 0 && existingDeadline.getMinutes() === 0) &&
-          !(existingDeadline.getHours() === 23 && existingDeadline.getMinutes() === 59)
-        : false,
-    });
-    setExpanded(true);
-    setEditing(true);
+      e.stopPropagation();
+      const existingDeadline = task.deadline ? new Date(task.deadline) : null;
+      setEditForm({
+          title:       task.title,           // ← pre-populate
+          description: task.description || '',
+          priority:    task.priority,
+          category:    task.category?.id?.toString() || '',
+          deadline:    existingDeadline,
+          timed: existingDeadline
+              ? !(existingDeadline.getHours() === 23 && existingDeadline.getMinutes() === 59)
+              : false,
+      });
+      setExpanded(true);
+      setEditing(true);
   };
 
   const handleSave = async (e) => {
-    e?.stopPropagation();
-    const changes = {};
-    if (editForm.title.trim())       changes.title       = editForm.title.trim();
-    if (editForm.description.trim()) changes.description = editForm.description.trim();
-    if (editForm.priority)           changes.priority    = editForm.priority;
-    if (editForm.category)           changes.category    = editForm.category;
-    if (editForm.deadline)           changes.deadline    = editForm.deadline.toISOString();
+      e?.stopPropagation();
+      const changes = {};
 
-    if (Object.keys(changes).length > 0) {
-      const updated = {
-        ...task, ...changes,
-        category: editForm.category
-          ? state.categories.find(c => c.id === parseInt(editForm.category)) || task.category
-          : task.category,
-      };
+      if (editForm.title.trim())             changes.title       = editForm.title.trim();
+      if (editForm.description.trim())       changes.description = editForm.description.trim();
+      if (editForm.priority)                 changes.priority    = editForm.priority;
+      if (editForm.category)                 changes.category    = parseInt(editForm.category);
 
-      dispatch({ type: 'UPDATE_TASK', payload: updated });
-      try { await updateTask(task.id, changes); } catch {}
-    }
-    if (editForm.deadline) {
-      const d = new Date(editForm.deadline);
-      if (!editForm.timed) d.setHours(0, 0, 0, 0);
-      changes.deadline = d.toISOString();
-    }
-    setEditing(false);
+      // fix: build deadline correctly BEFORE the API call
+      if (editForm.deadline) {
+          const d = new Date(editForm.deadline);
+          if (!editForm.timed) d.setHours(23, 59, 0, 0);
+          changes.deadline = d.toISOString();
+      }
+
+      if (Object.keys(changes).length > 0) {
+          const updated = {
+              ...task,
+              ...changes,
+              category: editForm.category
+                  ? state.categories.find(c => c.id === parseInt(editForm.category)) || task.category
+                  : task.category,
+          };
+          dispatch({ type: 'UPDATE_TASK', payload: updated });
+          try { await updateTask(task.id, changes); }
+          catch { dispatch({ type: 'UPDATE_TASK', payload: task }); }
+      }
+
+      setEditing(false);
   };
-
   const set = (key, val) => setEditForm(f => ({ ...f, [key]: val }));
 
   return (
