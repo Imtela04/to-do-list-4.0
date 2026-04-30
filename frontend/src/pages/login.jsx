@@ -22,7 +22,7 @@ export default function Login() {
     try {
         const res = await login({ username: form.username, password: form.password });
         localStorage.setItem('authToken', res.data.access);
-
+        localStorage.setItem('refreshToken', res.data.refresh);
         resetState();
         await Promise.all([
         loadTasks(),
@@ -35,7 +35,10 @@ export default function Login() {
 
         navigate('/');
     } catch (err) {
-        setError(err.message || "Invalid credentials");
+        const detail = err.response?.data?.detail 
+            || err.response?.data?.non_field_errors?.[0]
+            || "Invalid credentials";
+        setError(detail);
     } finally {
         setLoading(false);
     }

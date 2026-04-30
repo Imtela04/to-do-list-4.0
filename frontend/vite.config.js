@@ -9,9 +9,9 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
-  base: '/static/',                              // ← add this
+  base: process.env.NODE_ENV === 'production' ? '/static/' : '/',  // ← fix
   build: {
-    outDir: '../frontend_dist',   // outside staticfiles/
+    outDir: '../frontend_dist',
     emptyOutDir: true,
   },
 })
