@@ -113,7 +113,7 @@ def create_onboarding_data(user):
     StickyNotes.objects.create(
         owner=user,
         color='#7c6aff',
-        note='📌 Sticky notes live here!\n\nUse them for quick thoughts, reminders, or anything you need to jot down fast. Click the + to add one.',
+        note='📌 Sticky notes live here!\n\nUse them for quick thoughts, reminders, or anything you need to jot down fast. Click the ✏️ to add one.',
     )
     StickyNotes.objects.create(
         owner=user,
