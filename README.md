@@ -11,7 +11,7 @@
 ## Features
 
 - **Task management** — create, complete, pin, and delete tasks with due dates and descriptions
-- **Priorities** — mark tasks as low, medium, or high priority
+- **Priorities** — mark tasks as low, medium, high, or critical priority
 - **Categories** — organise tasks into colour-coded categories
 - **Sticky notes** — freeform notes board for quick thoughts
 - **Calendar view** — see tasks laid out by date
@@ -21,6 +21,34 @@
 - **JWT authentication** — secure login with access + refresh token rotation
 - **Session guard** — inactivity warning with auto-logout after idle period
 - **Proactive token refresh** — silent token renewal before expiry, no surprise logouts
+
+### Gamification & Progression
+
+what-do has a built-in XP and leveling system that rewards consistent productivity:
+
+- **Earn XP** by completing tasks — base reward plus bonuses for priority level, finishing before the deadline, and daily streaks
+- **Level up** to unlock higher limits on tasks, categories, and sticky notes
+- **Streak system** — complete tasks on consecutive days to earn bonus XP (capped at 3x)
+- **5 levels** of progression, each unlocking more features
+
+| Level | XP Required | Tasks | Categories | Sticky Notes |
+|---|---|---|---|---|
+| 1 | 0 | 5 | 2 | 0 |
+| 2 | 50 | 12 | 3 | 2 |
+| 3 | 150 | 25 | 5 | 5 |
+| 4 | 350 | Unlimited | Unlimited | Unlimited |
+| 5 | 700 | Unlimited | Unlimited | Unlimited |
+
+**XP rewards:**
+
+| Action | XP |
+|---|---|
+| Complete a task | +10 |
+| High priority bonus | +5 |
+| Critical priority bonus | +10 |
+| Finish before deadline | +5 |
+| Daily streak bonus (per day, max 3) | +5 |
+| Uncomplete a task | -5 |
 
 ---
 
@@ -102,6 +130,18 @@ App runs at **http://localhost:5173**
 
 ---
 
+## Tests
+
+The backend has 92 tests covering models, XP logic, API endpoints, authentication, and access control.
+
+```bash
+python manage.py test apps.accounts apps.todo
+```
+
+Test coverage includes XP calculation and level-up logic, streak tracking and bonus XP, task/category/note limits per level, JWT auth (register, login, token refresh), task CRUD and ownership enforcement, and unauthenticated access rejection.
+
+---
+
 ## Deployment (Railway)
 
 The app is deployed as a single Railway service using Docker.
@@ -130,8 +170,8 @@ FROM python:3.12-slim
 ```
 to-do-list-4.0/
 ├── apps/
-│   ├── todo/          # tasks, categories, sticky notes
-│   └── accounts/      # user auth, profiles
+│   ├── todo/          # tasks, categories, sticky notes, views, tests
+│   └── accounts/      # user auth, profiles, XP, leveling, tests
 ├── config/            # settings, urls, wsgi, middleware
 ├── frontend/          # React + Vite source
 │   └── src/
