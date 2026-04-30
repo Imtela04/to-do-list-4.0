@@ -39,11 +39,13 @@ export default function UserNav() {
   const [pos, setPos] = useState({ left: 0, bottom: 0 });
 
   const { xp, level, streak, nextLevelXp } = state;
-  const prevLevelXp = [0, 0, 50, 150, 300, 500][level] ?? 0;
+  const LEVEL_XP = { 1: 0, 2: 50, 3: 150, 4: 350, 5: 700 };
+
+  const prevLevelXp = LEVEL_XP[level] ?? 0;
   const xpInLevel   = xp - prevLevelXp;
   const xpNeeded    = nextLevelXp ? nextLevelXp - prevLevelXp : xpInLevel;
-  const xpPct       = nextLevelXp ? Math.min((xpInLevel / xpNeeded) * 100, 100) : 100;
-
+  const xpPct       = xpNeeded > 0 ? Math.min((xpInLevel / xpNeeded) * 100, 100) : 100;
+  
   useEffect(() => {
     if (!open) return;
     const handler = (e) => {
@@ -93,7 +95,9 @@ export default function UserNav() {
             <div className={styles.xpBar} style={{ width: `${xpPct}%` }} />
           </div>
           <span className={styles.xpText}>
-            {nextLevelXp ? `${xp} / ${nextLevelXp} XP` : `${xp} XP · Max Level`}
+            {nextLevelXp
+              ? `${xpInLevel} / ${xpNeeded} XP`   // progress within current level
+              : `${xp} XP · Max Level`}
           </span>
         </div>
       </div>
