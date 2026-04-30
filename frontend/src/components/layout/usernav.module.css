@@ -10,7 +10,7 @@
   width: 40px;
   height: 40px;
   border-radius: var(--radius-md);
-  color: white;
+  color: var(--accent-primary);
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.5px;

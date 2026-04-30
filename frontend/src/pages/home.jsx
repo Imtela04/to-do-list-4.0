@@ -27,7 +27,7 @@ export default function Dashboard() {
         )}
 
         <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ''}`}>
-          <span className={styles.logoText}>what-d<ClockAlert className={styles.logoIcon} /></span>
+          <div className={styles.logo}><span className={styles.logoText}>what-d<ClockAlert className={styles.logoIcon} /></span></div>
           <button className={styles.sidebarClose} onClick={() => setSidebarOpen(false)}>
             <X size={16} />
           </button>

@@ -43,7 +43,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  padding-bottom: 4px;
+  padding: 20px
+  
 }
 
 .logoIcon {
@@ -60,7 +61,7 @@
 
 .logoText, .logoIcon {
   font-family: var(--font-display);
-  font-size: 1.3rem;
+  font-size: 1.8rem;
   font-weight: 800;
   background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
   -webkit-background-clip: text;
