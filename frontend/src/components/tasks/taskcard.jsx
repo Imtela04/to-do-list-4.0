@@ -5,7 +5,7 @@ import { toggleTask, deleteTask, updateTask } from '@/api/services';
 import styles from './taskcard.module.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { Pin, PinOff, Trash, Timer, SquarePen, CalendarPlus } from 'lucide-react';
+import { Pin, PinOff, Trash, Hourglass, SquarePen, CalendarPlus, Hourglass } from 'lucide-react';
 
 const PRIORITY_MAP = {
   low:      { color: '#6ab4ff', label: 'Low' },
@@ -37,7 +37,7 @@ function useCountdown(deadline, timed) {
         if (diffDays < 0)       { setRemaining(null); return; } // overdue
         else if (diffDays === 0) setRemaining('due today');
         else if (diffDays === 1) setRemaining('due tomorrow');
-        else                     setRemaining(`${diffDays}d left`);
+        else                     setRemaining(`${diffDays}d`);
         return;
       }
 
@@ -336,7 +336,7 @@ export default function TaskCard({ task }) {
             {/* Countdown — always visible when deadline exists */}
             {dueDate && !task.completed && (
               <div className={`${styles.countdown} ${isOverdue ? styles.countdownOverdue : ''}`}>
-                <Timer size={11} />
+                <Hourglass size={11} />
                 {isOverdue
                   ? `Overdue · ${format(dueDate, 'MMM d')}`
                   : countdown}

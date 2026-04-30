@@ -293,7 +293,7 @@
   border-top: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
-  justify-content: flex-start; /* 👈 left align */
+  justify-content: flex-start;
   gap: 12px;
   flex-shrink: 0;
 }
