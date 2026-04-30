@@ -2,26 +2,23 @@ import { useState, useRef, useEffect } from 'react';
 import { useApp } from '@/context/AppContext';
 import { createStickyNote, updateStickyNote, deleteStickyNote } from '@/api/services';
 import styles from './stickynote.module.css';
-import { Bubbles, Icon, PenLine, Trash, PenBox } from 'lucide-react';
+import { PenLine, Trash, PenBox, Lock } from 'lucide-react';
 import { useDraft } from '../../hooks/useDraft';
 
-
-
 const NOTE_COLORS = ['#7c6aff', '#ff6a9e', '#6affdc', '#ffaa6a', '#6ab4ff', '#c96aff'];
-const ui = {bubbles: Bubbles}
+
 export default function StickyNotes() {
   const { state, dispatch } = useApp();
-  const [adding, setAdding] = useState(false);
-  const [newColor, setNewColor] = useState(NOTE_COLORS[0]);
-  const [editingId, setEditingId] = useState(null);
+  const [adding, setAdding]         = useState(false);
+  const [newColor, setNewColor]     = useState(NOTE_COLORS[0]);
+  const [editingId, setEditingId]   = useState(null);
   const [expandedId, setExpandedId] = useState(null);
-  const addEditorRef = useRef(null);
+  const [limitError, setLimitError] = useState(null);
+  const addEditorRef  = useRef(null);
   const editEditorRef = useRef(null);
   const { save: saveDraft, load: loadDraft, clear: clearDraft } = useDraft('draft_note');
   const [hasNoteDraft, setHasNoteDraft] = useState(!!loadDraft());
 
-
-  // clear editor when opening add form
   useEffect(() => {
     if (adding && addEditorRef.current) {
       const draft = loadDraft();
@@ -36,7 +33,6 @@ export default function StickyNotes() {
     }
   }, [adding]);
 
-  // set content when opening edit
   useEffect(() => {
     if (editingId && editEditorRef.current) {
       const note = state.stickyNotes.find(n => n.id === editingId);
@@ -47,8 +43,6 @@ export default function StickyNotes() {
   const handlePaste = (e) => {
     const items = e.clipboardData?.items;
     if (!items) return;
-    const editableDiv = e.currentTarget;
-
     for (const item of items) {
       if (item.type.startsWith('image/')) {
         e.preventDefault();
@@ -61,7 +55,6 @@ export default function StickyNotes() {
           img.style.display = 'block';
           img.style.borderRadius = '4px';
           img.style.marginTop = '4px';
-
           const selection = window.getSelection();
           if (selection.rangeCount) {
             const range = selection.getRangeAt(0);
@@ -83,13 +76,18 @@ export default function StickyNotes() {
     const content = addEditorRef.current?.innerHTML || '';
     const hasContent = content.trim() || content.includes('<img');
     if (!hasContent) return;
-    setAdding(false);
-    clearDraft();
-    setHasNoteDraft(false);
+    setLimitError(null);
     try {
       const res = await createStickyNote({ note: content, color: newColor });
       dispatch({ type: 'ADD_NOTE', payload: { ...res.data, color: newColor } });
-    } catch {}
+      setAdding(false);
+      clearDraft();
+      setHasNoteDraft(false);
+    } catch (err) {
+      if (err.response?.status === 403 && err.response?.data?.limit_reached) {
+        setLimitError(err.response.data.detail);
+      }
+    }
   };
 
   const handleSaveEdit = async (note) => {
@@ -108,14 +106,23 @@ export default function StickyNotes() {
   return (
     <div className={styles.panel}>
       <div className={styles.header}>
-        <button className={styles.addBtn} onClick={() => setAdding(true)}><PenLine/></button>
+        <button className={styles.addBtn} onClick={() => { setAdding(true); setLimitError(null); }}>
+          <PenLine />
+        </button>
       </div>
 
       {adding && (
         <div
           className={`${styles.noteForm} animate-scale-in`}
-          style={{ borderLeft: `4px solid ${newColor}` }} // or background: newColor + '22'
+          style={{ borderLeft: `4px solid ${newColor}` }}
         >
+          {limitError && (
+            <div className={styles.limitError}>
+              <Lock size={12} />
+              <span>{limitError}</span>
+            </div>
+          )}
+
           {hasNoteDraft && (
             <div className={styles.draftBadge}>
               <span>📝 Draft restored</span>
@@ -147,7 +154,7 @@ export default function StickyNotes() {
                 className={`${styles.colorDot} ${newColor === c ? styles.colorSelected : ''}`}
                 style={{
                   background: c,
-                  outline: newColor === c ? `2px solid white` : 'none', // fallback if CSS module fails
+                  outline: newColor === c ? '2px solid white' : 'none',
                   transform: newColor === c ? 'scale(1.25)' : 'scale(1)',
                 }}
                 onClick={() => setNewColor(c)}
@@ -198,22 +205,15 @@ export default function StickyNotes() {
                 className={styles.noteBtn}
                 onClick={(e) => {
                   e.stopPropagation();
-                  if (editingId === note.id) {
-                    handleSaveEdit(note);
-                  } else {
-                    setEditingId(note.id);
-                    setExpandedId(note.id);
-                  }
+                  if (editingId === note.id) handleSaveEdit(note);
+                  else { setEditingId(note.id); setExpandedId(note.id); }
                 }}
               >
-                {editingId === note.id ? '✓' : <span><PenBox size={12}/></span>}
+                {editingId === note.id ? '✓' : <span><PenBox size={12} /></span>}
               </button>
               <button
                 className={styles.noteBtn}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleDelete(note.id);
-                }}
+                onClick={(e) => { e.stopPropagation(); handleDelete(note.id); }}
               >
                 <Trash size={12} />
               </button>

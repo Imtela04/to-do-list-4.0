@@ -2,52 +2,65 @@ import { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { createCategory, deleteCategory } from '@/api/services';
 import styles from './categorypanel.module.css';
+import { Lock } from 'lucide-react';
 
 const ICONS = ['💼','🏠','💪','💰','📚','📌','🎯','🛒','✈️','🎮'];
 
 export default function Categories() {
   const { state, dispatch } = useApp();
-  const [adding, setAdding] = useState(false);
-  const [name, setName]     = useState('');
-  const [icon, setIcon]     = useState(ICONS[0]);
+  const [adding, setAdding]       = useState(false);
+  const [name, setName]           = useState('');
+  const [icon, setIcon]           = useState(ICONS[0]);
+  const [limitError, setLimitError] = useState(null);
 
   const activeCategory = state.filter.category;
   const setFilter = (val) => dispatch({
     type: 'SET_FILTER',
-    payload: { category: activeCategory === val ? null : val }
+    payload: { category: activeCategory === val ? null : val },
   });
 
   const handleAdd = async () => {
     if (!name.trim()) return;
-    const cat = { id: Date.now(), name: name.trim(), icon };
-    dispatch({ type: 'ADD_CATEGORY', payload: cat });
+    setLimitError(null);
+    const optimistic = { id: Date.now(), name: name.trim(), icon };
+    dispatch({ type: 'ADD_CATEGORY', payload: optimistic });
     setName(''); setAdding(false);
     try {
       const res = await createCategory({ name: name.trim(), icon });
-      dispatch({ type: 'DELETE_CATEGORY', payload: cat.id });
+      dispatch({ type: 'DELETE_CATEGORY', payload: optimistic.id });
       dispatch({ type: 'ADD_CATEGORY', payload: res.data });
-    } catch {}
+    } catch (err) {
+      dispatch({ type: 'DELETE_CATEGORY', payload: optimistic.id }); // rollback
+      if (err.response?.status === 403 && err.response?.data?.limit_reached) {
+        setAdding(true);
+        setLimitError(err.response.data.detail);
+      }
+    }
   };
 
   const handleDelete = async (e, id) => {
-    e.stopPropagation(); // don't trigger filter click
+    e.stopPropagation();
     dispatch({ type: 'DELETE_CATEGORY', payload: id });
     try { await deleteCategory(id); } catch {}
   };
 
-  // uncategorised = tasks with no category
   const uncategorisedCount = state.tasks.filter(t => !t.category).length;
 
   return (
     <div className={styles.panel}>
       <div className={styles.header}>
         <span className={styles.title}>Categories</span>
-        <button className={styles.addBtn} onClick={() => setAdding(v => !v)}>+</button>
-        
+        <button className={styles.addBtn} onClick={() => { setAdding(v => !v); setLimitError(null); }}>+</button>
       </div>
 
       {adding && (
         <div className={`${styles.form} animate-scale-in`}>
+          {limitError && (
+            <div className={styles.limitError}>
+              <Lock size={12} />
+              <span>{limitError}</span>
+            </div>
+          )}
           <input
             autoFocus
             className={styles.input}
@@ -68,7 +81,7 @@ export default function Categories() {
             ))}
           </div>
           <div className={styles.formActions}>
-            <button className={styles.cancelFormBtn} onClick={() => { setAdding(false); setName(''); }}>
+            <button className={styles.cancelFormBtn} onClick={() => { setAdding(false); setName(''); setLimitError(null); }}>
               Cancel
             </button>
             <button className={styles.saveBtn} onClick={handleAdd}>Add</button>
@@ -77,7 +90,6 @@ export default function Categories() {
       )}
 
       <div className={styles.list}>
-        {/* All tasks row */}
         <div
           className={`${styles.item} ${!activeCategory && activeCategory !== 'uncategorised' ? styles.itemActive : ''}`}
           onClick={() => dispatch({ type: 'SET_FILTER', payload: { category: null } })}
@@ -87,7 +99,6 @@ export default function Categories() {
           <span className={styles.count}>{state.tasks.length}</span>
         </div>
 
-        {/* Uncategorised row */}
         {uncategorisedCount > 0 && (
           <div
             className={`${styles.item} ${activeCategory === 'uncategorised' ? styles.itemActive : ''}`}
@@ -99,7 +110,6 @@ export default function Categories() {
           </div>
         )}
 
-        {/* User categories */}
         {state.categories.map(cat => {
           const count = state.tasks.filter(t => t.category?.id === cat.id).length;
           return (

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Sun, Moon, Pipette, X, User, Power } from 'lucide-react';
+import { Sun, Moon, Pipette, User, Power, Flame, Star } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
@@ -8,10 +8,18 @@ import { HexColorPicker } from 'react-colorful';
 import styles from './usernav.module.css';
 
 const COLOR_PICKERS = [
-  { variable: '--accent-primary',   label: 'Primary Accent'      },
-  { variable: '--accent-secondary', label: 'Secondary Accent'    },
-  { variable: '--bg-primary',       label: 'Background'  },
+  { variable: '--accent-primary',   label: 'Primary Accent' },
+  { variable: '--accent-secondary', label: 'Secondary Accent' },
+  { variable: '--bg-primary',       label: 'Background' },
 ];
+
+const LEVEL_LABELS = {
+  1: 'Novice',
+  2: 'Apprentice',
+  3: 'Journeyman',
+  4: 'Expert',
+  5: 'Master',
+};
 
 function getInitials(username) {
   if (!username) return '?';
@@ -21,23 +29,25 @@ function getInitials(username) {
 }
 
 export default function UserNav() {
-  const [open, setOpen]           = useState(false);
+  const [open, setOpen]             = useState(false);
   const [openPicker, setOpenPicker] = useState(null);
-  const { state, resetState }     = useApp();
+  const { state, resetState }       = useApp();
   const { theme, custom, applyTheme, updateCustomColor } = useTheme();
-  const drawerRef                 = useRef(null);
-  const btnRef                    = useRef(null);
-  const navigate                  = useNavigate();
+  const drawerRef = useRef(null);
+  const btnRef    = useRef(null);
+  const navigate  = useNavigate();
   const [pos, setPos] = useState({ left: 0, bottom: 0 });
 
-  // Close drawer on outside click
+  const { xp, level, streak, nextLevelXp } = state;
+  const prevLevelXp = [0, 0, 50, 150, 300, 500][level] ?? 0;
+  const xpInLevel   = xp - prevLevelXp;
+  const xpNeeded    = nextLevelXp ? nextLevelXp - prevLevelXp : xpInLevel;
+  const xpPct       = nextLevelXp ? Math.min((xpInLevel / xpNeeded) * 100, 100) : 100;
+
   useEffect(() => {
     if (!open) return;
     const handler = (e) => {
-      if (
-        !drawerRef.current?.contains(e.target) &&
-        !btnRef.current?.contains(e.target)
-      ) {
+      if (!drawerRef.current?.contains(e.target) && !btnRef.current?.contains(e.target)) {
         setOpen(false);
         setOpenPicker(null);
       }
@@ -49,10 +59,7 @@ export default function UserNav() {
   useEffect(() => {
     if (open && btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect();
-      setPos({
-        left: rect.right + 8,
-        bottom: window.innerHeight - rect.bottom,
-      });
+      setPos({ left: rect.right + 8, bottom: window.innerHeight - rect.bottom });
     }
   }, [open]);
 
@@ -67,35 +74,68 @@ export default function UserNav() {
 
   return (
     <div className={styles.parent}>
-      {/* Avatar button */}
-      <button ref={btnRef} className={styles.avatar} onClick={() => setOpen(o => !o)}>
-        {initials}
-      </button>
+      {/* Avatar + XP bar */}
+      <div className={styles.avatarRow}>
+        <button ref={btnRef} className={styles.avatar} onClick={() => setOpen(o => !o)}>
+          {initials}
+          <span className={styles.levelBadge}>{level}</span>
+        </button>
+        <div className={styles.xpInfo}>
+          <div className={styles.xpLabelRow}>
+            <span className={styles.levelLabel}>{LEVEL_LABELS[level] ?? 'Master'}</span>
+            {streak > 0 && (
+              <span className={styles.streak}>
+                <Flame size={11} /> {streak}d
+              </span>
+            )}
+          </div>
+          <div className={styles.xpBarWrap}>
+            <div className={styles.xpBar} style={{ width: `${xpPct}%` }} />
+          </div>
+          <span className={styles.xpText}>
+            {nextLevelXp ? `${xp} / ${nextLevelXp} XP` : `${xp} XP · Max Level`}
+          </span>
+        </div>
+      </div>
 
-     
-
-      {/* Inline drawer — portalled to body */}
       {open && createPortal(
-      <div
-        ref={drawerRef}
-        className={styles.drawer}
-        style={{
-          position: 'fixed',
-          left: pos.left,
-          bottom: pos.bottom,
-        }}
-      >
-      {/* Header */}
+        <div
+          ref={drawerRef}
+          className={styles.drawer}
+          style={{ position: 'fixed', left: pos.left, bottom: pos.bottom }}
+        >
+          {/* Header */}
           <div className={styles.drawerHeader}>
-            <div className={styles.drawerAvatar}><User/></div>
+            <div className={styles.drawerAvatar}><User /></div>
             <div className={styles.drawerUser}>
               <span className={styles.drawerUsername}>{state.username ?? 'User'}</span>
-              <span className={styles.drawerRole}>Member</span>
+              <span className={styles.drawerRole}>
+                <Star size={10} /> {LEVEL_LABELS[level]} · Level {level}
+              </span>
             </div>
-             {/* Logout button — separate, always visible */}
             <button className={styles.logoutBtn} onClick={handleLogout} title="Logout">
               <Power size={15} />
             </button>
+          </div>
+
+          {/* XP progress in drawer */}
+          <div className={styles.drawerXp}>
+            <div className={styles.drawerXpLabelRow}>
+              <span className={styles.drawerXpLabel}>{xp} XP</span>
+              {streak > 0 && (
+                <span className={styles.drawerStreak}>
+                  <Flame size={12} /> {streak} day streak
+                </span>
+              )}
+            </div>
+            <div className={styles.drawerXpBarWrap}>
+              <div className={styles.drawerXpBar} style={{ width: `${xpPct}%` }} />
+            </div>
+            {nextLevelXp && (
+              <span className={styles.drawerXpSub}>
+                {nextLevelXp - xp} XP to Level {level + 1}
+              </span>
+            )}
           </div>
 
           <div className={styles.divider} />
@@ -128,7 +168,6 @@ export default function UserNav() {
             </div>
           </div>
 
-          {/* Color pickers — only when custom */}
           {theme === 'custom' && (
             <>
               <div className={styles.divider} />

@@ -139,9 +139,19 @@ export default function TaskCard({ task }) {
     e.stopPropagation();
     const updated = { ...task, completed: !task.completed };
     dispatch({ type: 'UPDATE_TASK', payload: updated });
-    try { await toggleTask(task.id, !task.completed); }
-    catch { dispatch({ type: 'UPDATE_TASK', payload: task }); }
+    try {
+      const res = await toggleTask(task.id, !task.completed);
+      // Sync the task back (in case server changed anything)
+      dispatch({ type: 'UPDATE_TASK', payload: res.data });
+      // Award XP if the response includes xp_result
+      if (res.data.xp_result) {
+        dispatch({ type: 'UPDATE_XP', payload: res.data.xp_result });
+      }
+    } catch {
+      dispatch({ type: 'UPDATE_TASK', payload: task }); // rollback
+    }
   };
+
 
   const handleDelete = async () => {
     setDeleting(true);

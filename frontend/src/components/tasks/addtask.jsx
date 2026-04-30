@@ -5,29 +5,28 @@ import { useDraft } from '@/hooks/useDraft';
 import styles from './addtask.module.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { Pickaxe, Trash } from 'lucide-react';
+import { Pickaxe, Trash, Lock } from 'lucide-react';
 
 const PRIORITIES = ['low', 'medium', 'high', 'critical'];
 const DRAFT_KEY  = 'draft_task';
 
 export default function AddTask({ open, setOpen }) {
-  const { state, dispatch }       = useApp();
-  const { save, load, clear }     = useDraft(DRAFT_KEY);
-  const [form, setForm] = useState({ 
-    title: '', description: '', priority: '', category: '', 
-    due_date: null, due_time: null, timed: false 
+  const { state, dispatch }     = useApp();
+  const { save, load, clear }   = useDraft(DRAFT_KEY);
+  const [form, setForm] = useState({
+    title: '', description: '', priority: '', category: '',
+    due_date: null, due_time: null, timed: false,
   });
-  const [loading, setLoading]     = useState(false);
-  const [hasDraft, setHasDraft]   = useState(!!load());
+  const [loading, setLoading]   = useState(false);
+  const [hasDraft, setHasDraft] = useState(!!load());
+  const [limitError, setLimitError] = useState(null);
 
   useEffect(() => {
     if (open) {
+      setLimitError(null);
       const draft = load();
       if (draft) {
-        setForm({
-          ...draft,
-          due_date: draft.due_date ? new Date(draft.due_date) : null,
-        });
+        setForm({ ...draft, due_date: draft.due_date ? new Date(draft.due_date) : null });
       } else {
         setForm({ title: '', description: '', priority: '', category: '', due_date: null, timed: false });
       }
@@ -44,22 +43,10 @@ export default function AddTask({ open, setOpen }) {
     });
   };
 
-  const handleDateChange = (date) => {
-    if (!date) { set('due_date', null); set('timed', false); return; }
-    const isTimed = date.getHours() !== 0 || date.getMinutes() !== 0;
-    // if no time selected (midnight), default to 23:59
-    if (!isTimed) date.setHours(23, 59, 0, 0);
-    setForm(f => {
-      const updated = { ...f, due_date: date, timed: false }; // still untimed
-      save({ ...updated, due_date: date.toISOString() });
-      setHasDraft(true);
-      return updated;
-    });
-  };
-
   const handleSubmit = async () => {
     if (!form.title.trim()) return;
     setLoading(true);
+    setLimitError(null);
     try {
       let deadline = '';
       if (form.due_date) {
@@ -67,7 +54,7 @@ export default function AddTask({ open, setOpen }) {
         if (form.timed && form.due_time) {
           d.setHours(form.due_time.getHours(), form.due_time.getMinutes(), 0, 0);
         } else {
-          d.setHours(23, 59, 0, 0); // untimed — end of day for storage
+          d.setHours(23, 59, 0, 0);
         }
         deadline = d.toISOString();
       }
@@ -82,7 +69,11 @@ export default function AddTask({ open, setOpen }) {
       clear();
       setHasDraft(false);
       setOpen(false);
-    } catch {}
+    } catch (err) {
+      if (err.response?.status === 403 && err.response?.data?.limit_reached) {
+        setLimitError(err.response.data.detail);
+      }
+    }
     setLoading(false);
   };
 
@@ -101,6 +92,13 @@ export default function AddTask({ open, setOpen }) {
         <div className={styles.draftBadge}>
           <span><Pickaxe size={13} /> Draft</span>
           <button className={styles.discardBtn} onClick={handleDiscard}><Trash size={13} /></button>
+        </div>
+      )}
+
+      {limitError && (
+        <div className={styles.limitError}>
+          <Lock size={13} />
+          <span>{limitError}</span>
         </div>
       )}
 
@@ -169,10 +167,7 @@ export default function AddTask({ open, setOpen }) {
             </label>
             <DatePicker
               selected={form.due_time}
-              onChange={time => {
-                set('due_time', time);
-                set('timed', !!time);
-              }}
+              onChange={time => { set('due_time', time); set('timed', !!time); }}
               placeholderText="No time set"
               showTimeSelect
               showTimeSelectOnly

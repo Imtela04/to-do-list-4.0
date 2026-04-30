@@ -14,6 +14,7 @@ class BaseTestCase(APITestCase):
     def create_task(self, title='Test Task', user=None):
         return Todo.objects.create(
             title=title,
+            priority='low',
             owner=user or self.user
         )
 
@@ -58,7 +59,7 @@ class GetTasksTests(BaseTestCase):
 
 
 class AddTaskTests(BaseTestCase):
-    url = '/api/tasks/add/'
+    url = '/api/tasks/'
 
     def test_add_task_minimal(self):
         """Task with only title is created successfully."""
@@ -101,34 +102,35 @@ class AddTaskTests(BaseTestCase):
 
     def test_add_task_owner_is_set_automatically(self):
         """Task owner is set to the authenticated user."""
-        response = self.client.post(self.url, {'title': 'My Task'})
-        self.assertEqual(response.data['owner']['username'], 'testuser')
-
+        response = self.client.post(self.url, {'title': 'My Task', 'priority': 'low'})
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        task = Todo.objects.get(title='My Task')
+        self.assertEqual(task.owner, self.user)
 
 class DeleteTaskTests(BaseTestCase):
     def test_delete_own_task(self):
         """User can delete their own task."""
         task = self.create_task()
-        response = self.client.delete(f'/api/tasks/{task.id}/delete/')
+        response = self.client.delete(f'/api/tasks/{task.id}/')
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Todo.objects.filter(id=task.id).exists())
 
     def test_delete_other_users_task(self):
         """User cannot delete another user's task — returns 404."""
         task = self.create_task(user=self.other_user)
-        response = self.client.delete(f'/api/tasks/{task.id}/delete/')
+        response = self.client.delete(f'/api/tasks/{task.id}/')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_delete_nonexistent_task(self):
         """Deleting a non-existent task returns 404."""
-        response = self.client.delete('/api/tasks/9999/delete/')
+        response = self.client.delete('/api/tasks/9999/')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_delete_unauthenticated(self):
         """Unauthenticated request returns 401."""
         task = self.create_task()
         self.client.force_authenticate(user=None)
-        response = self.client.delete(f'/api/tasks/{task.id}/delete/')
+        response = self.client.delete(f'/api/tasks/{task.id}/')
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
@@ -136,7 +138,7 @@ class UpdateTaskTitleTests(BaseTestCase):
     def test_update_title_success(self):
         """Title is updated and returned."""
         task = self.create_task('Old Title')
-        response = self.client.patch(f'/api/tasks/{task.id}/title/', {
+        response = self.client.patch(f'/api/tasks/{task.id}/', {
             'title': 'New Title'
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -145,7 +147,7 @@ class UpdateTaskTitleTests(BaseTestCase):
     def test_update_title_other_users_task(self):
         """Cannot update another user's task title."""
         task = self.create_task(user=self.other_user)
-        response = self.client.patch(f'/api/tasks/{task.id}/title/', {
+        response = self.client.patch(f'/api/tasks/{task.id}/', {
             'title': 'Hacked Title'
         })
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -155,7 +157,7 @@ class UpdateTaskDescriptionTests(BaseTestCase):
     def test_update_description_success(self):
         """Description is updated and returned."""
         task = self.create_task()
-        response = self.client.patch(f'/api/tasks/{task.id}/description/', {
+        response = self.client.patch(f'/api/tasks/{task.id}/', {
             'description': 'New description'
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -164,7 +166,7 @@ class UpdateTaskDescriptionTests(BaseTestCase):
     def test_update_description_other_users_task(self):
         """Cannot update another user's task description."""
         task = self.create_task(user=self.other_user)
-        response = self.client.patch(f'/api/tasks/{task.id}/description/', {
+        response = self.client.patch(f'/api/tasks/{task.id}/', {
             'description': 'Hacked'
         })
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -174,7 +176,7 @@ class UpdateTaskDeadlineTests(BaseTestCase):
     def test_update_deadline_success(self):
         """Deadline is updated and returned."""
         task = self.create_task()
-        response = self.client.patch(f'/api/tasks/{task.id}/deadline/', {
+        response = self.client.patch(f'/api/tasks/{task.id}/', {
             'deadline': '2026-12-31T00:00:00'
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -183,7 +185,7 @@ class UpdateTaskDeadlineTests(BaseTestCase):
     def test_clear_deadline(self):
         """Sending empty deadline clears it."""
         task = self.create_task()
-        response = self.client.patch(f'/api/tasks/{task.id}/deadline/', {
+        response = self.client.patch(f'/api/tasks/{task.id}/', {
             'deadline': ''
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -192,24 +194,20 @@ class UpdateTaskDeadlineTests(BaseTestCase):
 
 class ToggleTaskTests(BaseTestCase):
     def test_toggle_task_completes_it(self):
-        """Toggling incomplete task marks it complete."""
         task = self.create_task()
-        self.assertFalse(task.completed)
-        response = self.client.patch(f'/api/tasks/{task.id}/toggle/')
+        response = self.client.patch(f'/api/tasks/{task.id}/', {'completed': True})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(response.data['completed'])
 
     def test_toggle_task_uncompletes_it(self):
-        """Toggling complete task marks it incomplete."""
         task = self.create_task()
         task.completed = True
         task.save()
-        response = self.client.patch(f'/api/tasks/{task.id}/toggle/')
+        response = self.client.patch(f'/api/tasks/{task.id}/', {'completed': False})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertFalse(response.data['completed'])
 
     def test_toggle_other_users_task(self):
-        """Cannot toggle another user's task."""
         task = self.create_task(user=self.other_user)
-        response = self.client.patch(f'/api/tasks/{task.id}/toggle/')
+        response = self.client.patch(f'/api/tasks/{task.id}/', {'completed': True})
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

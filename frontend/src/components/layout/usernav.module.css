@@ -254,3 +254,145 @@
   border: 2px solid white !important;
   box-shadow: 0 0 4px rgba(0,0,0,0.4) !important;
 }
+
+/* ── Add these to usernav.module.css ── */
+
+.avatarRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 4px 0;
+}
+
+/* wrap existing .avatar button — add position relative */
+.avatar {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.levelBadge {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  color: white;
+  font-size: 0.55rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--bg-primary);
+}
+
+.xpInfo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.xpLabelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.levelLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.streak {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 0.65rem;
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+.xpBarWrap {
+  height: 3px;
+  background: rgba(128,128,128,0.2);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  outline: 1px solid var(--border-accent);
+}
+
+.xpBar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+  border-radius: var(--radius-full);
+  transition: width 600ms cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 6px var(--accent-primary);
+}
+
+.xpText {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  color: var(--text-muted);
+}
+
+/* ── Drawer XP section ── */
+.drawerXp {
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.drawerXpLabelRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.drawerXpLabel {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--accent-primary);
+}
+
+.drawerStreak {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: #f59e0b;
+  font-weight: 600;
+}
+
+.drawerXpBarWrap {
+  height: 5px;
+  background: rgba(128,128,128,0.2);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  outline: 1px solid var(--border-accent);
+}
+
+.drawerXpBar {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+  border-radius: var(--radius-full);
+  transition: width 600ms cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 8px var(--accent-primary);
+}
+
+.drawerXpSub {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+/* update drawerRole to show star icon */
+.drawerRole {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}

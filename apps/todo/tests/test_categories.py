@@ -15,7 +15,7 @@ def create_category(user, name='work', icon='💼'):
 class GetCategoryTests(APITestCase):
     def setUp(self):
         self.user = create_user()
-        self.url = reverse('get_category')  # update if name differs
+        self.url = '/api/categories/'    # was reverse('get_category')
         self.client.force_authenticate(user=self.user)
 
     def test_get_categories_empty(self):
@@ -41,7 +41,7 @@ class GetCategoryTests(APITestCase):
 class AddCategoryTests(APITestCase):
     def setUp(self):
         self.user = create_user()
-        self.url = reverse('add_category')  # update if name differs
+        self.url = '/api/categories/'    # was reverse('add_category')
         self.client.force_authenticate(user=self.user)
 
     def test_add_category_success(self):
@@ -69,19 +69,23 @@ class AddCategoryTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_add_multiple_categories(self):
+        # level 1 allows 2 categories
         self.client.post(self.url, {'name': 'work', 'icon': '💼'})
-        self.client.post(self.url, {'name': 'personal', 'icon': '🏠'})
+        response = self.client.post(self.url, {'name': 'personal', 'icon': '🏠'})
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Category.objects.filter(owner=self.user).count(), 2)
 
 
 class UpdateCategoryTests(APITestCase):
     def setUp(self):
         self.user = create_user()
-        self.cat = create_category(self.user)
+        self.cat = create_category(self.user)  # ← add this
         self.client.force_authenticate(user=self.user)
 
     def get_url(self, cat_id):
-        return reverse('update_category', kwargs={'cat_id': cat_id})
+        return f'/api/categories/{cat_id}/'  # ← not reverse()
+
+
 
     def test_update_name(self):
         response = self.client.patch(self.get_url(self.cat.id), {'name': 'personal'})
@@ -121,11 +125,11 @@ class UpdateCategoryTests(APITestCase):
 class DeleteCategoryTests(APITestCase):
     def setUp(self):
         self.user = create_user()
-        self.cat = create_category(self.user)
+        self.cat = create_category(self.user)  # ← add this
         self.client.force_authenticate(user=self.user)
 
     def get_url(self, cat_id):
-        return reverse('delete_category', kwargs={'cat_id': cat_id})
+        return f'/api/categories/{cat_id}/'  # ← not reverse(
 
     def test_delete_own_category(self):
         response = self.client.delete(self.get_url(self.cat.id))

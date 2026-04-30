@@ -6,8 +6,10 @@ from django.shortcuts import get_object_or_404
 from datetime import datetime, timezone as dt_timezone
 from .serializers import TodoSerializer, CategorySerializer, StickyNoteSerializer
 from .models import Todo, Category, StickyNotes
+from apps.accounts.models import UserProfile
 
-# ── Helpers ────────────────────────────────────────────────────
+# ── Helpers ────────────────────────────────────────────────────────────────────
+
 def resolve_category(value, user):
     if not value:
         return None
@@ -22,13 +24,78 @@ def parse_deadline(value):
         return None
     return datetime.fromisoformat(value).replace(tzinfo=dt_timezone.utc)
 
-# ── Auth ───────────────────────────────────────────────────────
+def get_profile(user):
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+    return profile
+
+def check_limit(profile, resource):
+    """
+    Returns (allowed: bool, message: str | None)
+    resource is 'tasks', 'categories', or 'notes'
+    """
+    limits = profile.get_limits()
+    limit  = limits.get(resource)
+    if limit is None:
+        return True, None  # unlimited
+
+    user = profile.user
+    if resource == 'tasks':
+        count = Todo.objects.filter(owner=user).count()
+    elif resource == 'categories':
+        count = Category.objects.filter(owner=user).count()
+    elif resource == 'notes':
+        count = StickyNotes.objects.filter(owner=user).count()
+    else:
+        return True, None
+
+    if count >= limit:
+        next_level = profile.level + 1
+        from apps.accounts.models import LEVEL_CONFIG, MAX_LEVEL
+        if profile.level < MAX_LEVEL:
+            next_cfg   = LEVEL_CONFIG[next_level]
+            needed_xp  = next_cfg['xp'] - profile.xp
+            return False, (
+                f'You\'ve reached your Level {profile.level} limit of {limit} {resource}. '
+                f'Earn {needed_xp} more XP to reach Level {next_level} and unlock more!'
+            )
+        return False, f'You\'ve reached the maximum {resource} limit.'
+
+    return True, None
+
+
+# ── Auth ───────────────────────────────────────────────────────────────────────
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def me(request):
-    return Response({'username': request.user.username})
+    from apps.accounts.models import LEVEL_CONFIG, MAX_LEVEL
+    profile = get_profile(request.user)
+    limits  = profile.get_limits()
+    next_level_xp = None
+    if profile.level < MAX_LEVEL:
+        next_level_xp = LEVEL_CONFIG[profile.level + 1]['xp']
 
-# ── Tasks ──────────────────────────────────────────────────────
+    return Response({
+        'username':      request.user.username,
+        'xp':            profile.xp,
+        'level':         profile.level,
+        'streak':        profile.streak,
+        'next_level_xp': next_level_xp,
+        'limits': {
+            'tasks':      limits['tasks'],
+            'categories': limits['categories'],
+            'notes':      limits['notes'],
+        },
+        'counts': {
+            'tasks':      Todo.objects.filter(owner=request.user).count(),
+            'categories': Category.objects.filter(owner=request.user).count(),
+            'notes':      StickyNotes.objects.filter(owner=request.user).count(),
+        },
+    })
+
+
+# ── Tasks ──────────────────────────────────────────────────────────────────────
+
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def tasks(request):
@@ -62,6 +129,11 @@ def tasks(request):
     if Todo.objects.filter(title=title, owner=request.user).exists():
         return Response({'detail': 'Task already exists'}, status=status.HTTP_409_CONFLICT)
 
+    profile = get_profile(request.user)
+    allowed, message = check_limit(profile, 'tasks')
+    if not allowed:
+        return Response({'detail': message, 'limit_reached': True}, status=status.HTTP_403_FORBIDDEN)
+
     task = Todo.objects.create(
         title=title,
         owner=request.user,
@@ -85,12 +157,16 @@ def task_detail(request, task_id):
         return Response(status=status.HTTP_204_NO_CONTENT)
 
     # PATCH
+    was_completed = task.completed
+    xp_result     = None
+
     if 'title' in request.data:
         task.title = request.data['title']
     if 'description' in request.data:
         task.description = request.data['description']
     if 'completed' in request.data:
-        task.completed = request.data['completed']
+        val = request.data['completed']
+        task.completed = val if isinstance(val, bool) else str(val).lower() == 'true'
     if 'deadline' in request.data:
         task.deadline = parse_deadline(request.data['deadline'])
     if 'category' in request.data:
@@ -100,10 +176,25 @@ def task_detail(request, task_id):
     if 'pinned' in request.data:
         task.pinned = request.data['pinned']
     task.save()
-    return Response(TodoSerializer(task).data)
+
+    # XP logic — only when completion state changes
+    if 'completed' in request.data:
+        profile = get_profile(request.user)
+        if task.completed and not was_completed:
+            xp_result = profile.award_xp(task)
+        elif not task.completed and was_completed:
+            profile.deduct_xp()
+            xp_result = {'xp_gained': -5, 'total_xp': profile.xp, 'leveled_up': False}
+
+    data = TodoSerializer(task).data
+    if xp_result:
+        data['xp_result'] = xp_result
+
+    return Response(data)
 
 
-# ── Categories ─────────────────────────────────────────────────
+# ── Categories ─────────────────────────────────────────────────────────────────
+
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def categories(request):
@@ -111,11 +202,16 @@ def categories(request):
         cats = Category.objects.filter(owner=request.user)
         return Response(CategorySerializer(cats, many=True).data)
 
-    # POST
     name = request.data.get('name', '').strip()
     icon = request.data.get('icon', '🏷️').strip()
     if not name:
         return Response({'detail': 'Name is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    profile = get_profile(request.user)
+    allowed, message = check_limit(profile, 'categories')
+    if not allowed:
+        return Response({'detail': message, 'limit_reached': True}, status=status.HTTP_403_FORBIDDEN)
+
     cat = Category.objects.create(name=name, icon=icon, owner=request.user)
     return Response(CategorySerializer(cat).data, status=status.HTTP_201_CREATED)
 
@@ -131,7 +227,6 @@ def category_detail(request, cat_id):
         cat.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    # PATCH
     cat.name = request.data.get('name', cat.name)
     if request.data.get('icon'):
         cat.icon = request.data['icon']
@@ -139,7 +234,8 @@ def category_detail(request, cat_id):
     return Response(CategorySerializer(cat).data)
 
 
-# ── Sticky Notes ───────────────────────────────────────────────
+# ── Sticky Notes ───────────────────────────────────────────────────────────────
+
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def notes(request):
@@ -147,10 +243,15 @@ def notes(request):
         n = StickyNotes.objects.filter(owner=request.user)
         return Response(StickyNoteSerializer(n, many=True).data)
 
-    # POST
     content = request.data.get('note', '').strip()
     if not content:
         return Response({'detail': 'Content is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    profile = get_profile(request.user)
+    allowed, message = check_limit(profile, 'notes')
+    if not allowed:
+        return Response({'detail': message, 'limit_reached': True}, status=status.HTTP_403_FORBIDDEN)
+
     note = StickyNotes.objects.create(note=content, owner=request.user)
     return Response(StickyNoteSerializer(note).data, status=status.HTTP_201_CREATED)
 
@@ -164,7 +265,7 @@ def note_detail(request, pk):
         note.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    # PATCH
-    note.note = request.data.get('note', note.note)
+    note.note  = request.data.get('note', note.note)
+    note.color = request.data.get('color', note.color)
     note.save()
     return Response(StickyNoteSerializer(note).data)

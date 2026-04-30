@@ -10,6 +10,7 @@ import UserNav from '@/components/layout/usernav';
 import styles from './home.module.css';
 import { ClockAlert, Menu, X, NotebookPen, LayoutList, CalendarDays } from 'lucide-react';
 import SessionGuard from '@/components/layout/sessionguard';
+import LevelUpToast from '@/components/layout/leveluptoast';
 
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -18,6 +19,7 @@ export default function Dashboard() {
 
   return (
     <SessionGuard>
+      <LevelUpToast />
       <div className={styles.layout}>
 
         {sidebarOpen && (
