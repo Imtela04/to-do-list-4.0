@@ -4,12 +4,12 @@ import styles from './greetings.module.css';
 import { isToday } from 'date-fns';
 import { PenLine } from 'lucide-react';
 
-function getTimeGreeting() {
+function getTimeGreeting(allDone) {
   const h = new Date().getHours();
   if (h < 12) return 'Good morning';
   if (h < 17) return 'Good afternoon';
   if (h < 21) return 'Good evening';
-  return 'Good night';
+  return allDone ? 'Good night' : 'Good evening';  // ← evening if tasks remain
 }
 
 function getMotivation(completedCount, totalCount) {
@@ -40,6 +40,7 @@ export default function Greeting() {
   const todayTasks  = state.tasks.filter(t => t.deadline && isToday(new Date(t.deadline)));
   const completed   = todayTasks.filter(t => t.completed).length;
   const total       = todayTasks.length;
+  const allDone = total > 0 && completed === total;
 
 
   const handleSave = () => {
@@ -50,7 +51,7 @@ export default function Greeting() {
   return (
     <div className={styles.greeting}>
       <div className={styles.topLine}>
-        <span className={styles.timeGreeting}>{getTimeGreeting()},</span>
+        <span className={styles.timeGreeting}>{getTimeGreeting(allDone)},</span>
         {editing ? (
           <span className={styles.nameEdit}>
             <input

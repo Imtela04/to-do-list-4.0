@@ -62,7 +62,7 @@
   flex-shrink: 0;
 }
 
-.sortTrigger {
+.sortTrigger, .todayBtn {
   display: flex;
   align-items: center;
   gap: 5px;
@@ -76,7 +76,7 @@
   transition: all var(--transition-fast);
   white-space: nowrap;
 }
-.sortTrigger:hover,
+.sortTrigger:hover, .todayBtn:hover,
 .sortTriggerOpen {
   border-color: var(--accent-primary);
   color: var(--accent-primary);
@@ -286,3 +286,11 @@
   flex-shrink: 0;
 }
 .clearDate:hover { color: var(--text-primary); }
+
+
+
+.todayActive {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: #fff;
+}

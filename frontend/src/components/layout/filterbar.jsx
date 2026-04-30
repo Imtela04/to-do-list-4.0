@@ -76,6 +76,30 @@ export default function FilterBar() {
           )}
         </div>
 
+        <button
+          className={`${styles.todayBtn} ${filter.deadlineDay ? styles.todayActive : ''}`}
+          onClick={() => {
+            if (filter.deadlineDay) {
+              dispatch({ type: 'SET_FILTER', payload: { deadlineDay: null } });
+            } else {
+              const today = new Date();
+              dispatch({
+                type: 'SET_FILTER',
+                payload: {
+                  deadlineDay: {
+                    year:  today.getFullYear(),
+                    month: today.getMonth(),
+                    day:   today.getDate(),
+                  },
+                },
+              });
+            }
+          }}
+        >
+          today
+        </button>
+
+
         {/* Sort dropdown */}
         <div className={styles.sortWrap} ref={sortRef}>
           <button
