@@ -5,7 +5,7 @@ import { toggleTask, deleteTask, updateTask } from '@/api/services';
 import styles from './taskcard.module.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { Pin, PinOff, Trash, Hourglass, SquarePen, CalendarPlus, Hourglass } from 'lucide-react';
+import { Pin, PinOff, Trash, SquarePen, CalendarPlus, Hourglass } from 'lucide-react';
 
 const PRIORITY_MAP = {
   low:      { color: '#6ab4ff', label: 'Low' },
