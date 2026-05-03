@@ -329,3 +329,8 @@
   background: var(--accent-primary);
   color: white !important;
 }
+
+.pomodoroDrawer {
+  width: 280px; /* slightly narrower than notes drawer */
+  padding: 16px;
+}

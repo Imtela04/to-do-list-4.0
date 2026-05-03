@@ -11,12 +11,14 @@ import styles from './home.module.css';
 import { ClockAlert, Menu, X, NotebookPen, LayoutList, CalendarDays } from 'lucide-react';
 import SessionGuard from '@/components/layout/sessionguard';
 import LevelUpToast from '@/components/layout/leveluptoast';
+import Pomodoro from '../components/widgets/pomodoro';
+import { Timer } from 'lucide-react';
 
 export default function Dashboard() {
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [notesOpen, setNotesOpen]     = useState(false);
-  const [view, setView]               = useState('list'); // 'list' | 'calendar'
-
+  const [sidebarOpen, setSidebarOpen]     = useState(false);
+  const [notesOpen, setNotesOpen]         = useState(false);
+  const [view, setView]                   = useState('list'); // 'list' | 'calendar'
+  const [pomodoroOpen, setPomodoroOpen ]  = useState(false);
   return (
     <SessionGuard>
       <LevelUpToast />
@@ -66,11 +68,19 @@ export default function Dashboard() {
                 >
                   <CalendarDays size={16} />
                 </button>
+                <button
+                  className={`${styles.viewBtn} ${pomodoroOpen ? styles.viewBtnActive : ''}`}
+                  onClick={() => setPomodoroOpen(o => !o)}
+                  title="Pomodoro timer"
+                >
+                  <Timer size={16} />
+                </button>
               </div>
 
               <button className={styles.notesToggle} onClick={() => setNotesOpen(o => !o)}>
                 <NotebookPen size={18} />
               </button>
+
             </div>
           </header>
 
@@ -93,6 +103,15 @@ export default function Dashboard() {
             <StickyNotes />
           </div>
         </aside>
+
+        {pomodoroOpen && (
+          <>
+            <div className={styles.overlay} onClick={() => setPomodoroOpen(false)} />
+            <aside className={`${styles.notesDrawer} ${styles.pomodoroDrawer} ${pomodoroOpen ? styles.notesDrawerOpen : ''}`}>
+              <Pomodoro onClose={() => setPomodoroOpen(false)} />
+            </aside>
+          </>
+        )}
 
       </div>
     </SessionGuard>
