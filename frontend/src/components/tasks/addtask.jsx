@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
 
-import { createTask } from '@/api/services';
+import { createTask, getCategories } from '@/api/services';
 import { useDraft } from '@/hooks/useDraft';
 import styles from './addtask.module.css';
 import DatePicker from 'react-datepicker';
@@ -12,17 +13,24 @@ const PRIORITIES = ['low', 'medium', 'high', 'critical'];
 const DRAFT_KEY  = 'draft_task';
 
 export default function AddTask({ open, setOpen }) {
-  // const { state, dispatch }     = useApp();
-  const categories = useAppStore(s => s.categories);
-  const addTask    = useAppStore(s => s.addTask);
+  const queryClient = useQueryClient();
+  const limits      = useAppStore(s => s.limits);
+  const level       = useAppStore(s => s.level);
 
-  const { save, load, clear }   = useDraft(DRAFT_KEY);
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn:  async () => {
+      const res = await getCategories();
+      return res.data;
+    },
+  });
+
+  const { save, load, clear } = useDraft(DRAFT_KEY);
   const [form, setForm] = useState({
     title: '', description: '', priority: '', category: '',
     due_date: null, due_time: null, timed: false,
   });
-  const [loading, setLoading]   = useState(false);
-  const [hasDraft, setHasDraft] = useState(!!load());
+  const [hasDraft, setHasDraft]     = useState(!!load());
   const [limitError, setLimitError] = useState(null);
 
   useEffect(() => {
@@ -47,38 +55,44 @@ export default function AddTask({ open, setOpen }) {
     });
   };
 
-  const handleSubmit = async () => {
-    if (!form.title.trim()) return;
-    setLoading(true);
-    setLimitError(null);
-    try {
-      let deadline = '';
-      if (form.due_date) {
-        const d = new Date(form.due_date);
-        if (form.timed && form.due_time) {
-          d.setHours(form.due_time.getHours(), form.due_time.getMinutes(), 0, 0);
-        } else {
-          d.setHours(23, 59, 0, 0);
-        }
-        deadline = d.toISOString();
-      }
-      const res = await createTask({
-        title:       form.title,
-        description: form.description,
-        priority:    form.priority,
-        category:    form.category,
-        deadline,
-      });
-      addTask(res.data);
+  const addMutation = useMutation({
+    mutationFn: (payload) => createTask(payload),
+    onSuccess: (res) => {
+      queryClient.setQueryData(['tasks'], old => [res.data, ...(old ?? [])]);
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
       clear();
       setHasDraft(false);
       setOpen(false);
-    } catch (err) {
+    },
+    onError: (err) => {
       if (err.response?.status === 403 && err.response?.data?.limit_reached) {
         setLimitError(err.response.data.detail);
       }
+    },
+  });
+
+  const handleSubmit = () => {
+    if (!form.title.trim()) return;
+    setLimitError(null);
+
+    let deadline = '';
+    if (form.due_date) {
+      const d = new Date(form.due_date);
+      if (form.timed && form.due_time) {
+        d.setHours(form.due_time.getHours(), form.due_time.getMinutes(), 0, 0);
+      } else {
+        d.setHours(23, 59, 0, 0);
+      }
+      deadline = d.toISOString();
     }
-    setLoading(false);
+
+    addMutation.mutate({
+      title:       form.title,
+      description: form.description,
+      priority:    form.priority,
+      category:    form.category,
+      deadline,
+    });
   };
 
   const handleCancel  = () => setOpen(false);
@@ -187,8 +201,12 @@ export default function AddTask({ open, setOpen }) {
 
       <div className={styles.actions}>
         <button className={styles.cancelBtn} onClick={handleCancel}>Cancel</button>
-        <button className={styles.submitBtn} onClick={handleSubmit} disabled={loading || !form.title.trim()}>
-          {loading ? '...' : 'Add Task'}
+        <button
+          className={styles.submitBtn}
+          onClick={handleSubmit}
+          disabled={addMutation.isPending || !form.title.trim()}
+        >
+          {addMutation.isPending ? '...' : 'Add Task'}
         </button>
       </div>
     </div>

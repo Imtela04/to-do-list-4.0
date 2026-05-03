@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { format, isPast, isToday, addDays } from 'date-fns';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
 
-import { toggleTask, deleteTask, updateTask as updateTaskApi } from '@/api/services';
+import { toggleTask, deleteTask, updateTask as updateTaskApi, getCategories } from '@/api/services';
 import styles from './taskcard.module.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -61,34 +62,97 @@ function useCountdown(deadline, timed) {
 }
 
 export default function TaskCard({ task }) {
-  const categories  = useAppStore(s => s.categories);
-  const updateTask  = useAppStore(s => s.updateTask);
-  const deleteTask_ = useAppStore(s => s.deleteTask);
-  const addTask     = useAppStore(s => s.addTask);
+  const queryClient = useQueryClient();
   const updateXp    = useAppStore(s => s.updateXp);
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn:  async () => {
+      const res = await getCategories();
+      return res.data;
+    },
+  });
 
   const [deleting, setDeleting]           = useState(false);
   const [editing, setEditing]             = useState(false);
   const [expanded, setExpanded]           = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmUncomplete, setConfirmUncomplete] = useState(false);
   const [editForm, setEditForm] = useState({
     title: '', description: '', priority: '', category: '', deadline: null, timed: false,
   });
-  const [confirmUncomplete, setConfirmUncomplete] = useState(false);
 
-  const cardRef  = useRef(null);
-  const category = task.category;
-  const priority = PRIORITY_MAP[task.priority] || PRIORITY_MAP.low;
-  const dueDate  = task.deadline ? new Date(task.deadline) : null;
+  const cardRef    = useRef(null);
+  const category   = task.category;
+  const priority   = PRIORITY_MAP[task.priority] || PRIORITY_MAP.low;
+  const dueDate    = task.deadline ? new Date(task.deadline) : null;
   const isDueToday = dueDate && isToday(dueDate);
-  const isTimed = dueDate &&
-    !(dueDate.getHours() === 23 && dueDate.getMinutes() === 59);
-  const isOverdue = dueDate && !task.completed && (
+  const isTimed    = dueDate && !(dueDate.getHours() === 23 && dueDate.getMinutes() === 59);
+  const isOverdue  = dueDate && !task.completed && (
     isTimed ? isPast(dueDate) : isPast(dueDate) && !isToday(dueDate)
   );
 
   const countdown = useCountdown(task.deadline, isTimed);
 
+  // ── Shared optimistic update helper ───────────────────────
+  const optimisticUpdate = (updatedTask) => {
+    queryClient.setQueryData(['tasks'], old =>
+      old?.map(t => t.id === updatedTask.id ? updatedTask : t) ?? []
+    );
+  };
+
+  const rollback = (ctx) => {
+    queryClient.setQueryData(['tasks'], ctx.previous);
+  };
+
+  const makeOptimisticMutation = (mutationFn, getUpdated) => ({
+    mutationFn,
+    onMutate: async (vars) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      const previous = queryClient.getQueryData(['tasks']);
+      optimisticUpdate(getUpdated(vars));
+      return { previous };
+    },
+    onError:   (err, vars, ctx) => rollback(ctx),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
+  });
+
+  // ── Mutations ──────────────────────────────────────────────
+  const toggleMutation = useMutation({
+    mutationFn: ({ completed }) => toggleTask(task.id, completed),
+    onMutate: async ({ completed }) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      const previous = queryClient.getQueryData(['tasks']);
+      optimisticUpdate({ ...task, completed });
+      return { previous };
+    },
+    onSuccess: (res) => {
+      if (res.data.xp_result) updateXp(res.data.xp_result);
+    },
+    onError:   (err, vars, ctx) => rollback(ctx),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
+  });
+
+  const updateMutation = useMutation(
+    makeOptimisticMutation(
+      ({ changes }) => updateTaskApi(task.id, changes),
+      ({ updated }) => updated,
+    )
+  );
+
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteTask(task.id),
+    onMutate: async () => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      const previous = queryClient.getQueryData(['tasks']);
+      queryClient.setQueryData(['tasks'], old => old?.filter(t => t.id !== task.id) ?? []);
+      return { previous };
+    },
+    onError:   (err, vars, ctx) => rollback(ctx),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
+  });
+
+  // ── Handlers ───────────────────────────────────────────────
   useEffect(() => {
     if (!expanded) return;
     const handler = (e) => {
@@ -102,7 +166,6 @@ export default function TaskCard({ task }) {
   const handleCardClick = (e) => {
     if (e.target.closest('button, input, textarea, select')) return;
     if (editing) return;
-
     if (clickTimer.current) {
       clearTimeout(clickTimer.current);
       clickTimer.current = null;
@@ -115,62 +178,42 @@ export default function TaskCard({ task }) {
     }
   };
 
-  const handleMoveToNextDay = async (e) => {
+  const handleMoveToNextDay = (e) => {
     e.stopPropagation();
     const tomorrow = addDays(new Date(), 1);
     tomorrow.setHours(23, 59, 0, 0);
     const newDeadline = tomorrow.toISOString();
-    const updated = { ...task, deadline: newDeadline };
-    updateTask(updated);
-    try { await updateTaskApi(task.id, { deadline: newDeadline }); }
-    catch { updateTask(task); }
+    updateMutation.mutate({
+      changes: { deadline: newDeadline },
+      updated: { ...task, deadline: newDeadline },
+    });
   };
 
-  const handleToggle = async (e) => {
+  const handleToggle = (e) => {
     e.stopPropagation();
-
     if (!task.completed) {
-      const updated = { ...task, completed: true };
-      updateTask(updated);
-      try {
-        const res = await toggleTask(task.id, true);
-        if (res.data.xp_result) updateXp(res.data.xp_result);
-      } catch {
-        updateTask(task);
-      }
-      return;
+      toggleMutation.mutate({ completed: true });
+    } else {
+      setConfirmUncomplete(true);
     }
-
-    setConfirmUncomplete(true);
   };
 
-  const handleConfirmUncomplete = async () => {
+  const handleConfirmUncomplete = () => {
     setConfirmUncomplete(false);
-    const updated = { ...task, completed: false };
-    updateTask(updated);
-    try {
-      const res = await toggleTask(task.id, false);
-      if (res.data.xp_result) updateXp(res.data.xp_result);
-    } catch {
-      updateTask(task);
-    }
+    toggleMutation.mutate({ completed: false });
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     setDeleting(true);
-    setTimeout(async () => {
-      deleteTask_(task.id);
-      try { await deleteTask(task.id); }
-      catch { addTask(task); }
-    }, 300);
+    setTimeout(() => deleteMutation.mutate(), 300);
   };
 
-  const handlePin = async (e) => {
+  const handlePin = (e) => {
     e.stopPropagation();
-    const updated = { ...task, pinned: !task.pinned };
-    updateTask(updated);
-    try { await updateTaskApi(task.id, { pinned: !task.pinned }); }
-    catch { updateTask(task); }
+    updateMutation.mutate({
+      changes: { pinned: !task.pinned },
+      updated: { ...task, pinned: !task.pinned },
+    });
   };
 
   const openEdit = (e) => {
@@ -190,7 +233,7 @@ export default function TaskCard({ task }) {
     setEditing(true);
   };
 
-  const handleSave = async (e) => {
+  const handleSave = (e) => {
     e?.stopPropagation();
     const changes = {};
 
@@ -213,9 +256,7 @@ export default function TaskCard({ task }) {
           ? categories.find(c => c.id === parseInt(editForm.category)) || task.category
           : task.category,
       };
-      updateTask(updated);
-      try { await updateTaskApi(task.id, changes); }
-      catch { updateTask(task); }
+      updateMutation.mutate({ changes, updated });
     }
 
     setEditing(false);
@@ -229,9 +270,7 @@ export default function TaskCard({ task }) {
       className={`${styles.card} ${task.completed ? styles.completed : ''} ${deleting ? styles.deleting : ''} ${expanded ? styles.cardExpanded : ''}`}
       onClick={handleCardClick}
     >
-      {task.pinned && (
-        <span className={styles.pinnedBadge}><Pin size={13} /></span>
-      )}
+      {task.pinned && <span className={styles.pinnedBadge}><Pin size={13} /></span>}
       <div className={styles.left}>
         <button className={styles.toggle} onClick={handleToggle}>
           {task.completed ? '✓' : <span className={styles.activeDot} />}
@@ -278,7 +317,6 @@ export default function TaskCard({ task }) {
                 <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
               ))}
             </select>
-
             <div className={styles.dateTimeRow}>
               <DatePicker
                 selected={editForm.deadline}
@@ -331,14 +369,12 @@ export default function TaskCard({ task }) {
             >
               {task.title}
             </p>
-
             {dueDate && !task.completed && (
               <div className={`${styles.countdown} ${isOverdue ? styles.countdownOverdue : ''}`}>
                 <Hourglass size={11} />
                 {isOverdue ? `Overdue · ${format(dueDate, 'MMM d')}` : countdown}
               </div>
             )}
-
             <div className={`${styles.tooltip} ${expanded ? styles.tooltipExpanded : ''}`}>
               {category && <span>{category.icon} {category.name}</span>}
               {task.priority && <span>🎯 {priority.label}</span>}
@@ -365,19 +401,11 @@ export default function TaskCard({ task }) {
           {task.pinned ? <PinOff size={14} /> : <Pin size={14} />}
         </button>
         {isOverdue && (
-          <button
-            className={`${styles.actionBtn} ${styles.nextDayBtn}`}
-            onClick={handleMoveToNextDay}
-            title="Move to tomorrow"
-          >
+          <button className={`${styles.actionBtn} ${styles.nextDayBtn}`} onClick={handleMoveToNextDay} title="Move to tomorrow">
             <CalendarPlus size={14} />
           </button>
         )}
-        <button
-          className={styles.actionBtn}
-          onClick={editing ? handleSave : openEdit}
-          title={editing ? 'Save' : 'Edit'}
-        >
+        <button className={styles.actionBtn} onClick={editing ? handleSave : openEdit} title={editing ? 'Save' : 'Edit'}>
           <SquarePen size={14} />
         </button>
         <button

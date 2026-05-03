@@ -39,7 +39,11 @@ function applyThemeToDom(mode, customColors) {
 
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme]   = useState('dark');
+  const [theme, setTheme] = useState(() => {
+    const saved = localStorage.getItem('theme') || 'dark';
+    applyThemeToDom(saved, DEFAULT_CUSTOM);
+    return saved;
+  });  
   const [custom, setCustom] = useState(DEFAULT_CUSTOM);
   const saveTimer           = useRef(null);
   const loaded              = useRef(false);  // prevent double-fire in StrictMode
@@ -71,6 +75,7 @@ export function ThemeProvider({ children }) {
 
   const applyTheme = useCallback((mode, customColors, persist = true) => {
     const colors = customColors ?? custom;
+    localStorage.setItem('theme', mode);  // ← add this
     setTheme(mode);
     setCustom(colors);
     applyThemeToDom(mode, colors);

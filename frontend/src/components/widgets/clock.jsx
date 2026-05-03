@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import styles from './clock.module.css';
+import { useQuery } from '@tanstack/react-query';  // add this
+import { useTasksQuery } from '@/hooks/useTasksQuery';          // add this
+
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June',
@@ -10,7 +13,7 @@ export default function ClockWidget() {
   const [now, setNow]           = useState(new Date());
   const [calMonth, setCalMonth] = useState(new Date());
 
-  const tasks         = useAppStore(s => s.tasks);
+  const { data: tasks = [] } = useTasksQuery();
   const deadlineDay   = useAppStore(s => s.filter.deadlineDay);
   const setFilter     = useAppStore(s => s.setFilter);
 

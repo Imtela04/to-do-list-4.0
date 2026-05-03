@@ -1,30 +1,29 @@
 import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
-import { createTask, deleteTask, toggleTask } from '@/api/services';
+import { createTask, deleteTask, toggleTask, getTasks } from '@/api/services';
 import { ChevronLeft, ChevronRight, Plus, X, Check, Lock } from 'lucide-react';
 import styles from './calendarview.module.css';
 
 const MONTHS = ['January','February','March','April','May','June',
   'July','August','September','October','November','December'];
 const DAYS_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-
 const PRIORITY_COLORS = {
   low: '#6ab4ff', medium: '#6affdc', high: '#ffaa6a', critical: '#ff6a6a',
 };
 
 export default function CalendarView() {
-  const tasks      = useAppStore(s => s.tasks);
-  const limits     = useAppStore(s => s.limits);
-  const level      = useAppStore(s => s.level);
-  const addTask    = useAppStore(s => s.addTask);
-  const updateTask = useAppStore(s => s.updateTask);
-  const deleteTask_ = useAppStore(s => s.deleteTask);
+  const queryClient = useQueryClient();
+  const limits      = useAppStore(s => s.limits);
+  const level       = useAppStore(s => s.level);
 
-  const [calMonth, setCalMonth]   = useState(new Date());
+  const { data: tasks = [] } = useTasksQuery();
+
+  const [calMonth, setCalMonth]       = useState(new Date());
   const [selectedDay, setSelectedDay] = useState(null);
-  const [newTitle, setNewTitle]   = useState('');
-  const [adding, setAdding]       = useState(false);
-  const [limitError, setLimitError] = useState(null);
+  const [newTitle, setNewTitle]       = useState('');
+  const [adding, setAdding]           = useState(false);
+  const [limitError, setLimitError]   = useState(null);
 
   const year  = calMonth.getFullYear();
   const month = calMonth.getMonth();
@@ -35,7 +34,7 @@ export default function CalendarView() {
     Array.from({ length: daysInMonth }, (_, i) => i + 1)
   );
 
-  const today = new Date();
+  const today       = new Date();
   const tasksLocked = limits.tasks !== null && tasks.length >= limits.tasks;
 
   const tasksByDay = {};
@@ -50,6 +49,47 @@ export default function CalendarView() {
 
   const selectedTasks = selectedDay ? (tasksByDay[selectedDay.day] || []) : [];
 
+  const addMutation = useMutation({
+    mutationFn: (payload) => createTask(payload),
+    onSuccess: (res) => {
+      queryClient.setQueryData(['tasks'], old => [res.data, ...(old ?? [])]);
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      setNewTitle('');
+      setAdding(false);
+    },
+    onError: (err) => {
+      if (err.response?.status === 403 && err.response?.data?.limit_reached) {
+        setLimitError(err.response.data.detail);
+      }
+    },
+  });
+
+  const toggleMutation = useMutation({
+    mutationFn: ({ id, completed }) => toggleTask(id, completed),
+    onMutate: async ({ id, completed }) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      const previous = queryClient.getQueryData(['tasks']);
+      queryClient.setQueryData(['tasks'], old =>
+        old?.map(t => t.id === id ? { ...t, completed } : t) ?? []
+      );
+      return { previous };
+    },
+    onError:   (err, vars, ctx) => queryClient.setQueryData(['tasks'], ctx.previous),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => deleteTask(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      const previous = queryClient.getQueryData(['tasks']);
+      queryClient.setQueryData(['tasks'], old => old?.filter(t => t.id !== id) ?? []);
+      return { previous };
+    },
+    onError:   (err, vars, ctx) => queryClient.setQueryData(['tasks'], ctx.previous),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
+  });
+
   const handleDayClick = (day) => {
     if (!day) return;
     if (selectedDay?.day === day && selectedDay?.month === month && selectedDay?.year === year) {
@@ -61,50 +101,21 @@ export default function CalendarView() {
     setAdding(false);
   };
 
-  const handleAddTask = async () => {
+  const handleAddTask = () => {
     if (!newTitle.trim() || !selectedDay) return;
-    if (tasksLocked) {
-      setLimitError(`Reach Level ${level + 1} to add more tasks`);
-      return;
-    }
+    if (tasksLocked) { setLimitError(`Reach Level ${level + 1} to add more tasks`); return; }
     setLimitError(null);
     const deadline = new Date(selectedDay.year, selectedDay.month, selectedDay.day, 23, 59, 0, 0);
-    const payload  = { title: newTitle.trim(), deadline: deadline.toISOString(), completed: false };
-    try {
-      const res = await createTask(payload);
-      addTask(res.data);
-    } catch (err) {
-      if (err.response?.status === 403 && err.response?.data?.limit_reached) {
-        setLimitError(err.response.data.detail);
-      }
-    }
-    setNewTitle('');
-    setAdding(false);
-  };
-
-  const handleToggle = async (task) => {
-    const updated = { ...task, completed: !task.completed };
-    updateTask(updated);
-    try { await toggleTask(task.id, !task.completed); }
-    catch { updateTask(task); }
-  };
-
-  const handleDelete = async (task) => {
-    deleteTask_(task.id);
-    try { await deleteTask(task.id); }
-    catch { addTask(task); }
+    addMutation.mutate({ title: newTitle.trim(), deadline: deadline.toISOString(), completed: false });
   };
 
   const prevMonth = () => setCalMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1));
   const nextMonth = () => setCalMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1));
   const goToday   = () => { setCalMonth(new Date()); setSelectedDay(null); };
-
   const isToday    = (day) => day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
   const isSelected = (day) => selectedDay?.day === day && selectedDay?.month === month && selectedDay?.year === year;
 
   return (
-    // JSX unchanged — just replace state.level with level in the two locked button labels
-    // and state.tasks / state.limits are gone, replaced by tasks / limits above
     <div className={styles.wrapper}>
       <div className={`${styles.grid} ${selectedDay ? styles.gridNarrow : ''}`}>
         <div className={styles.header}>
@@ -159,19 +170,28 @@ export default function CalendarView() {
             {selectedTasks.length === 0 && !adding && <p className={styles.panelEmpty}>No tasks for this day</p>}
             {selectedTasks.map(task => (
               <div key={task.id} className={`${styles.panelTask} ${task.completed ? styles.panelTaskDone : ''}`}>
-                <button className={styles.panelToggle} onClick={() => handleToggle(task)}>
+                <button className={styles.panelToggle} onClick={() => toggleMutation.mutate({ id: task.id, completed: !task.completed })}>
                   {task.completed ? <Check size={11} /> : <span className={styles.toggleDot} />}
                 </button>
                 <span className={styles.panelTaskTitle}>{task.title}</span>
                 {task.priority && <span className={styles.panelPrio} style={{ background: PRIORITY_COLORS[task.priority] }} />}
-                <button className={styles.panelDelete} onClick={() => handleDelete(task)}><X size={11} /></button>
+                <button className={styles.panelDelete} onClick={() => deleteMutation.mutate(task.id)}><X size={11} /></button>
               </div>
             ))}
-            {limitError && (
-              <div className={styles.limitError}><Lock size={12} /><span>{limitError}</span></div>
-            )}
+            {limitError && <div className={styles.limitError}><Lock size={12} /><span>{limitError}</span></div>}
             {adding ? (
-              <div className={styles.addRow}>{/* unchanged */}</div>
+              <div className={styles.addRow}>
+                <input
+                  autoFocus
+                  className={styles.addInput}
+                  value={newTitle}
+                  onChange={e => setNewTitle(e.target.value)}
+                  onKeyDown={e => { if (e.key === 'Enter') handleAddTask(); if (e.key === 'Escape') setAdding(false); }}
+                  placeholder="Task title..."
+                />
+                <button className={styles.addConfirm} onClick={handleAddTask}><Check size={13} /></button>
+                <button className={styles.addCancel} onClick={() => setAdding(false)}><X size={13} /></button>
+              </div>
             ) : (
               <button
                 className={`${styles.addBtn} ${tasksLocked ? styles.addBtnLocked : ''}`}

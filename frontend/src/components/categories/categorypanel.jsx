@@ -1,56 +1,77 @@
 import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '@/store/useAppStore';
-import { createCategory, deleteCategory } from '@/api/services';
+import { createCategory, deleteCategory, getCategories, getTasks } from '@/api/services';
 import styles from './categorypanel.module.css';
 import { Lock } from 'lucide-react';
-
+import { useTasksQuery } from '../../hooks/useTasksQuery';
+import { useCategoriesQuery } from '../../hooks/useCategoriesQuery';
 const ICONS = ['💼','🏠','💪','💰','📚','📌','🎯','🛒','✈️','🎮'];
 
 export default function Categories() {
-  const tasks         = useAppStore(s => s.tasks);
-  const categories    = useAppStore(s => s.categories);
-  const limits        = useAppStore(s => s.limits);
-  const level         = useAppStore(s => s.level);
+  const queryClient    = useQueryClient();
+  const limits         = useAppStore(s => s.limits);
+  const level          = useAppStore(s => s.level);
   const activeCategory = useAppStore(s => s.filter.category);
-  const setFilter     = useAppStore(s => s.setFilter);
-  const addCategory   = useAppStore(s => s.addCategory);
-  const deletecat     = useAppStore(s => s.deleteCategory);
+  const setFilter      = useAppStore(s => s.setFilter);
+
+  const { data: tasks = [] } = useTasksQuery();
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ['categories'],
+    queryFn:  async () => { const res = await getCategories(); return res.data; },
+  });
 
   const [adding, setAdding]         = useState(false);
   const [name, setName]             = useState('');
   const [icon, setIcon]             = useState(ICONS[0]);
   const [limitError, setLimitError] = useState(null);
 
-  const categoriesLocked = limits.categories !== null &&
-    categories.length >= limits.categories;
+  const categoriesLocked = limits.categories !== null && categories.length >= limits.categories;
+  const toggleFilter = (val) => setFilter({ category: activeCategory === val ? null : val });
 
-  const toggleFilter = (val) => setFilter({
-    category: activeCategory === val ? null : val,
-  });
-
-  const handleAdd = async () => {
-    if (!name.trim()) return;
-    setLimitError(null);
-    const optimistic = { id: Date.now(), name: name.trim(), icon };
-    addCategory(optimistic);
-    setName(''); setAdding(false);
-    try {
-      const res = await createCategory({ name: name.trim(), icon });
-      deletecat(optimistic.id);
-      addCategory(res.data);
-    } catch (err) {
-      deletecat(optimistic.id);
+  const addMutation = useMutation({
+    mutationFn: (payload) => createCategory(payload),
+    onMutate: async (payload) => {
+      await queryClient.cancelQueries({ queryKey: ['categories'] });
+      const previous = queryClient.getQueryData(['categories']);
+      const optimistic = { id: Date.now(), ...payload };
+      queryClient.setQueryData(['categories'], old => [...(old ?? []), optimistic]);
+      return { previous };
+    },
+    onError: (err, vars, ctx) => {
+      queryClient.setQueryData(['categories'], ctx.previous);
       if (err.response?.status === 403 && err.response?.data?.limit_reached) {
         setAdding(true);
         setLimitError(err.response.data.detail);
       }
-    }
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['categories'] }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => deleteCategory(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['categories'] });
+      const previous = queryClient.getQueryData(['categories']);
+      queryClient.setQueryData(['categories'], old => old?.filter(c => c.id !== id) ?? []);
+      return { previous };
+    },
+    onError: (err, vars, ctx) => queryClient.setQueryData(['categories'], ctx.previous),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['categories'] }),
+  });
+
+  const handleAdd = () => {
+    if (!name.trim()) return;
+    setLimitError(null);
+    addMutation.mutate({ name: name.trim(), icon });
+    setName('');
+    setAdding(false);
   };
 
-  const handleDelete = async (e, id) => {
+  const handleDelete = (e, id) => {
     e.stopPropagation();
-    deletecat(id);
-    try { await deleteCategory(id); } catch {}
+    deleteMutation.mutate(id);
   };
 
   const uncategorisedCount = tasks.filter(t => !t.category).length;
@@ -62,10 +83,7 @@ export default function Categories() {
         <button
           className={`${styles.addBtn} ${categoriesLocked ? styles.locked : ''}`}
           onClick={() => {
-            if (categoriesLocked) {
-              setLimitError(`Reach Level ${level + 1} to unlock more categories`);
-              return;
-            }
+            if (categoriesLocked) { setLimitError(`Reach Level ${level + 1} to unlock more categories`); return; }
             setAdding(v => !v);
             setLimitError(null);
           }}
@@ -75,10 +93,7 @@ export default function Categories() {
       </div>
 
       {limitError && !adding && (
-        <div className={styles.limitError}>
-          <Lock size={12} />
-          <span>{limitError}</span>
-        </div>
+        <div className={styles.limitError}><Lock size={12} /><span>{limitError}</span></div>
       )}
 
       {adding && (
@@ -93,19 +108,13 @@ export default function Categories() {
           />
           <div className={styles.colorRow}>
             {ICONS.map(i => (
-              <button
-                key={i}
-                className={`${styles.dot} ${icon === i ? styles.selected : ''}`}
-                onClick={() => setIcon(i)}
-              >
+              <button key={i} className={`${styles.dot} ${icon === i ? styles.selected : ''}`} onClick={() => setIcon(i)}>
                 {i}
               </button>
             ))}
           </div>
           <div className={styles.formActions}>
-            <button className={styles.cancelFormBtn} onClick={() => { setAdding(false); setName(''); setLimitError(null); }}>
-              Cancel
-            </button>
+            <button className={styles.cancelFormBtn} onClick={() => { setAdding(false); setName(''); setLimitError(null); }}>Cancel</button>
             <button className={styles.saveBtn} onClick={handleAdd}>Add</button>
           </div>
         </div>

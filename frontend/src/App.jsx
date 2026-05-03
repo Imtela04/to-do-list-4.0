@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-// import { AppProvider } from '@/context/AppContext';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import Dashboard from '@/pages/home';
 import Login from '@/pages/login';
 import Register from '@/pages/register';
@@ -8,14 +9,23 @@ import { ThemeProvider } from './context/ThemeContext';
 import { useDataLoader } from '@/hooks/useDataLoader';
 import { useAppStore } from '@/store/useAppStore';
 
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime:        1000 * 60 * 5,  // data stays fresh for 5 minutes
+      retry:            1,              // retry failed requests once
+      refetchOnWindowFocus: false,      // don't refetch just because user switched tabs
+    },
+  },
+});
 
 function PrivateRoute({ children }) {
-  const token = localStorage.getItem("authToken");
+  const token = localStorage.getItem('authToken');
   if (!token) return <Navigate to="/login" />;
   try {
-    const payload = JSON.parse(atob(token.split(".")[1]));
+    const payload = JSON.parse(atob(token.split('.')[1]));
     if (payload.exp * 1000 < Date.now()) {
-      localStorage.removeItem("authToken");
+      localStorage.removeItem('authToken');
       return <Navigate to="/login" />;
     }
   } catch {
@@ -34,13 +44,17 @@ export default function App() {
   const resetState = useAppStore(s => s.resetState);
 
   useEffect(() => {
-    const handleAuthChange = () => {resetState(); setAuthKey(k => k + 1);};
+    const handleAuthChange = () => {
+      queryClient.clear();  // ← wipe the React Query cache on logout
+      resetState();
+      setAuthKey(k => k + 1);
+    };
     window.addEventListener('auth-change', handleAuthChange);
     return () => window.removeEventListener('auth-change', handleAuthChange);
   }, []);
 
   return (
-    // key on both providers forces full unmount+remount on auth change
+    <QueryClientProvider client={queryClient}>
       <ThemeProvider key={authKey}>
         <AppLoader key={authKey}>
           <Routes>
@@ -51,5 +65,7 @@ export default function App() {
           </Routes>
         </AppLoader>
       </ThemeProvider>
+      <ReactQueryDevtools initialIsOpen={false} />
+    </QueryClientProvider>
   );
 }

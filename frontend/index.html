@@ -4,6 +4,18 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>what-do</title>
+    <script>
+      getTheme()
+        .then(res => {
+          const { mode, custom_colors } = res.data;
+          const colors = custom_colors || DEFAULT_CUSTOM;
+          localStorage.setItem('theme', mode || 'dark');  // ← add this
+          setTheme(mode || 'dark');
+          setCustom(colors);
+          applyThemeToDom(mode || 'dark', colors);
+        })
+        .catch(() => {});
+    </script>
   </head>
   <body>
     <div id="root"></div>

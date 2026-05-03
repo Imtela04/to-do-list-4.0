@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
-
-import { createStickyNote, updateStickyNote, deleteStickyNote } from '@/api/services';
+import { createStickyNote, updateStickyNote, deleteStickyNote, getStickyNotes } from '@/api/services';
 import styles from './stickynote.module.css';
 import { PenLine, Trash, PenBox, Lock } from 'lucide-react';
 import { useDraft } from '../../hooks/useDraft';
@@ -9,13 +9,15 @@ import { useDraft } from '../../hooks/useDraft';
 const NOTE_COLORS = ['#7c6aff', '#ff6a9e', '#6affdc', '#ffaa6a', '#6ab4ff', '#c96aff'];
 
 export default function StickyNotes() {
-  const stickyNotes = useAppStore(s => s.stickyNotes);
+  const queryClient = useQueryClient();
   const limits      = useAppStore(s => s.limits);
   const counts      = useAppStore(s => s.counts);
   const level       = useAppStore(s => s.level);
-  const addNote     = useAppStore(s => s.addNote);
-  const updateNote  = useAppStore(s => s.updateNote);
-  const deleteNote  = useAppStore(s => s.deleteNote);
+
+  const { data: stickyNotes = [] } = useQuery({
+    queryKey: ['notes'],
+    queryFn:  async () => { const res = await getStickyNotes(); return res.data; },
+  });
 
   const [adding, setAdding]         = useState(false);
   const [newColor, setNewColor]     = useState(NOTE_COLORS[0]);
@@ -83,35 +85,60 @@ export default function StickyNotes() {
     }
   };
 
-  const handleAdd = async () => {
+  const addMutation = useMutation({
+    mutationFn: (payload) => createStickyNote(payload),
+    onSuccess: (res) => {
+      queryClient.setQueryData(['notes'], old => [...(old ?? []), res.data]);
+      queryClient.invalidateQueries({ queryKey: ['notes'] });
+      setAdding(false);
+      clearDraft();
+      setHasNoteDraft(false);
+    },
+    onError: (err) => {
+      if (err.response?.status === 403 && err.response?.data?.limit_reached) {
+        setLimitError(err.response.data.detail);
+      }
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, content }) => updateStickyNote(id, { note: content }),
+    onMutate: async ({ id, content }) => {
+      await queryClient.cancelQueries({ queryKey: ['notes'] });
+      const previous = queryClient.getQueryData(['notes']);
+      queryClient.setQueryData(['notes'], old =>
+        old?.map(n => n.id === id ? { ...n, note: content } : n) ?? []
+      );
+      return { previous };
+    },
+    onError:   (err, vars, ctx) => queryClient.setQueryData(['notes'], ctx.previous),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['notes'] }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id) => deleteStickyNote(id),
+    onMutate: async (id) => {
+      await queryClient.cancelQueries({ queryKey: ['notes'] });
+      const previous = queryClient.getQueryData(['notes']);
+      queryClient.setQueryData(['notes'], old => old?.filter(n => n.id !== id) ?? []);
+      return { previous };
+    },
+    onError:   (err, vars, ctx) => queryClient.setQueryData(['notes'], ctx.previous),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['notes'] }),
+  });
+
+  const handleAdd = () => {
     const content = addEditorRef.current?.innerHTML || '';
     const hasContent = content.trim() || content.includes('<img');
     if (!hasContent) return;
     setLimitError(null);
-    try {
-      const res = await createStickyNote({ note: content, color: newColor });
-      addNote({ ...res.data, color: newColor });
-      setAdding(false);
-      clearDraft();
-      setHasNoteDraft(false);
-    } catch (err) {
-      if (err.response?.status === 403 && err.response?.data?.limit_reached) {
-        setLimitError(err.response.data.detail);
-      }
-    }
+    addMutation.mutate({ note: content, color: newColor });
   };
 
-  const handleSaveEdit = async (note) => {
+  const handleSaveEdit = (note) => {
     const content = editEditorRef.current?.innerHTML || '';
-    const updated = { ...note, note: content };
-    updateNote(updated);
+    updateMutation.mutate({ id: note.id, content });
     setEditingId(null);
-    try { await updateStickyNote(note.id, { note: content }); } catch {}
-  };
-
-  const handleDelete = async (id) => {
-    deleteNote(id);
-    try { await deleteStickyNote(id); } catch {}
   };
 
   return (
@@ -132,28 +159,19 @@ export default function StickyNotes() {
           </button>
         )}
       </div>
+
       {adding && (
-        <div
-          className={`${styles.noteForm} animate-scale-in`}
-          style={{ borderLeft: `4px solid ${newColor}` }}
-        >
-          {limitError && (
-            <div className={styles.limitBanner}>
-              <Lock size={12} />
-              <span>{limitError}</span>
-            </div>
-          )}
+        <div className={`${styles.noteForm} animate-scale-in`} style={{ borderLeft: `4px solid ${newColor}` }}>
+          {limitError && <div className={styles.limitBanner}><Lock size={12} /><span>{limitError}</span></div>}
           {hasNoteDraft && (
             <div className={styles.draftBadge}>
               <span>📝 Draft restored</span>
               <button className={styles.discardDraft} onClick={() => {
-                clearDraft();
-                setHasNoteDraft(false);
+                clearDraft(); setHasNoteDraft(false);
                 if (addEditorRef.current) addEditorRef.current.innerHTML = '';
               }}>Discard</button>
             </div>
           )}
-
           <div
             ref={addEditorRef}
             className={styles.textarea}
@@ -172,11 +190,7 @@ export default function StickyNotes() {
               <button
                 key={c}
                 className={`${styles.colorDot} ${newColor === c ? styles.colorSelected : ''}`}
-                style={{
-                  background: c,
-                  outline: newColor === c ? '2px solid white' : 'none',
-                  transform: newColor === c ? 'scale(1.25)' : 'scale(1)',
-                }}
+                style={{ background: c, outline: newColor === c ? '2px solid white' : 'none', transform: newColor === c ? 'scale(1.25)' : 'scale(1)' }}
                 onClick={() => setNewColor(c)}
               />
             ))}
@@ -188,38 +202,20 @@ export default function StickyNotes() {
       )}
 
       <div className={styles.notes}>
-        {stickyNotes.length === 0 && !adding && (
-          <p className={styles.empty}>no notes :(</p>
-        )}
+        {stickyNotes.length === 0 && !adding && <p className={styles.empty}>no notes :(</p>}
         {stickyNotes.map((note, i) => (
           <div
             key={note.id}
             className={`${styles.note} ${expandedId === note.id ? styles.noteExpanded : ''}`}
             style={{ '--note-color': note.color, animationDelay: `${i * 50}ms` }}
-            onClick={() => {
-              if (editingId !== note.id) {
-                setExpandedId(prev => prev === note.id ? null : note.id);
-              }
-            }}
+            onClick={() => { if (editingId !== note.id) setExpandedId(prev => prev === note.id ? null : note.id); }}
           >
             <div className={styles.noteAccent} />
-
             {editingId === note.id ? (
-              <div
-                ref={editEditorRef}
-                className={styles.noteEditArea}
-                contentEditable
-                suppressContentEditableWarning
-                onPaste={handlePaste}
-                onClick={e => e.stopPropagation()}
-              />
+              <div ref={editEditorRef} className={styles.noteEditArea} contentEditable suppressContentEditableWarning onPaste={handlePaste} onClick={e => e.stopPropagation()} />
             ) : (
-              <p
-                className={styles.noteText}
-                dangerouslySetInnerHTML={{ __html: note.note }}
-              />
+              <p className={styles.noteText} dangerouslySetInnerHTML={{ __html: note.note }} />
             )}
-
             <div className={styles.noteActions}>
               <button
                 className={styles.noteBtn}
@@ -231,10 +227,7 @@ export default function StickyNotes() {
               >
                 {editingId === note.id ? '✓' : <span><PenBox size={12} /></span>}
               </button>
-              <button
-                className={styles.noteBtn}
-                onClick={(e) => { e.stopPropagation(); handleDelete(note.id); }}
-              >
+              <button className={styles.noteBtn} onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(note.id); }}>
                 <Trash size={12} />
               </button>
             </div>

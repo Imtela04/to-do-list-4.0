@@ -7,13 +7,8 @@ const savedFilter = (() => {
 
 export const useAppStore = create((set, get) => ({
   // ── State ──────────────────────────────────────────────────
-  tasks:       [],
-  categories:  [],
-  stickyNotes: [],
   username:    '',
   greeting:    localStorage.getItem('userName') || '',
-  loading:     { tasks: false, categories: false, notes: false },
-  error:       null,
 
   // XP / gamification
   xp:             0,
@@ -40,22 +35,6 @@ export const useAppStore = create((set, get) => ({
     deadlineDay: null,
   },
 
-  // ── Task actions ───────────────────────────────────────────
-  setTasks:      (tasks)   => set({ tasks }),
-  addTask:       (task)    => set(s => ({ tasks: [task, ...s.tasks] })),
-  updateTask:    (task)    => set(s => ({ tasks: s.tasks.map(t => t.id === task.id ? task : t) })),
-  deleteTask:    (id)      => set(s => ({ tasks: s.tasks.filter(t => t.id !== id) })),
-
-  // ── Category actions ───────────────────────────────────────
-  setCategories:   (categories) => set({ categories }),
-  addCategory:     (cat)        => set(s => ({ categories: [...s.categories, cat] })),
-  deleteCategory:  (id)         => set(s => ({ categories: s.categories.filter(c => c.id !== id) })),
-
-  // ── Note actions ───────────────────────────────────────────
-  setNotes:    (stickyNotes) => set({ stickyNotes }),
-  addNote:     (note)        => set(s => ({ stickyNotes: [...s.stickyNotes, note] })),
-  updateNote:  (note)        => set(s => ({ stickyNotes: s.stickyNotes.map(n => n.id === note.id ? note : n) })),
-  deleteNote:  (id)          => set(s => ({ stickyNotes: s.stickyNotes.filter(n => n.id !== id) })),
 
   // ── Filter actions ─────────────────────────────────────────
   setFilter: (payload) => set(s => {
@@ -94,14 +73,11 @@ export const useAppStore = create((set, get) => ({
   clearLevelUp: () => set({ levelUpEvent: null }),
 
   setGreeting: (greeting) => set({ greeting }),
-  setLoading:  (payload)  => set(s => ({ loading: { ...s.loading, ...payload } })),
-  setError:    (error)    => set({ error }),
 
   resetState: () => {
     localStorage.removeItem('taskFilter');
     localStorage.removeItem('userName');
     set({
-      tasks: [], categories: [], stickyNotes: [],
       username: '', greeting: '', xp: 0, level: 1,
       streak: 0, nextLevelXp: 50,
       limits: { tasks: 5, categories: 2, notes: 0 },
@@ -116,8 +92,8 @@ export const useAppStore = create((set, get) => ({
   },
 
   // ── Derived: filtered + sorted tasks ──────────────────────
-  getFilteredTasks: () => {
-    const { tasks, filter } = get();
+  getFilteredTasks: (tasks=[]) => {
+    const { filter } = get();
     return tasks
       .filter(task => {
         const { search, category, priority, status, dateFrom, dateTo, deadlineDay } = filter;

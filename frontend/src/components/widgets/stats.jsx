@@ -1,15 +1,12 @@
-// import { useAppStore } from '../../store/useAppStore';
-
-import { useAppStore } from '@/store/useAppStore';
+import { useQuery } from '@tanstack/react-query';
+import { useTasksQuery } from '@/hooks/useTasksQuery';  // add this
 import styles from '@/components/widgets/stats.module.css';
 
 const RADIUS = 28;
 const CIRC   = 2 * Math.PI * RADIUS;
 
 export default function StatsWidget() {
-  // const { state } = useApp();
-  const tasks = useAppStore(s => s.tasks);
-
+  const { data: tasks = [] } = useTasksQuery();
 
   const total     = tasks.length;
   const completed = tasks.filter(t => t.completed).length;

@@ -13,8 +13,9 @@ const MODES = {
 const SESSION_CYCLE = ['work', 'short', 'work', 'short', 'work', 'short', 'work', 'long'];
 
 export default function Pomodoro({ onClose }) {
-  const tasks           = useAppStore(s => s.tasks);
   const pomodoroComplete = useAppStore(s => s.pomodoroComplete);
+
+  const { data: tasks = [] } = useTasksQuery();
 
   const [modeIndex, setModeIndex] = useState(0);
   const [timeLeft, setTimeLeft]   = useState(MODES.work.duration);

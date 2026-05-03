@@ -3,6 +3,8 @@ import { useAppStore } from '@/store/useAppStore';
 import styles from './greetings.module.css';
 import { isToday } from 'date-fns';
 import { PenLine } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';  // add this
+import { useTasksQuery } from '@/hooks/useTasksQuery';          // add this
 
 function getTimeGreeting(allDone) {
   const h = new Date().getHours();
@@ -25,7 +27,7 @@ function getMotivation(completedCount, totalCount) {
 export default function Greeting() {
   const greeting    = useAppStore(s => s.greeting);
   const username    = useAppStore(s => s.username);
-  const tasks       = useAppStore(s => s.tasks);
+  const { data: tasks = [] } = useTasksQuery();
   const setGreeting = useAppStore(s => s.setGreeting);
 
   const [editing, setEditing]     = useState(false);
