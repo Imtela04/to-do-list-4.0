@@ -38,18 +38,21 @@ class ThemeView(APIView):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def me(request):
-    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    profile = UserProfile.objects.get_or_create(user=request.user)
     limits = profile.get_limits()
     next_level_xp = None
     if profile.level < MAX_LEVEL:
-        next_level_xp = LEVEL_CONFIG[profile.level + 1]['xp']
-
+        next_level_xp = LEVEL_CONFIG[profile.level +1]['xp']
+    
+    today = timezone.now().date()
+    pomodoros_today = profile.pomodoros_today if profile.last_pomodoro_date == today else 0
     return Response({
-        'username':     request.user.username,
-        'xp':           profile.xp,
-        'level':        profile.level,
-        'streak':       profile.streak,
-        'next_level_xp': next_level_xp,
+        'username':        request.user.username,
+        'xp':              profile.xp,
+        'level':           profile.level,
+        'streak':          profile.streak,
+        'next_level_xp':   next_level_xp,
+        'pomodoros_today': pomodoros_today,  # ← add
         'limits': {
             'tasks':      limits['tasks'],
             'categories': limits['categories'],
@@ -121,3 +124,10 @@ def register(request):
             status=status.HTTP_201_CREATED
         )
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def complete_pomodoro(request):
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
+    result = profile.complete_pomodoro()
+    return Response(result)

@@ -31,3 +31,6 @@ export const deleteStickyNote = (id) => client.delete(`/sticky-notes/${id}/`);
 // themes
 export const getTheme  = ()           => client.get('/user/theme/');
 export const saveTheme = (payload)    => client.post('/user/theme/', payload);
+
+// pomodoro
+export const completePomodoro = () => client.post('/auth/pomodoro/complete/');

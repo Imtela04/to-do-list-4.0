@@ -37,6 +37,8 @@ class UserProfile(models.Model):
     level               = models.IntegerField(default=1)
     streak              = models.IntegerField(default=0)
     last_completed_date = models.DateField(null=True, blank=True)
+    pomodoros_today     = models.IntegerField(default=0)
+    last_pomodoro_date  = models.DateField(null=True, blank=True)
 
     def __str__(self):
         return f'{self.user.username} profile'
@@ -97,3 +99,26 @@ class UserProfile(models.Model):
         self.xp = max(0, self.xp + XP_REWARDS['uncomplete'])
         self.level = calc_level(self.xp)
         self.save()
+    
+    def complete_pomodoro(self):
+        """Called when a 25-min session finishes. Resets daily count if needed."""
+        today = timezone.now().date()
+        if self.last_pomodoro_date != today:
+            self.pomodoros_today = 0 #reset for new day
+        self.pomodoros_today += 1
+        self.last_pomodoro_date = today
+
+        #award xp
+        old_level = self.level
+        self.xp = max(0, self.xp+5)
+        self.level = calc_level(self.xp)
+        self.save()
+
+        return {
+            'xp_gained':  5,
+            'total_xp':   self.xp,
+            'leveled_up': self.level > old_level,
+            'new_level':  self.level,
+            'streak':     self.streak,
+            'pomodoros_today': self.pomodoros_today,
+        }

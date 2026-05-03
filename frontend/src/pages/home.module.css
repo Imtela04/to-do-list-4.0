@@ -23,7 +23,7 @@
   display: flex;
   flex-direction: column;
   gap: 0;
-  flex-shrink: 0; /* clock, stats don't shrink */
+  flex-shrink: 0; 
 }
 
 .sideSection + .sideSection {
@@ -32,7 +32,7 @@
 
 .sideSectionGrow {
   flex: 1;
-  min-height: 0;        /* critical */
+  min-height: 0;
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--border-medium) transparent;

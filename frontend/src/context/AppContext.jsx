@@ -28,6 +28,7 @@ const initialState = {
     ...savedFilter,
     search:      '',
     deadlineDay: null,
+    pomodoros_today: 0
   },
   greeting: localStorage.getItem('userName') || '',
 
@@ -80,6 +81,7 @@ function reducer(state, action) {
         nextLevelXp: action.payload.next_level_xp,
         limits:      action.payload.limits,
         counts:      action.payload.counts,
+        pomodoros_today: action.payload.pomodoros_today ?? 0,
       };
 
     case 'UPDATE_XP': {
@@ -103,6 +105,17 @@ function reducer(state, action) {
         theme:    'dark',
         greeting: '',
       };
+    
+    case 'POMODORO_COMPLETE': {
+      const { xp_gained, total_xp, leveled_up, new_level, pomodoros_today } = action.payload;
+      return {
+        ...state,
+        xp:              total_xp,
+        level:           new_level ?? state.level,
+        pomodoros_today: pomodoros_today,
+        levelUpEvent:    leveled_up ? { newLevel: new_level } : state.levelUpEvent,
+      };
+    }
 
     default: return state;
   }
