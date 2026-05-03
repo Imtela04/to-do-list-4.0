@@ -63,35 +63,6 @@ def check_limit(profile, resource):
     return True, None
 
 
-# ── Auth ───────────────────────────────────────────────────────────────────────
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def me(request):
-    from apps.accounts.models import LEVEL_CONFIG, MAX_LEVEL
-    profile = get_profile(request.user)
-    limits  = profile.get_limits()
-    next_level_xp = None
-    if profile.level < MAX_LEVEL:
-        next_level_xp = LEVEL_CONFIG[profile.level + 1]['xp']
-
-    return Response({
-        'username':      request.user.username,
-        'xp':            profile.xp,
-        'level':         profile.level,
-        'streak':        profile.streak,
-        'next_level_xp': next_level_xp,
-        'limits': {
-            'tasks':      limits['tasks'],
-            'categories': limits['categories'],
-            'notes':      limits['notes'],
-        },
-        'counts': {
-            'tasks':      Todo.objects.filter(owner=request.user).count(),
-            'categories': Category.objects.filter(owner=request.user).count(),
-            'notes':      StickyNotes.objects.filter(owner=request.user).count(),
-        },
-    })
 
 
 # ── Tasks ──────────────────────────────────────────────────────────────────────

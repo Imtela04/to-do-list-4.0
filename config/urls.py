@@ -8,7 +8,7 @@ urlpatterns = [
     path('api/auth/login/',   TokenObtainPairView.as_view()),
     path('api/auth/refresh/', TokenRefreshView.as_view()),
     path('api/auth/',         include('apps.accounts.urls')),
-    path('api/',              include('apps.accounts.urls')),  # ← add this
+    path('api/',              include('apps.accounts.urls')),
     path('api/',              include('apps.todo.urls')),
     re_path(r'^(?!static/).*$', TemplateView.as_view(template_name='index.html')),
 ]

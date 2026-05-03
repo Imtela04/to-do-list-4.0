@@ -38,7 +38,7 @@ class ThemeView(APIView):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def me(request):
-    profile = UserProfile.objects.get_or_create(user=request.user)
+    profile, _ = UserProfile.objects.get_or_create(user=request.user)
     limits = profile.get_limits()
     next_level_xp = None
     if profile.level < MAX_LEVEL:
@@ -52,7 +52,7 @@ def me(request):
         'level':           profile.level,
         'streak':          profile.streak,
         'next_level_xp':   next_level_xp,
-        'pomodoros_today': pomodoros_today,  # ← add
+        'pomodoros_today': pomodoros_today,
         'limits': {
             'tasks':      limits['tasks'],
             'categories': limits['categories'],
