@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { format, isPast, isToday, addDays } from 'date-fns';
-import { useApp } from '@/context/AppContext';
-import { toggleTask, deleteTask, updateTask } from '@/api/services';
+import { useAppStore } from '../../store/useAppStore';
+
+import { toggleTask, deleteTask, updateTask as updateTaskApi } from '@/api/services';
 import styles from './taskcard.module.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -16,8 +17,6 @@ const PRIORITY_MAP = {
 
 const PRIORITIES = ['low', 'medium', 'high', 'critical'];
 
-// Countdown hook — ticks every second
-// Replace useCountdown entirely
 function useCountdown(deadline, timed) {
   const [remaining, setRemaining] = useState('');
 
@@ -29,19 +28,17 @@ function useCountdown(deadline, timed) {
       const now = new Date();
 
       if (!timed) {
-        // Compare calendar dates only
         const dueDay   = new Date(due.getFullYear(), due.getMonth(), due.getDate());
         const today    = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const diffDays = Math.round((dueDay - today) / 86400000);
 
-        if (diffDays < 0)       { setRemaining(null); return; } // overdue
+        if (diffDays < 0)        { setRemaining(null); return; }
         else if (diffDays === 0) setRemaining('due today');
         else if (diffDays === 1) setRemaining('due tomorrow');
         else                     setRemaining(`${diffDays}d`);
         return;
       }
 
-      // Timed — tick every second
       const diff = due - now;
       if (diff <= 0) { setRemaining(null); return; }
 
@@ -62,8 +59,14 @@ function useCountdown(deadline, timed) {
 
   return remaining;
 }
+
 export default function TaskCard({ task }) {
-  const { dispatch, state } = useApp();
+  const categories  = useAppStore(s => s.categories);
+  const updateTask  = useAppStore(s => s.updateTask);
+  const deleteTask_ = useAppStore(s => s.deleteTask);
+  const addTask     = useAppStore(s => s.addTask);
+  const updateXp    = useAppStore(s => s.updateXp);
+
   const [deleting, setDeleting]           = useState(false);
   const [editing, setEditing]             = useState(false);
   const [expanded, setExpanded]           = useState(false);
@@ -72,47 +75,35 @@ export default function TaskCard({ task }) {
     title: '', description: '', priority: '', category: '', deadline: null, timed: false,
   });
   const [confirmUncomplete, setConfirmUncomplete] = useState(false);
-  
-  const cardRef   = useRef(null);
-  const category  = task.category;
-  const priority  = PRIORITY_MAP[task.priority] || PRIORITY_MAP.low;
-  const dueDate   = task.deadline ? new Date(task.deadline) : null;
+
+  const cardRef  = useRef(null);
+  const category = task.category;
+  const priority = PRIORITY_MAP[task.priority] || PRIORITY_MAP.low;
+  const dueDate  = task.deadline ? new Date(task.deadline) : null;
   const isDueToday = dueDate && isToday(dueDate);
   const isTimed = dueDate &&
     !(dueDate.getHours() === 23 && dueDate.getMinutes() === 59);
   const isOverdue = dueDate && !task.completed && (
-    isTimed
-      ? isPast(dueDate)
-      : isPast(dueDate) && !isToday(dueDate)
+    isTimed ? isPast(dueDate) : isPast(dueDate) && !isToday(dueDate)
   );
 
-
-  // Then pass it to the hook
   const countdown = useCountdown(task.deadline, isTimed);
 
-  
-
-  // Collapse on outside click
   useEffect(() => {
     if (!expanded) return;
     const handler = (e) => {
-      if (cardRef.current && !cardRef.current.contains(e.target)) {
-        setExpanded(false);
-      }
+      if (cardRef.current && !cardRef.current.contains(e.target)) setExpanded(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [expanded]);
 
-  // Single vs double click handling
   const clickTimer = useRef(null);
   const handleCardClick = (e) => {
-    // Don't expand if clicking buttons or inputs
     if (e.target.closest('button, input, textarea, select')) return;
     if (editing) return;
 
     if (clickTimer.current) {
-      // Double click — collapse
       clearTimeout(clickTimer.current);
       clickTimer.current = null;
       setExpanded(false);
@@ -126,14 +117,13 @@ export default function TaskCard({ task }) {
 
   const handleMoveToNextDay = async (e) => {
     e.stopPropagation();
-    // Always move to tomorrow from TODAY, not +1 from the old deadline
     const tomorrow = addDays(new Date(), 1);
-    tomorrow.setHours(23, 59, 0, 0); // end of tomorrow
+    tomorrow.setHours(23, 59, 0, 0);
     const newDeadline = tomorrow.toISOString();
     const updated = { ...task, deadline: newDeadline };
-    dispatch({ type: 'UPDATE_TASK', payload: updated });
-    try { await updateTask(task.id, { deadline: newDeadline }); }
-    catch { dispatch({ type: 'UPDATE_TASK', payload: task }); }
+    updateTask(updated);
+    try { await updateTaskApi(task.id, { deadline: newDeadline }); }
+    catch { updateTask(task); }
   };
 
   const handleToggle = async (e) => {
@@ -141,101 +131,96 @@ export default function TaskCard({ task }) {
 
     if (!task.completed) {
       const updated = { ...task, completed: true };
-      dispatch({ type: 'UPDATE_TASK', payload: updated });
+      updateTask(updated);
       try {
         const res = await toggleTask(task.id, true);
-        if (res.data.xp_result) {
-          dispatch({ type: 'UPDATE_XP', payload: res.data.xp_result });
-        }
+        if (res.data.xp_result) updateXp(res.data.xp_result);
       } catch {
-        dispatch({ type: 'UPDATE_TASK', payload: task });
+        updateTask(task);
       }
       return;
     }
 
-    // if uncompleting, ask first
     setConfirmUncomplete(true);
   };
+
   const handleConfirmUncomplete = async () => {
     setConfirmUncomplete(false);
     const updated = { ...task, completed: false };
-    dispatch({ type: 'UPDATE_TASK', payload: updated });
+    updateTask(updated);
     try {
       const res = await toggleTask(task.id, false);
-      if (res.data.xp_result) {
-        dispatch({ type: 'UPDATE_XP', payload: res.data.xp_result });
-      }
+      if (res.data.xp_result) updateXp(res.data.xp_result);
     } catch {
-      dispatch({ type: 'UPDATE_TASK', payload: task });
+      updateTask(task);
     }
   };
-
 
   const handleDelete = async () => {
     setDeleting(true);
     setTimeout(async () => {
-      dispatch({ type: 'DELETE_TASK', payload: task.id });
+      deleteTask_(task.id);
       try { await deleteTask(task.id); }
-      catch { dispatch({ type: 'ADD_TASK', payload: task }); }
+      catch { addTask(task); }
     }, 300);
   };
 
   const handlePin = async (e) => {
     e.stopPropagation();
     const updated = { ...task, pinned: !task.pinned };
-    dispatch({ type: 'UPDATE_TASK', payload: updated });
-    try { await updateTask(task.id, { pinned: !task.pinned }); }
-    catch { dispatch({ type: 'UPDATE_TASK', payload: task }); }
+    updateTask(updated);
+    try { await updateTaskApi(task.id, { pinned: !task.pinned }); }
+    catch { updateTask(task); }
   };
 
   const openEdit = (e) => {
-      e.stopPropagation();
-      const existingDeadline = task.deadline ? new Date(task.deadline) : null;
-      setEditForm({
-          title:       task.title,           // ← pre-populate
-          description: task.description || '',
-          priority:    task.priority,
-          category:    task.category?.id?.toString() || '',
-          deadline:    existingDeadline,
-          timed: existingDeadline
-              ? !(existingDeadline.getHours() === 23 && existingDeadline.getMinutes() === 59)
-              : false,
-      });
-      setExpanded(true);
-      setEditing(true);
+    e.stopPropagation();
+    const existingDeadline = task.deadline ? new Date(task.deadline) : null;
+    setEditForm({
+      title:       task.title,
+      description: task.description || '',
+      priority:    task.priority,
+      category:    task.category?.id?.toString() || '',
+      deadline:    existingDeadline,
+      timed: existingDeadline
+        ? !(existingDeadline.getHours() === 23 && existingDeadline.getMinutes() === 59)
+        : false,
+    });
+    setExpanded(true);
+    setEditing(true);
   };
 
   const handleSave = async (e) => {
-      e?.stopPropagation();
-      const changes = {};
+    e?.stopPropagation();
+    const changes = {};
 
-      if (editForm.title.trim())             changes.title       = editForm.title.trim();
-      if (editForm.description.trim())       changes.description = editForm.description.trim();
-      if (editForm.priority)                 changes.priority    = editForm.priority;
-      if (editForm.category)                 changes.category    = parseInt(editForm.category);
+    if (editForm.title.trim())       changes.title       = editForm.title.trim();
+    if (editForm.description.trim()) changes.description = editForm.description.trim();
+    if (editForm.priority)           changes.priority    = editForm.priority;
+    if (editForm.category)           changes.category    = parseInt(editForm.category);
 
-      // fix: build deadline correctly BEFORE the API call
-      if (editForm.deadline) {
-          const d = new Date(editForm.deadline);
-          if (!editForm.timed) d.setHours(23, 59, 0, 0);
-          changes.deadline = d.toISOString();
-      }
+    if (editForm.deadline) {
+      const d = new Date(editForm.deadline);
+      if (!editForm.timed) d.setHours(23, 59, 0, 0);
+      changes.deadline = d.toISOString();
+    }
 
-      if (Object.keys(changes).length > 0) {
-          const updated = {
-              ...task,
-              ...changes,
-              category: editForm.category
-                  ? state.categories.find(c => c.id === parseInt(editForm.category)) || task.category
-                  : task.category,
-          };
-          dispatch({ type: 'UPDATE_TASK', payload: updated });
-          try { await updateTask(task.id, changes); }
-          catch { dispatch({ type: 'UPDATE_TASK', payload: task }); }
-      }
+    if (Object.keys(changes).length > 0) {
+      const updated = {
+        ...task,
+        ...changes,
+        category: editForm.category
+          ? categories.find(c => c.id === parseInt(editForm.category)) || task.category
+          : task.category,
+      };
+      updateTask(updated);
+      try { await updateTaskApi(task.id, changes); }
+      catch { updateTask(task); }
+    }
 
-      setEditing(false);
+    setEditing(false);
   };
+
   const set = (key, val) => setEditForm(f => ({ ...f, [key]: val }));
 
   return (
@@ -244,13 +229,9 @@ export default function TaskCard({ task }) {
       className={`${styles.card} ${task.completed ? styles.completed : ''} ${deleting ? styles.deleting : ''} ${expanded ? styles.cardExpanded : ''}`}
       onClick={handleCardClick}
     >
-      {/* Pin badge */}
       {task.pinned && (
-        <span className={styles.pinnedBadge}>
-          <Pin size={13} />
-        </span>
+        <span className={styles.pinnedBadge}><Pin size={13} /></span>
       )}
-      {/* Toggle button */}
       <div className={styles.left}>
         <button className={styles.toggle} onClick={handleToggle}>
           {task.completed ? '✓' : <span className={styles.activeDot} />}
@@ -293,7 +274,7 @@ export default function TaskCard({ task }) {
               onChange={e => set('category', e.target.value)}
             >
               <option value="">Category (unchanged)</option>
-              {state.categories.map(c => (
+              {categories.map(c => (
                 <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
               ))}
             </select>
@@ -351,17 +332,13 @@ export default function TaskCard({ task }) {
               {task.title}
             </p>
 
-            {/* Countdown — always visible when deadline exists */}
             {dueDate && !task.completed && (
               <div className={`${styles.countdown} ${isOverdue ? styles.countdownOverdue : ''}`}>
                 <Hourglass size={11} />
-                {isOverdue
-                  ? `Overdue · ${format(dueDate, 'MMM d')}`
-                  : countdown}
+                {isOverdue ? `Overdue · ${format(dueDate, 'MMM d')}` : countdown}
               </div>
             )}
 
-            {/* Details — shown on expand */}
             <div className={`${styles.tooltip} ${expanded ? styles.tooltipExpanded : ''}`}>
               {category && <span>{category.icon} {category.name}</span>}
               {task.priority && <span>🎯 {priority.label}</span>}
@@ -410,6 +387,7 @@ export default function TaskCard({ task }) {
           <Trash size={14} />
         </button>
       </div>
+
       {confirmDelete && (
         <div className={styles.confirmOverlay}>
           <p className={styles.confirmText}>Delete this task?</p>

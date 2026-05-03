@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useApp } from '@/context/AppContext';
+import { useAppStore } from '@/store/useAppStore';
 import { createCategory, deleteCategory } from '@/api/services';
 import styles from './categorypanel.module.css';
 import { Lock } from 'lucide-react';
@@ -7,34 +7,39 @@ import { Lock } from 'lucide-react';
 const ICONS = ['💼','🏠','💪','💰','📚','📌','🎯','🛒','✈️','🎮'];
 
 export default function Categories() {
-  const { state, dispatch } = useApp();
-  const [adding, setAdding]       = useState(false);
-  const [name, setName]           = useState('');
-  const [icon, setIcon]           = useState(ICONS[0]);
+  const tasks         = useAppStore(s => s.tasks);
+  const categories    = useAppStore(s => s.categories);
+  const limits        = useAppStore(s => s.limits);
+  const level         = useAppStore(s => s.level);
+  const activeCategory = useAppStore(s => s.filter.category);
+  const setFilter     = useAppStore(s => s.setFilter);
+  const addCategory   = useAppStore(s => s.addCategory);
+  const deletecat     = useAppStore(s => s.deleteCategory);
+
+  const [adding, setAdding]         = useState(false);
+  const [name, setName]             = useState('');
+  const [icon, setIcon]             = useState(ICONS[0]);
   const [limitError, setLimitError] = useState(null);
-  
-  const categoriesLocked = state.limits.categories !== null && 
-    state.categories.length >= state.limits.categories;
 
+  const categoriesLocked = limits.categories !== null &&
+    categories.length >= limits.categories;
 
-  const activeCategory = state.filter.category;
-  const setFilter = (val) => dispatch({
-    type: 'SET_FILTER',
-    payload: { category: activeCategory === val ? null : val },
+  const toggleFilter = (val) => setFilter({
+    category: activeCategory === val ? null : val,
   });
 
   const handleAdd = async () => {
     if (!name.trim()) return;
     setLimitError(null);
     const optimistic = { id: Date.now(), name: name.trim(), icon };
-    dispatch({ type: 'ADD_CATEGORY', payload: optimistic });
+    addCategory(optimistic);
     setName(''); setAdding(false);
     try {
       const res = await createCategory({ name: name.trim(), icon });
-      dispatch({ type: 'DELETE_CATEGORY', payload: optimistic.id });
-      dispatch({ type: 'ADD_CATEGORY', payload: res.data });
+      deletecat(optimistic.id);
+      addCategory(res.data);
     } catch (err) {
-      dispatch({ type: 'DELETE_CATEGORY', payload: optimistic.id }); // rollback
+      deletecat(optimistic.id);
       if (err.response?.status === 403 && err.response?.data?.limit_reached) {
         setAdding(true);
         setLimitError(err.response.data.detail);
@@ -44,24 +49,24 @@ export default function Categories() {
 
   const handleDelete = async (e, id) => {
     e.stopPropagation();
-    dispatch({ type: 'DELETE_CATEGORY', payload: id });
+    deletecat(id);
     try { await deleteCategory(id); } catch {}
   };
 
-  const uncategorisedCount = state.tasks.filter(t => !t.category).length;
+  const uncategorisedCount = tasks.filter(t => !t.category).length;
 
   return (
     <div className={styles.panel}>
       <div className={styles.header}>
         <span className={styles.title}>Categories</span>
-        <button 
+        <button
           className={`${styles.addBtn} ${categoriesLocked ? styles.locked : ''}`}
           onClick={() => {
             if (categoriesLocked) {
-              setLimitError(`Reach Level ${state.level + 1} to unlock more categories`);
+              setLimitError(`Reach Level ${level + 1} to unlock more categories`);
               return;
             }
-            setAdding(v => !v); 
+            setAdding(v => !v);
             setLimitError(null);
           }}
         >
@@ -69,15 +74,15 @@ export default function Categories() {
         </button>
       </div>
 
+      {limitError && !adding && (
+        <div className={styles.limitError}>
+          <Lock size={12} />
+          <span>{limitError}</span>
+        </div>
+      )}
 
       {adding && (
         <div className={`${styles.form} animate-scale-in`}>
-          {limitError && !adding && (
-            <div className={styles.limitError}>
-              <Lock size={12} />
-              <span>{limitError}</span>
-            </div>
-          )}
           <input
             autoFocus
             className={styles.input}
@@ -109,17 +114,17 @@ export default function Categories() {
       <div className={styles.list}>
         <div
           className={`${styles.item} ${!activeCategory && activeCategory !== 'uncategorised' ? styles.itemActive : ''}`}
-          onClick={() => dispatch({ type: 'SET_FILTER', payload: { category: null } })}
+          onClick={() => setFilter({ category: null })}
         >
           <span className={styles.itemIcon}>🗂️</span>
           <span className={styles.catName}>All tasks</span>
-          <span className={styles.count}>{state.tasks.length}</span>
+          <span className={styles.count}>{tasks.length}</span>
         </div>
 
         {uncategorisedCount > 0 && (
           <div
             className={`${styles.item} ${activeCategory === 'uncategorised' ? styles.itemActive : ''}`}
-            onClick={() => setFilter('uncategorised')}
+            onClick={() => toggleFilter('uncategorised')}
           >
             <span className={styles.itemIcon}>📂</span>
             <span className={styles.catName}>Uncategorised</span>
@@ -127,13 +132,13 @@ export default function Categories() {
           </div>
         )}
 
-        {state.categories.map(cat => {
-          const count = state.tasks.filter(t => t.category?.id === cat.id).length;
+        {categories.map(cat => {
+          const count = tasks.filter(t => t.category?.id === cat.id).length;
           return (
             <div
               key={cat.id}
               className={`${styles.item} ${activeCategory === cat.id ? styles.itemActive : ''}`}
-              onClick={() => setFilter(cat.id)}
+              onClick={() => toggleFilter(cat.id)}
             >
               <span className={styles.itemIcon}>{cat.icon}</span>
               <span className={styles.catName}>{cat.name}</span>
@@ -143,7 +148,7 @@ export default function Categories() {
           );
         })}
 
-        {state.categories.length === 0 && uncategorisedCount === 0 && (
+        {categories.length === 0 && uncategorisedCount === 0 && (
           <p className={styles.empty}>No categories yet</p>
         )}
       </div>

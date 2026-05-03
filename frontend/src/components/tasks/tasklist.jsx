@@ -1,4 +1,6 @@
-import { useApp } from '@/context/AppContext';
+// import { useAppStore } from '../../store/useAppStore';
+
+import { useAppStore } from '../../store/useAppStore';
 import { useState, useEffect } from 'react';
 import TaskCard from './taskcard';
 import AddTask from './addtask';
@@ -9,33 +11,39 @@ import { Calendar, Lock, Plus } from 'lucide-react'
 const PAGE_SIZE = 8;
 
 export default function TaskList() {
-  const { filteredTasks, state, dispatch } = useApp();
-  const [addOpen, setAddOpen] = useState(false);
+  const filter     = useAppStore(s => s.filter);
+  const loading    = useAppStore(s => s.loading);
+  const tasks      = useAppStore(s => s.tasks);
+  const limits     = useAppStore(s => s.limits);
+  const level      = useAppStore(s => s.level);
+  const setFilter  = useAppStore(s => s.setFilter);
+  const getFilteredTasks = useAppStore(s => s.getFilteredTasks);
+  const filteredTasks = getFilteredTasks();  const [addOpen, setAddOpen] = useState(false);
   const [page, setPage] = useState(1);
   // Reset to page 1 whenever filters change
-  useEffect(() => { setPage(1); }, [state.filter]);
+  useEffect(() => { setPage(1); }, [filter]);
 
   const totalPages = Math.ceil(filteredTasks.length / PAGE_SIZE);
   const paginated  = filteredTasks.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const tasksLocked = state.limits.tasks !== null &&
-    state.tasks.length >= state.limits.tasks;
+  const tasksLocked = limits.tasks !== null &&
+    tasks.length >= limits.tasks;
 
   return (
     <div className={styles.container}>
       <FilterBar />
-      {state.filter.deadlineDay && (
+      {filter.deadlineDay && (
         <div className={styles.dateChip}>
           <Calendar/> {format(
             new Date(
-              state.filter.deadlineDay.year,
-              state.filter.deadlineDay.month,
-              state.filter.deadlineDay.day
+              filter.deadlineDay.year,
+              filter.deadlineDay.month,
+              filter.deadlineDay.day
             ),
             'MMMM d, yyyy'
           )}
           <button
             className={styles.dateChipClear}
-            onClick={() => dispatch({ type: 'SET_FILTER', payload: { deadlineDay: null } })}
+            onClick={() => setFilter({ deadlineDay: null })}
           >
             -
           </button>
@@ -44,13 +52,13 @@ export default function TaskList() {
       {filteredTasks.length > 0 && (
         <p className={styles.count}>
           {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''}
-          {state.filter.status !== 'all' ? ` ${state.filter.status}` : ''}
+          {filter.status !== 'all' ? ` ${filter.status}` : ''}
           {totalPages > 1 ? ` · page ${page} of ${totalPages}` : ''}
         </p>
       )}
 
       <div className={styles.list}>
-        {state.loading.tasks ? (
+        {loading.tasks ? (
           <div className={styles.loading}>
             <div className={styles.spinner} />
             <span>Loading tasks...</span>
@@ -59,9 +67,9 @@ export default function TaskList() {
           <div className={styles.empty}>
             <span className={styles.emptyIcon}>✓</span>
             <p className={styles.emptyTitle}>
-              {state.filter.search || state.filter.category || state.filter.priority
+              {filter.search || filter.category || filter.priority
                 ? 'No tasks match your filters'
-                : state.filter.status === 'completed'
+                : filter.status === 'completed'
                 ? 'No completed tasks yet'
                 : 'All clear!'}
             </p>
@@ -142,7 +150,7 @@ export default function TaskList() {
           if (tasksLocked) return; // AddTask's handleSubmit will show the error
           setAddOpen(true);
         }}
-        title={tasksLocked ? `Reach Level ${state.level + 1} to add more tasks` : 'Add task'}
+        title={tasksLocked ? `Reach Level ${level + 1} to add more tasks` : 'Add task'}
       >
         {tasksLocked ? <Lock size={20} /> : '+'}
       </button>

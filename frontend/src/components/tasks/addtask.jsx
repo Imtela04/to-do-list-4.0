@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { useApp } from '@/context/AppContext';
+import { useAppStore } from '../../store/useAppStore';
+
 import { createTask } from '@/api/services';
 import { useDraft } from '@/hooks/useDraft';
 import styles from './addtask.module.css';
@@ -11,7 +12,10 @@ const PRIORITIES = ['low', 'medium', 'high', 'critical'];
 const DRAFT_KEY  = 'draft_task';
 
 export default function AddTask({ open, setOpen }) {
-  const { state, dispatch }     = useApp();
+  // const { state, dispatch }     = useApp();
+  const categories = useAppStore(s => s.categories);
+  const addTask    = useAppStore(s => s.addTask);
+
   const { save, load, clear }   = useDraft(DRAFT_KEY);
   const [form, setForm] = useState({
     title: '', description: '', priority: '', category: '',
@@ -65,7 +69,7 @@ export default function AddTask({ open, setOpen }) {
         category:    form.category,
         deadline,
       });
-      dispatch({ type: 'ADD_TASK', payload: res.data });
+      addTask(res.data);
       clear();
       setHasDraft(false);
       setOpen(false);
@@ -139,7 +143,7 @@ export default function AddTask({ open, setOpen }) {
           <label className={styles.label}>Category</label>
           <select className={styles.select} value={form.category} onChange={e => set('category', e.target.value)}>
             <option value="">None</option>
-            {state.categories.map(c => (
+            {categories.map(c => (
               <option key={c.id} value={c.id}>{c.name}</option>
             ))}
           </select>

@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { AppProvider } from '@/context/AppContext';
+// import { AppProvider } from '@/context/AppContext';
 import Dashboard from '@/pages/home';
 import Login from '@/pages/login';
 import Register from '@/pages/register';
 import { ThemeProvider } from './context/ThemeContext';
+import { useDataLoader } from '@/hooks/useDataLoader';
+import { useAppStore } from '@/store/useAppStore';
+
 
 function PrivateRoute({ children }) {
   const token = localStorage.getItem("authToken");
@@ -21,26 +24,32 @@ function PrivateRoute({ children }) {
   return children;
 }
 
+function AppLoader({ children }) {
+  useDataLoader();
+  return children;
+}
+
 export default function App() {
   const [authKey, setAuthKey] = useState(0);
+  const resetState = useAppStore(s => s.resetState);
 
   useEffect(() => {
-    const handleAuthChange = () => setAuthKey(k => k + 1);
+    const handleAuthChange = () => {resetState(); setAuthKey(k => k + 1);};
     window.addEventListener('auth-change', handleAuthChange);
     return () => window.removeEventListener('auth-change', handleAuthChange);
   }, []);
 
   return (
     // key on both providers forces full unmount+remount on auth change
-    <AppProvider key={authKey}>
       <ThemeProvider key={authKey}>
-        <Routes>
-          <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
+        <AppLoader key={authKey}>
+          <Routes>
+            <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </AppLoader>
       </ThemeProvider>
-    </AppProvider>
   );
 }

@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useApp } from '@/context/AppContext';
+// import { useAppStore } from '../../store/useAppStore';
+
 import { Star } from 'lucide-react';
 import styles from './leveluptoast.module.css';
+import { useAppStore } from '@/store/useAppStore';
 
 const LEVEL_LABELS = {
   1: 'Novice',
@@ -12,21 +14,24 @@ const LEVEL_LABELS = {
 };
 
 export default function LevelUpToast() {
-  const { state, dispatch } = useApp();
+  // const { state, dispatch } = useApp();
+  const levelUpEvent = useAppStore(s => s.levelUpEvent);
+  const clearLevelUp = useAppStore(s => s.clearLevelUp);
   const [visible, setVisible] = useState(false);
   const [level, setLevel]     = useState(null);
 
   useEffect(() => {
-    if (state.levelUpEvent) {
-      setLevel(state.levelUpEvent.newLevel);
+    if (levelUpEvent) {
+      setLevel(levelUpEvent.newLevel);
       setVisible(true);
       const t = setTimeout(() => {
         setVisible(false);
-        setTimeout(() => dispatch({ type: 'CLEAR_LEVEL_UP' }), 400);
+        // setTimeout(() => dispatch({ type: 'CLEAR_LEVEL_UP' }), 400);
+        setTimeout(() => clearLevelUp(), 400);
       }, 4000);
       return () => clearTimeout(t);
     }
-  }, [state.levelUpEvent]);
+  }, [levelUpEvent]);
 
   if (!level) return null;
 

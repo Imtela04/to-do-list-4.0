@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { useApp } from '@/context/AppContext';
+import { useAppStore } from '../../store/useAppStore';
+
 import { createStickyNote, updateStickyNote, deleteStickyNote } from '@/api/services';
 import styles from './stickynote.module.css';
 import { PenLine, Trash, PenBox, Lock } from 'lucide-react';
@@ -8,7 +9,14 @@ import { useDraft } from '../../hooks/useDraft';
 const NOTE_COLORS = ['#7c6aff', '#ff6a9e', '#6affdc', '#ffaa6a', '#6ab4ff', '#c96aff'];
 
 export default function StickyNotes() {
-  const { state, dispatch } = useApp();
+  const stickyNotes = useAppStore(s => s.stickyNotes);
+  const limits      = useAppStore(s => s.limits);
+  const counts      = useAppStore(s => s.counts);
+  const level       = useAppStore(s => s.level);
+  const addNote     = useAppStore(s => s.addNote);
+  const updateNote  = useAppStore(s => s.updateNote);
+  const deleteNote  = useAppStore(s => s.deleteNote);
+
   const [adding, setAdding]         = useState(false);
   const [newColor, setNewColor]     = useState(NOTE_COLORS[0]);
   const [editingId, setEditingId]   = useState(null);
@@ -19,8 +27,8 @@ export default function StickyNotes() {
   const { save: saveDraft, load: loadDraft, clear: clearDraft } = useDraft('draft_note');
   const [hasNoteDraft, setHasNoteDraft] = useState(!!loadDraft());
 
-  const notesLocked = state.limits.notes !== null && state.counts.notes >= state.limits.notes;
-  const notesAtLimit = state.limits.notes === 0; // level 1 can't create any
+  const notesLocked  = limits.notes !== null && counts.notes >= limits.notes;
+  const notesAtLimit = limits.notes === 0;
 
   useEffect(() => {
     if (adding && addEditorRef.current) {
@@ -38,7 +46,7 @@ export default function StickyNotes() {
 
   useEffect(() => {
     if (editingId && editEditorRef.current) {
-      const note = state.stickyNotes.find(n => n.id === editingId);
+      const note = stickyNotes.find(n => n.id === editingId);
       if (note) editEditorRef.current.innerHTML = note.note;
     }
   }, [editingId]);
@@ -82,7 +90,7 @@ export default function StickyNotes() {
     setLimitError(null);
     try {
       const res = await createStickyNote({ note: content, color: newColor });
-      dispatch({ type: 'ADD_NOTE', payload: { ...res.data, color: newColor } });
+      addNote({ ...res.data, color: newColor });
       setAdding(false);
       clearDraft();
       setHasNoteDraft(false);
@@ -96,13 +104,13 @@ export default function StickyNotes() {
   const handleSaveEdit = async (note) => {
     const content = editEditorRef.current?.innerHTML || '';
     const updated = { ...note, note: content };
-    dispatch({ type: 'UPDATE_NOTE', payload: updated });
+    updateNote(updated);
     setEditingId(null);
     try { await updateStickyNote(note.id, { note: content }); } catch {}
   };
 
   const handleDelete = async (id) => {
-    dispatch({ type: 'DELETE_NOTE', payload: id });
+    deleteNote(id);
     try { await deleteStickyNote(id); } catch {}
   };
 
@@ -113,8 +121,8 @@ export default function StickyNotes() {
         {notesLocked || notesAtLimit ? (
           <button
             className={`${styles.addBtn} ${styles.locked}`}
-            onClick={() => setLimitError(`Reach Level ${state.level + 1} to unlock sticky notes`)}
-            title={`Unlock at Level ${state.level + 1}`}
+            onClick={() => setLimitError(`Reach Level ${level + 1} to unlock sticky notes`)}
+            title={`Unlock at Level ${level + 1}`}
           >
             <Lock size={16} />
           </button>
@@ -129,12 +137,12 @@ export default function StickyNotes() {
           className={`${styles.noteForm} animate-scale-in`}
           style={{ borderLeft: `4px solid ${newColor}` }}
         >
-        {limitError && (
-          <div className={styles.limitBanner}>
-            <Lock size={12} />
-            <span>{limitError}</span>
-          </div>
-        )}
+          {limitError && (
+            <div className={styles.limitBanner}>
+              <Lock size={12} />
+              <span>{limitError}</span>
+            </div>
+          )}
           {hasNoteDraft && (
             <div className={styles.draftBadge}>
               <span>📝 Draft restored</span>
@@ -180,10 +188,10 @@ export default function StickyNotes() {
       )}
 
       <div className={styles.notes}>
-        {state.stickyNotes.length === 0 && !adding && (
+        {stickyNotes.length === 0 && !adding && (
           <p className={styles.empty}>no notes :(</p>
         )}
-        {state.stickyNotes.map((note, i) => (
+        {stickyNotes.map((note, i) => (
           <div
             key={note.id}
             className={`${styles.note} ${expandedId === note.id ? styles.noteExpanded : ''}`}

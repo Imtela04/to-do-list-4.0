@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { useApp } from '@/context/AppContext';
+import { useAppStore } from '../../store/useAppStore';
+
 import styles from './filterbar.module.css';
 import { ArrowUpDown, CalendarArrowDown, CalendarArrowUp, CircleAlert, CalendarClock, ArrowDownAZ, SlidersHorizontal, X } from 'lucide-react';
 
@@ -12,9 +13,12 @@ const SORT_OPTIONS = [
 ];
 
 export default function FilterBar() {
-  const { state, dispatch } = useApp();
-  const { filter, categories } = state;
-  const set = (key, val) => dispatch({ type: 'SET_FILTER', payload: { [key]: val } });
+  const filter     = useAppStore(s => s.filter);
+  const categories = useAppStore(s => s.categories);
+  const setFilter  = useAppStore(s => s.setFilter);
+
+  const set = (key, val) => setFilter({ [key]: val });
+
   const [filtersPos, setFiltersPos] = useState({ top: 0, right: 0 });
   const filtersBtnRef = useRef(null);
   const [sortOpen, setSortOpen]       = useState(false);
@@ -49,16 +53,12 @@ export default function FilterBar() {
     filter.dateTo,
   ].filter(Boolean).length;
 
-  const clearAll = () => dispatch({
-    type: 'SET_FILTER',
-    payload: { priority: null, category: null, status: 'all', dateFrom: null, dateTo: null }
-  });
+  const clearAll = () => setFilter({ priority: null, category: null, status: 'all', dateFrom: null, dateTo: null });
 
   const hasDateFilter = filter.dateFrom || filter.dateTo;
 
   return (
     <div className={styles.bar}>
-      {/* Row 1 — search + sort + filters trigger */}
       <div className={styles.topRow}>
         <div className={styles.searchWrap}>
           <svg className={styles.searchIcon} viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -80,17 +80,14 @@ export default function FilterBar() {
           className={`${styles.todayBtn} ${filter.deadlineDay ? styles.todayActive : ''}`}
           onClick={() => {
             if (filter.deadlineDay) {
-              dispatch({ type: 'SET_FILTER', payload: { deadlineDay: null } });
+              setFilter({ deadlineDay: null });
             } else {
               const today = new Date();
-              dispatch({
-                type: 'SET_FILTER',
-                payload: {
-                  deadlineDay: {
-                    year:  today.getFullYear(),
-                    month: today.getMonth(),
-                    day:   today.getDate(),
-                  },
+              setFilter({
+                deadlineDay: {
+                  year:  today.getFullYear(),
+                  month: today.getMonth(),
+                  day:   today.getDate(),
                 },
               });
             }
@@ -99,8 +96,6 @@ export default function FilterBar() {
           today
         </button>
 
-
-        {/* Sort dropdown */}
         <div className={styles.sortWrap} ref={sortRef}>
           <button
             className={`${styles.sortTrigger} ${sortOpen ? styles.sortTriggerOpen : ''}`}
@@ -125,7 +120,6 @@ export default function FilterBar() {
           )}
         </div>
 
-        {/* Filters dropdown trigger */}
         <div className={styles.filtersWrap} ref={filtersRef}>
           <button
             ref={filtersBtnRef}
@@ -152,7 +146,6 @@ export default function FilterBar() {
                 )}
               </div>
 
-              {/* Status */}
               <div className={styles.filterSection}>
                 <span className={styles.filterSectionLabel}>Status</span>
                 <div className={styles.filterGroup}>
@@ -168,7 +161,6 @@ export default function FilterBar() {
                 </div>
               </div>
 
-              {/* Priority */}
               <div className={styles.filterSection}>
                 <span className={styles.filterSectionLabel}>Priority</span>
                 <div className={styles.filterGroup}>
@@ -184,7 +176,6 @@ export default function FilterBar() {
                 </div>
               </div>
 
-              {/* Category */}
               <div className={styles.filterSection}>
                 <span className={styles.filterSectionLabel}>Category</span>
                 <select
@@ -199,7 +190,6 @@ export default function FilterBar() {
                 </select>
               </div>
 
-              {/* Date range */}
               <div className={styles.filterSection}>
                 <span className={styles.filterSectionLabel}>Deadline range</span>
                 <div className={styles.dateInputs}>

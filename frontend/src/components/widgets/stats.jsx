@@ -1,12 +1,15 @@
-import { useApp } from '@/context/AppContext';
+// import { useAppStore } from '../../store/useAppStore';
+
+import { useAppStore } from '@/store/useAppStore';
 import styles from '@/components/widgets/stats.module.css';
 
 const RADIUS = 28;
 const CIRC   = 2 * Math.PI * RADIUS;
 
 export default function StatsWidget() {
-  const { state } = useApp();
-  const tasks = state.tasks;
+  // const { state } = useApp();
+  const tasks = useAppStore(s => s.tasks);
+
 
   const total     = tasks.length;
   const completed = tasks.filter(t => t.completed).length;

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Sun, Moon, Pipette, User, Power, Flame, Star } from 'lucide-react';
-import { useApp } from '@/context/AppContext';
+import { useAppStore } from '@/store/useAppStore';
 import { useTheme } from '@/context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import { HexColorPicker } from 'react-colorful';
@@ -31,21 +31,26 @@ function getInitials(username) {
 export default function UserNav() {
   const [open, setOpen]             = useState(false);
   const [openPicker, setOpenPicker] = useState(null);
-  const { state, resetState }       = useApp();
+
+  const username   = useAppStore(s => s.username);
+  const xp         = useAppStore(s => s.xp);
+  const level      = useAppStore(s => s.level);
+  const streak     = useAppStore(s => s.streak);
+  const nextLevelXp = useAppStore(s => s.nextLevelXp);
+  const resetState = useAppStore(s => s.resetState);
+
   const { theme, custom, applyTheme, updateCustomColor } = useTheme();
   const drawerRef = useRef(null);
   const btnRef    = useRef(null);
   const navigate  = useNavigate();
   const [pos, setPos] = useState({ left: 0, bottom: 0 });
 
-  const { xp, level, streak, nextLevelXp } = state;
-  const LEVEL_XP = { 1: 0, 2: 50, 3: 150, 4: 350, 5: 700 };
-
+  const LEVEL_XP    = { 1: 0, 2: 50, 3: 150, 4: 350, 5: 700 };
   const prevLevelXp = LEVEL_XP[level] ?? 0;
   const xpInLevel   = xp - prevLevelXp;
   const xpNeeded    = nextLevelXp ? nextLevelXp - prevLevelXp : xpInLevel;
   const xpPct       = xpNeeded > 0 ? Math.min((xpInLevel / xpNeeded) * 100, 100) : 100;
-  
+
   useEffect(() => {
     if (!open) return;
     const handler = (e) => {
@@ -67,16 +72,16 @@ export default function UserNav() {
 
   const handleLogout = () => {
     localStorage.removeItem('authToken');
+    localStorage.removeItem('refreshToken');
     resetState();
     window.dispatchEvent(new Event('auth-change'));
     navigate('/login');
   };
 
-  const initials = getInitials(state.username);
+  const initials = getInitials(username);
 
   return (
     <div className={styles.parent}>
-      {/* Avatar + XP bar */}
       <div className={styles.avatarRow}>
         <button ref={btnRef} className={styles.avatar} onClick={() => setOpen(o => !o)}>
           {initials}
@@ -95,9 +100,7 @@ export default function UserNav() {
             <div className={styles.xpBar} style={{ width: `${xpPct}%` }} />
           </div>
           <span className={styles.xpText}>
-            {nextLevelXp
-              ? `${xpInLevel} / ${xpNeeded} XP`   // progress within current level
-              : `${xp} XP · Max Level`}
+            {nextLevelXp ? `${xpInLevel} / ${xpNeeded} XP` : `${xp} XP · Max Level`}
           </span>
         </div>
       </div>
@@ -108,11 +111,10 @@ export default function UserNav() {
           className={styles.drawer}
           style={{ position: 'fixed', left: pos.left, bottom: pos.bottom }}
         >
-          {/* Header */}
           <div className={styles.drawerHeader}>
             <div className={styles.drawerAvatar}><User /></div>
             <div className={styles.drawerUser}>
-              <span className={styles.drawerUsername}>{state.username ?? 'User'}</span>
+              <span className={styles.drawerUsername}>{username ?? 'User'}</span>
               <span className={styles.drawerRole}>
                 <Star size={10} /> {LEVEL_LABELS[level]} · Level {level}
               </span>
@@ -122,7 +124,6 @@ export default function UserNav() {
             </button>
           </div>
 
-          {/* XP progress in drawer */}
           <div className={styles.drawerXp}>
             <div className={styles.drawerXpLabelRow}>
               <span className={styles.drawerXpLabel}>{xp} XP</span>
@@ -144,7 +145,6 @@ export default function UserNav() {
 
           <div className={styles.divider} />
 
-          {/* Theme */}
           <div className={styles.section}>
             <span className={styles.sectionLabel}>Theme</span>
             <div className={styles.themeRow}>

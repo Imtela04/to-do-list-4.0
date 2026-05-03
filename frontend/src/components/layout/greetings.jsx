@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useApp } from '@/context/AppContext';
+import { useAppStore } from '@/store/useAppStore';
 import styles from './greetings.module.css';
 import { isToday } from 'date-fns';
 import { PenLine } from 'lucide-react';
@@ -9,7 +9,7 @@ function getTimeGreeting(allDone) {
   if (h < 12) return 'Good morning';
   if (h < 17) return 'Good afternoon';
   if (h < 21) return 'Good evening';
-  return allDone ? 'Good night' : 'Good evening';  // ← evening if tasks remain
+  return allDone ? 'Good night' : 'Good evening';
 }
 
 function getMotivation(completedCount, totalCount) {
@@ -22,32 +22,32 @@ function getMotivation(completedCount, totalCount) {
   return "Incredible — all tasks done! 🎉";
 }
 
-
 export default function Greeting() {
-  const { state, dispatch } = useApp();
-  const [editing, setEditing] = useState(false);
-  
-  const displayName = state.greeting || state.username || '';
-  
-  //derive from state, not frozen initial value
+  const greeting    = useAppStore(s => s.greeting);
+  const username    = useAppStore(s => s.username);
+  const tasks       = useAppStore(s => s.tasks);
+  const setGreeting = useAppStore(s => s.setGreeting);
+
+  const [editing, setEditing]     = useState(false);
   const [nameInput, setNameInput] = useState('');
-  
-  //sync input when state.username arrives (after loadUsername resolves)
+
+  const displayName = greeting || username || '';
+
   useEffect(() => {
-    setNameInput(state.greeting || state.username || '');
-  }, [state.username, state.greeting]);
+    setNameInput(greeting || username || '');
+  }, [username, greeting]);
 
-  const todayTasks  = state.tasks.filter(t => t.deadline && isToday(new Date(t.deadline)));
-  const completed   = todayTasks.filter(t => t.completed).length;
-  const total       = todayTasks.length;
-  const allDone = total > 0 && completed === total;
-
+  const todayTasks = tasks.filter(t => t.deadline && isToday(new Date(t.deadline)));
+  const completed  = todayTasks.filter(t => t.completed).length;
+  const total      = todayTasks.length;
+  const allDone    = total > 0 && completed === total;
 
   const handleSave = () => {
-    const name = nameInput.trim() || state.username;
-    dispatch({ type: 'SET_GREETING', payload: name });
+    const name = nameInput.trim() || username;
+    setGreeting(name);
     setEditing(false);
   };
+
   return (
     <div className={styles.greeting}>
       <div className={styles.topLine}>
@@ -68,7 +68,9 @@ export default function Greeting() {
         ) : (
           <span className={styles.nameLine}>
             <span className={styles.name}>{displayName}</span>
-            <button className={styles.editBtn} onClick={() => setEditing(true)} title="Edit name"><PenLine size={12}/></button>
+            <button className={styles.editBtn} onClick={() => setEditing(true)} title="Edit name">
+              <PenLine size={12} />
+            </button>
           </span>
         )}
       </div>
