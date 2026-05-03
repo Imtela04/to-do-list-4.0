@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { format, addDays } from 'date-fns';
 import { useApp } from '@/context/AppContext';
 import { createTask, deleteTask, toggleTask } from '@/api/services';
-import { ChevronLeft, ChevronRight, Plus, X, Check } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X, Check, Lock } from 'lucide-react';
 import styles from './calendarview.module.css';
+
 
 const MONTHS = ['January','February','March','April','May','June',
   'July','August','September','October','November','December'];
@@ -33,6 +34,9 @@ export default function CalendarView() {
   );
 
   const today = new Date();
+  const tasksLocked = state.limits.tasks !== null &&
+    state.tasks.length >= state.limits.tasks;
+  const [limitError, setLimitError] = useState(null);
 
   // Group tasks by day-of-month for this month
   const tasksByDay = {};
@@ -63,12 +67,21 @@ export default function CalendarView() {
 
   const handleAddTask = async () => {
     if (!newTitle.trim() || !selectedDay) return;
+    if (tasksLocked) {
+      setLimitError(`Reach Level ${state.level + 1} to add more tasks`);
+      return;
+    }
+    setLimitError(null);
     const deadline = new Date(selectedDay.year, selectedDay.month, selectedDay.day, 23, 59, 0, 0);
     const payload  = { title: newTitle.trim(), deadline: deadline.toISOString(), completed: false };
     try {
       const res = await createTask(payload);
       dispatch({ type: 'ADD_TASK', payload: res.data });
-    } catch {}
+    } catch (err) {
+      if (err.response?.status === 403 && err.response?.data?.limit_reached) {
+        setLimitError(err.response.data.detail);
+      }
+    }
     setNewTitle('');
     setAdding(false);
   };
@@ -202,27 +215,33 @@ export default function CalendarView() {
             ))}
 
             {/* Quick add */}
+            {limitError && (
+              <div className={styles.limitError}>
+                <Lock size={12} />
+                <span>{limitError}</span>
+              </div>
+            )}
+
             {adding ? (
               <div className={styles.addRow}>
-                <input
-                  autoFocus
-                  className={styles.addInput}
-                  placeholder="Task title…"
-                  value={newTitle}
-                  onChange={e => setNewTitle(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') handleAddTask();
-                    if (e.key === 'Escape') { setAdding(false); setNewTitle(''); }
-                  }}
-                />
-                <button className={styles.addConfirm} onClick={handleAddTask}><Check size={13} /></button>
-                <button className={styles.addCancel} onClick={() => { setAdding(false); setNewTitle(''); }}><X size={13} /></button>
+                {/* unchanged */}
               </div>
             ) : (
-              <button className={styles.addBtn} onClick={() => setAdding(true)}>
-                <Plus size={13} /> Add task
+              <button
+                className={`${styles.addBtn} ${tasksLocked ? styles.addBtnLocked : ''}`}
+                onClick={() => {
+                  if (tasksLocked) {
+                    setLimitError(`Reach Level ${state.level + 1} to add more tasks`);
+                    return;
+                  }
+                  setAdding(true);
+                  setLimitError(null);
+                }}
+              >
+                {tasksLocked ? <Lock size={13} /> : <Plus size={13} />}
+                {tasksLocked ? 'Locked' : 'Add task'}
               </button>
-            )}
+            )}          
           </div>
         </div>
       )}

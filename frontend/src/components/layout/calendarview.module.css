@@ -394,3 +394,21 @@
   color: var(--text-primary);
   background: var(--bg-glass-hover);
 }
+
+.addBtnLocked {
+  opacity: 0.5;
+  cursor: not-allowed;
+  color: var(--text-muted);
+}
+
+.limitError {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  padding: 6px 8px;
+  background: var(--bg-secondary);
+  border-radius: 6px;
+  margin-top: 4px;
+}
