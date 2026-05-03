@@ -155,8 +155,13 @@ def task_detail(request, task_id):
             xp_result = profile.award_xp(task)
         elif not task.completed and was_completed:
             profile.deduct_xp()
-            xp_result = {'xp_gained': -5, 'total_xp': profile.xp, 'leveled_up': False}
-
+            xp_result = {
+                'xp_gained':  -5,
+                'total_xp':   profile.xp,
+                'leveled_up': False,
+                'new_level':  profile.level,   # ← add this
+                'streak':     profile.streak,
+            }
     data = TodoSerializer(task).data
     if xp_result:
         data['xp_result'] = xp_result

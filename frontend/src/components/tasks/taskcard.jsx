@@ -71,6 +71,7 @@ export default function TaskCard({ task }) {
   const [editForm, setEditForm] = useState({
     title: '', description: '', priority: '', category: '', deadline: null, timed: false,
   });
+  const [confirmUncomplete, setConfirmUncomplete] = useState(false);
   
   const cardRef   = useRef(null);
   const category  = task.category;
@@ -84,6 +85,7 @@ export default function TaskCard({ task }) {
       ? isPast(dueDate)
       : isPast(dueDate) && !isToday(dueDate)
   );
+
 
   // Then pass it to the hook
   const countdown = useCountdown(task.deadline, isTimed);
@@ -134,21 +136,37 @@ export default function TaskCard({ task }) {
     catch { dispatch({ type: 'UPDATE_TASK', payload: task }); }
   };
 
-
   const handleToggle = async (e) => {
     e.stopPropagation();
-    const updated = { ...task, completed: !task.completed };
+
+    if (!task.completed) {
+      const updated = { ...task, completed: true };
+      dispatch({ type: 'UPDATE_TASK', payload: updated });
+      try {
+        const res = await toggleTask(task.id, true);
+        if (res.data.xp_result) {
+          dispatch({ type: 'UPDATE_XP', payload: res.data.xp_result });
+        }
+      } catch {
+        dispatch({ type: 'UPDATE_TASK', payload: task });
+      }
+      return;
+    }
+
+    // if uncompleting, ask first
+    setConfirmUncomplete(true);
+  };
+  const handleConfirmUncomplete = async () => {
+    setConfirmUncomplete(false);
+    const updated = { ...task, completed: false };
     dispatch({ type: 'UPDATE_TASK', payload: updated });
     try {
-      const res = await toggleTask(task.id, !task.completed);
-      // Sync the task back (in case server changed anything)
-      dispatch({ type: 'UPDATE_TASK', payload: res.data });
-      // Award XP if the response includes xp_result
+      const res = await toggleTask(task.id, false);
       if (res.data.xp_result) {
         dispatch({ type: 'UPDATE_XP', payload: res.data.xp_result });
       }
     } catch {
-      dispatch({ type: 'UPDATE_TASK', payload: task }); // rollback
+      dispatch({ type: 'UPDATE_TASK', payload: task });
     }
   };
 
@@ -398,6 +416,15 @@ export default function TaskCard({ task }) {
           <div className={styles.confirmActions}>
             <button className={styles.confirmCancel} onClick={() => setConfirmDelete(false)}>Cancel</button>
             <button className={styles.confirmDelete} onClick={() => { setConfirmDelete(false); handleDelete(); }}>Delete</button>
+          </div>
+        </div>
+      )}
+      {confirmUncomplete && (
+        <div className={styles.confirmOverlay}>
+          <p className={styles.confirmText}>Mark as incomplete? You'll lose 5 XP.</p>
+          <div className={styles.confirmActions}>
+            <button className={styles.confirmCancel} onClick={() => setConfirmUncomplete(false)}>Cancel</button>
+            <button className={styles.confirmDelete} onClick={handleConfirmUncomplete}>Confirm</button>
           </div>
         </div>
       )}
