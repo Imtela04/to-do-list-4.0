@@ -4,22 +4,46 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
 import { useCategoriesQuery } from '@/hooks/useCategoriesQuery';
 import { toggleTask, deleteTask, updateTask as updateTaskApi } from '@/api/services';
+import type { Task, TaskPayload, XpResult } from '@/types';
 import styles from './taskcard.module.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { Pin, PinOff, Trash, SquarePen, CalendarPlus, Hourglass } from 'lucide-react';
 
-const PRIORITY_MAP = {
+const PRIORITY_MAP: Record<string, { color: string; label: string }> = {
   low:      { color: '#6ab4ff', label: 'Low' },
   medium:   { color: '#6affdc', label: 'Medium' },
   high:     { color: '#ffaa6a', label: 'High' },
   critical: { color: '#ff6a6a', label: 'Critical' },
 };
 
-const PRIORITIES = ['low', 'medium', 'high', 'critical'];
+const PRIORITIES = ['low', 'medium', 'high', 'critical'] as const;
+// add these interfaces near the top of the file, with the other interfaces
 
-function useCountdown(deadline, timed) {
-  const [remaining, setRemaining] = useState('');
+interface ToggleMutationVars {
+  completed: boolean;
+}
+
+interface UpdateMutationVars {
+  changes: Partial<TaskPayload>;
+  updated: Task;
+}
+
+interface EditForm {
+  title:       string;
+  description: string;
+  priority:    string;
+  category:    string;
+  deadline:    Date | null;
+  timed:       boolean;
+}
+
+interface MutationContext {
+  previous: Task[] | undefined;
+}
+
+function useCountdown(deadline: string | null, timed: boolean): string | null {
+  const [remaining, setRemaining] = useState<string | null>('');
 
   useEffect(() => {
     if (!deadline) return;
@@ -31,7 +55,7 @@ function useCountdown(deadline, timed) {
       if (!timed) {
         const dueDay   = new Date(due.getFullYear(), due.getMonth(), due.getDate());
         const today    = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const diffDays = Math.round((dueDay - today) / 86400000);
+        const diffDays = Math.round((dueDay.getTime() - today.getTime()) / 86400000);
 
         if (diffDays < 0)        { setRemaining(null); return; }
         else if (diffDays === 0) setRemaining('due today');
@@ -40,7 +64,7 @@ function useCountdown(deadline, timed) {
         return;
       }
 
-      const diff = due - now;
+      const diff = due.getTime() - now.getTime();
       if (diff <= 0) { setRemaining(null); return; }
 
       const d = Math.floor(diff / 86400000);
@@ -61,105 +85,102 @@ function useCountdown(deadline, timed) {
   return remaining;
 }
 
-export default function TaskCard({ task }) {
+interface TaskCardProps {
+  task:  Task;
+  index: number;
+}
+
+export default function TaskCard({ task }: TaskCardProps) {
   const queryClient = useQueryClient();
   const updateXp    = useAppStore(s => s.updateXp);
-
   const { data: categories = [] } = useCategoriesQuery();
 
-
-  const [deleting, setDeleting]           = useState(false);
-  const [editing, setEditing]             = useState(false);
-  const [expanded, setExpanded]           = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting]                   = useState(false);
+  const [editing, setEditing]                     = useState(false);
+  const [expanded, setExpanded]                   = useState(false);
+  const [confirmDelete, setConfirmDelete]         = useState(false);
   const [confirmUncomplete, setConfirmUncomplete] = useState(false);
-  const [editForm, setEditForm] = useState({
+  const [editForm, setEditForm] = useState<EditForm>({
     title: '', description: '', priority: '', category: '', deadline: null, timed: false,
   });
 
-  const cardRef    = useRef(null);
+  const cardRef    = useRef<HTMLDivElement>(null);
+  const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const category   = task.category;
-  const priority   = PRIORITY_MAP[task.priority] || PRIORITY_MAP.low;
+  const priority   = PRIORITY_MAP[task.priority] ?? PRIORITY_MAP.low;
   const dueDate    = task.deadline ? new Date(task.deadline) : null;
-  const isDueToday = dueDate && isToday(dueDate);
-  const isTimed    = dueDate && !(dueDate.getHours() === 23 && dueDate.getMinutes() === 59);
-  const isOverdue  = dueDate && !task.completed && (
-    isTimed ? isPast(dueDate) : isPast(dueDate) && !isToday(dueDate)
-  );
+  const isDueToday = dueDate ? isToday(dueDate) : false;
+  const isTimed    = dueDate ? !(dueDate.getHours() === 23 && dueDate.getMinutes() === 59) : false;
+  const isOverdue  = dueDate && !task.completed
+    ? (isTimed ? isPast(dueDate) : isPast(dueDate) && !isToday(dueDate))
+    : false;
 
   const countdown = useCountdown(task.deadline, isTimed);
 
-  // ── Shared optimistic update helper ───────────────────────
-  const optimisticUpdate = (updatedTask) => {
-    queryClient.setQueryData(['tasks'], old =>
+  // ── Optimistic helpers ─────────────────────────────────────
+  const optimisticUpdate = (updatedTask: Task): void => {
+    queryClient.setQueryData<Task[]>(['tasks'], old =>
       old?.map(t => t.id === updatedTask.id ? updatedTask : t) ?? []
     );
   };
 
-  const rollback = (ctx) => {
+  const rollback = (ctx: MutationContext): void => {
     queryClient.setQueryData(['tasks'], ctx.previous);
   };
 
-  const makeOptimisticMutation = (mutationFn, getUpdated) => ({
-    mutationFn,
-    onMutate: async (vars) => {
-      await queryClient.cancelQueries({ queryKey: ['tasks'] });
-      const previous = queryClient.getQueryData(['tasks']);
-      optimisticUpdate(getUpdated(vars));
-      return { previous };
-    },
-    onError:   (err, vars, ctx) => rollback(ctx),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
-  });
-
   // ── Mutations ──────────────────────────────────────────────
   const toggleMutation = useMutation({
-    mutationFn: ({ completed }) => toggleTask(task.id, completed),
-    onMutate: async ({ completed }) => {
+    mutationFn: ({ completed }: ToggleMutationVars) => toggleTask(task.id, completed),
+    onMutate: async ({ completed }: ToggleMutationVars) => {
       await queryClient.cancelQueries({ queryKey: ['tasks'] });
-      const previous = queryClient.getQueryData(['tasks']);
+      const previous = queryClient.getQueryData<Task[]>(['tasks']);
       optimisticUpdate({ ...task, completed });
       return { previous };
     },
     onSuccess: (res) => {
-      if (res.data.xp_result) updateXp(res.data.xp_result);
+      const xpResult = res.data.xp_result;
+      if (xpResult) updateXp(xpResult as XpResult);
     },
-    onError:   (err, vars, ctx) => rollback(ctx),
+    onError:   (_err: Error, _vars: ToggleMutationVars, ctx: MutationContext | undefined) => { if (ctx) rollback(ctx); },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
   });
 
-  const updateMutation = useMutation(
-    makeOptimisticMutation(
-      ({ changes }) => updateTaskApi(task.id, changes),
-      ({ updated }) => updated,
-    )
-  );
+  const updateMutation = useMutation({
+    mutationFn: ({ changes }: UpdateMutationVars) => updateTaskApi(task.id, changes),
+    onMutate: async ({ updated }: UpdateMutationVars) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      const previous = queryClient.getQueryData<Task[]>(['tasks']);
+      optimisticUpdate(updated);
+      return { previous };
+    },
+    onError:   (_err: Error, _vars: UpdateMutationVars, ctx: MutationContext | undefined) => { if (ctx) rollback(ctx); },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
+  });
 
   const deleteMutation = useMutation({
     mutationFn: () => deleteTask(task.id),
     onMutate: async () => {
       await queryClient.cancelQueries({ queryKey: ['tasks'] });
-      const previous = queryClient.getQueryData(['tasks']);
-      queryClient.setQueryData(['tasks'], old => old?.filter(t => t.id !== task.id) ?? []);
+      const previous = queryClient.getQueryData<Task[]>(['tasks']);
+      queryClient.setQueryData<Task[]>(['tasks'], old => old?.filter(t => t.id !== task.id) ?? []);
       return { previous };
     },
-    onError:   (err, vars, ctx) => rollback(ctx),
+    onError:   (_err: Error, _vars: void, ctx: MutationContext | undefined) => { if (ctx) rollback(ctx); },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
   });
 
   // ── Handlers ───────────────────────────────────────────────
   useEffect(() => {
     if (!expanded) return;
-    const handler = (e) => {
-      if (cardRef.current && !cardRef.current.contains(e.target)) setExpanded(false);
+    const handler = (e: MouseEvent) => {
+      if (cardRef.current && !cardRef.current.contains(e.target as Node)) setExpanded(false);
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [expanded]);
 
-  const clickTimer = useRef(null);
-  const handleCardClick = (e) => {
-    if (e.target.closest('button, input, textarea, select')) return;
+  const handleCardClick = (e: React.MouseEvent<HTMLDivElement>): void => {
+    if ((e.target as HTMLElement).closest('button, input, textarea, select')) return;
     if (editing) return;
     if (clickTimer.current) {
       clearTimeout(clickTimer.current);
@@ -168,42 +189,38 @@ export default function TaskCard({ task }) {
     } else {
       clickTimer.current = setTimeout(() => {
         clickTimer.current = null;
-        setExpanded(e => !e);
+        setExpanded(prev => !prev);
       }, 220);
     }
   };
 
-  const handleMoveToNextDay = (e) => {
+  const handleMoveToNextDay = (e: React.MouseEvent): void => {
     e.stopPropagation();
     const tomorrow = addDays(new Date(), 1);
     tomorrow.setHours(23, 59, 0, 0);
-    const newDeadline = tomorrow.toISOString();
     updateMutation.mutate({
-      changes: { deadline: newDeadline },
-      updated: { ...task, deadline: newDeadline },
+      changes: { deadline: tomorrow.toISOString() },
+      updated: { ...task, deadline: tomorrow.toISOString() },
     });
   };
 
-  const handleToggle = (e) => {
+  const handleToggle = (e: React.MouseEvent): void => {
     e.stopPropagation();
-    if (!task.completed) {
-      toggleMutation.mutate({ completed: true });
-    } else {
-      setConfirmUncomplete(true);
-    }
+    if (!task.completed) toggleMutation.mutate({ completed: true });
+    else setConfirmUncomplete(true);
   };
 
-  const handleConfirmUncomplete = () => {
+  const handleConfirmUncomplete = (): void => {
     setConfirmUncomplete(false);
     toggleMutation.mutate({ completed: false });
   };
 
-  const handleDelete = () => {
+  const handleDelete = (): void => {
     setDeleting(true);
     setTimeout(() => deleteMutation.mutate(), 300);
   };
 
-  const handlePin = (e) => {
+  const handlePin = (e: React.MouseEvent): void => {
     e.stopPropagation();
     updateMutation.mutate({
       changes: { pinned: !task.pinned },
@@ -211,16 +228,16 @@ export default function TaskCard({ task }) {
     });
   };
 
-  const openEdit = (e) => {
+  const openEdit = (e: React.MouseEvent): void => {
     e.stopPropagation();
     const existingDeadline = task.deadline ? new Date(task.deadline) : null;
     setEditForm({
       title:       task.title,
-      description: task.description || '',
+      description: task.description,
       priority:    task.priority,
-      category:    task.category?.id?.toString() || '',
+      category:    task.category?.id?.toString() ?? '',
       deadline:    existingDeadline,
-      timed: existingDeadline
+      timed:       existingDeadline
         ? !(existingDeadline.getHours() === 23 && existingDeadline.getMinutes() === 59)
         : false,
     });
@@ -228,13 +245,13 @@ export default function TaskCard({ task }) {
     setEditing(true);
   };
 
-  const handleSave = (e) => {
+  const handleSave = (e?: React.MouseEvent): void => {
     e?.stopPropagation();
-    const changes = {};
+    const changes: Partial<TaskPayload> = {};
 
     if (editForm.title.trim())       changes.title       = editForm.title.trim();
     if (editForm.description.trim()) changes.description = editForm.description.trim();
-    if (editForm.priority)           changes.priority    = editForm.priority;
+    if (editForm.priority)           changes.priority    = editForm.priority as TaskPayload['priority'];
     if (editForm.category)           changes.category    = parseInt(editForm.category);
 
     if (editForm.deadline) {
@@ -244,11 +261,11 @@ export default function TaskCard({ task }) {
     }
 
     if (Object.keys(changes).length > 0) {
-      const updated = {
+      const updated: Task = {
         ...task,
         ...changes,
         category: editForm.category
-          ? categories.find(c => c.id === parseInt(editForm.category)) || task.category
+          ? (categories.find(c => c.id === parseInt(editForm.category)) ?? task.category)
           : task.category,
       };
       updateMutation.mutate({ changes, updated });
@@ -257,7 +274,8 @@ export default function TaskCard({ task }) {
     setEditing(false);
   };
 
-  const set = (key, val) => setEditForm(f => ({ ...f, [key]: val }));
+  const set = <K extends keyof EditForm>(key: K, val: EditForm[K]): void =>
+    setEditForm(f => ({ ...f, [key]: val }));
 
   return (
     <div
@@ -315,7 +333,7 @@ export default function TaskCard({ task }) {
             <div className={styles.dateTimeRow}>
               <DatePicker
                 selected={editForm.deadline}
-                onChange={date => {
+                onChange={(date: Date | null) => {
                   if (!date) { set('deadline', null); set('timed', false); return; }
                   date.setHours(23, 59, 0, 0);
                   set('deadline', date);
@@ -329,14 +347,14 @@ export default function TaskCard({ task }) {
               {editForm.deadline && (
                 <DatePicker
                   selected={editForm.timed ? editForm.deadline : null}
-                  onChange={time => {
+                  onChange={(time: Date | null) => {
                     if (!time) {
-                      const d = new Date(editForm.deadline);
+                      const d = new Date(editForm.deadline!);
                       d.setHours(23, 59, 0, 0);
                       setEditForm(f => ({ ...f, deadline: d, timed: false }));
                       return;
                     }
-                    const d = new Date(editForm.deadline);
+                    const d = new Date(editForm.deadline!);
                     d.setHours(time.getHours(), time.getMinutes(), 0, 0);
                     setEditForm(f => ({ ...f, deadline: d, timed: true }));
                   }}

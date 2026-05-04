@@ -1,6 +1,6 @@
 import { useAppStore } from '../../store/useAppStore';
 import { useState, useEffect } from 'react';
-import { useTasksQuery } from '@/hooks/useTasksQuery';  // ← your new hook
+import { useTasksQuery } from '@/hooks/useTasksQuery';
 import TaskCard from './taskcard';
 import AddTask from './addtask';
 import FilterBar from '@/components/layout/filterbar';
@@ -12,10 +12,11 @@ import { getFilteredTasks } from '@/utils/filterTasks';
 const PAGE_SIZE = 8;
 
 export default function TaskList() {
-  const filter           = useAppStore(s => s.filter);
-  const limits           = useAppStore(s => s.limits);
-  const level            = useAppStore(s => s.level);
-  const setFilter        = useAppStore(s => s.setFilter);
+  const filter    = useAppStore(s => s.filter);
+  const limits    = useAppStore(s => s.limits);
+  const level     = useAppStore(s => s.level);
+  const setFilter = useAppStore(s => s.setFilter);
+
   const { data: tasks = [], isLoading } = useTasksQuery();
   const filteredTasks = getFilteredTasks(tasks, filter);
 
@@ -27,6 +28,14 @@ export default function TaskList() {
   const totalPages  = Math.ceil(filteredTasks.length / PAGE_SIZE);
   const paginated   = filteredTasks.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
   const tasksLocked = limits.tasks !== null && tasks.length >= limits.tasks;
+
+  const pageItems = Array.from({ length: totalPages }, (_, i) => i + 1)
+    .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+    .reduce<(number | '...')[]>((acc, p, idx, arr) => {
+      if (idx > 0 && p - arr[idx - 1] > 1) acc.push('...');
+      acc.push(p);
+      return acc;
+    }, []);
 
   return (
     <div className={styles.container}>
@@ -79,26 +88,19 @@ export default function TaskList() {
           <button className={styles.pageBtn} onClick={() => setPage(1)} disabled={page === 1} title="First page">«</button>
           <button className={styles.pageBtn} onClick={() => setPage(p => p - 1)} disabled={page === 1} title="Previous page">‹</button>
 
-          {Array.from({ length: totalPages }, (_, i) => i + 1)
-            .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
-            .reduce((acc, p, idx, arr) => {
-              if (idx > 0 && p - arr[idx - 1] > 1) acc.push('...');
-              acc.push(p);
-              return acc;
-            }, [])
-            .map((p, i) =>
-              p === '...' ? (
-                <span key={`ellipsis-${i}`} className={styles.ellipsis}>…</span>
-              ) : (
-                <button
-                  key={p}
-                  className={`${styles.pageBtn} ${page === p ? styles.pageActive : ''}`}
-                  onClick={() => setPage(p)}
-                >
-                  {p}
-                </button>
-              )
-            )}
+          {pageItems.map((p, i) =>
+            p === '...' ? (
+              <span key={`ellipsis-${i}`} className={styles.ellipsis}>…</span>
+            ) : (
+              <button
+                key={p}
+                className={`${styles.pageBtn} ${page === p ? styles.pageActive : ''}`}
+                onClick={() => setPage(p)}
+              >
+                {p}
+              </button>
+            )
+          )}
 
           <button className={styles.pageBtn} onClick={() => setPage(p => p + 1)} disabled={page === totalPages} title="Next page">›</button>
           <button className={styles.pageBtn} onClick={() => setPage(totalPages)} disabled={page === totalPages} title="Last page">»</button>

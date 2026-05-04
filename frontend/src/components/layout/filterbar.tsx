@@ -1,10 +1,18 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import { useCategoriesQuery } from '@/hooks/useCategoriesQuery';
+import type { Filter } from '@/store/useAppStore';
 import styles from './filterbar.module.css';
-import { ArrowUpDown, CalendarArrowDown, CalendarArrowUp, CircleAlert, CalendarClock, ArrowDownAZ, SlidersHorizontal, X } from 'lucide-react';
+import { ArrowUpDown, CalendarArrowDown, CalendarArrowUp, CircleAlert, CalendarClock, ArrowDownAZ, SlidersHorizontal } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
-const SORT_OPTIONS = [
+interface SortOption {
+  value: Filter['sort'];
+  label: string;
+  icon:  LucideIcon;
+}
+
+const SORT_OPTIONS: SortOption[] = [
   { value: 'newest',   label: 'Newest',   icon: CalendarArrowDown },
   { value: 'oldest',   label: 'Oldest',   icon: CalendarArrowUp   },
   { value: 'priority', label: 'Priority', icon: CircleAlert        },
@@ -12,24 +20,29 @@ const SORT_OPTIONS = [
   { value: 'alpha',    label: 'A→Z',      icon: ArrowDownAZ        },
 ];
 
+const STATUSES  = ['all', 'active', 'completed'] as const;
+const PRIORITIES = ['low', 'medium', 'high', 'critical'] as const;
+
 export default function FilterBar() {
-  const filter     = useAppStore(s => s.filter);
+  const filter    = useAppStore(s => s.filter);
+  const setFilter = useAppStore(s => s.setFilter);
   const { data: categories = [] } = useCategoriesQuery();
 
-  const setFilter  = useAppStore(s => s.setFilter);
+  const set = <K extends keyof Filter>(key: K, val: Filter[K]): void => setFilter({ [key]: val });
 
-  const set = (key, val) => setFilter({ [key]: val });
-
-  const [filtersPos, setFiltersPos] = useState({ top: 0, right: 0 });
-  const filtersBtnRef = useRef(null);
+  const [filtersPos, setFiltersPos]   = useState({ top: 0, right: 0 });
   const [sortOpen, setSortOpen]       = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const sortRef    = useRef(null);
-  const filtersRef = useRef(null);
+
+  const filtersBtnRef = useRef<HTMLButtonElement>(null);
+  const sortRef       = useRef<HTMLDivElement>(null);
+  const filtersRef    = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!sortOpen) return;
-    const handler = (e) => { if (!sortRef.current?.contains(e.target)) setSortOpen(false); };
+    const handler = (e: MouseEvent) => {
+      if (!sortRef.current?.contains(e.target as Node)) setSortOpen(false);
+    };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [sortOpen]);
@@ -37,15 +50,11 @@ export default function FilterBar() {
   useEffect(() => {
     if (filtersOpen && filtersBtnRef.current) {
       const rect = filtersBtnRef.current.getBoundingClientRect();
-      setFiltersPos({
-        top:   rect.bottom + 6,
-        right: window.innerWidth - rect.right,
-      });
+      setFiltersPos({ top: rect.bottom + 6, right: window.innerWidth - rect.right });
     }
   }, [filtersOpen]);
 
-  const currentSort = SORT_OPTIONS.find(o => o.value === filter.sort);
-
+  const currentSort      = SORT_OPTIONS.find(o => o.value === filter.sort);
   const activeFilterCount = [
     filter.priority,
     filter.category,
@@ -54,9 +63,8 @@ export default function FilterBar() {
     filter.dateTo,
   ].filter(Boolean).length;
 
-  const clearAll = () => setFilter({ priority: null, category: null, status: 'all', dateFrom: null, dateTo: null });
-
-  const hasDateFilter = filter.dateFrom || filter.dateTo;
+  const clearAll     = (): void => setFilter({ priority: null, category: null, status: 'all', dateFrom: null, dateTo: null });
+  const hasDateFilter = filter.dateFrom ?? filter.dateTo;
 
   return (
     <div className={styles.bar}>
@@ -85,11 +93,7 @@ export default function FilterBar() {
             } else {
               const today = new Date();
               setFilter({
-                deadlineDay: {
-                  year:  today.getFullYear(),
-                  month: today.getMonth(),
-                  day:   today.getDate(),
-                },
+                deadlineDay: { year: today.getFullYear(), month: today.getMonth(), day: today.getDate() },
               });
             }
           }}
@@ -134,23 +138,18 @@ export default function FilterBar() {
           </button>
 
           {filtersOpen && (
-            <div
-              className={styles.filtersDropdown}
-              style={{ top: filtersPos.top, right: filtersPos.right }}
-            >
+            <div className={styles.filtersDropdown} style={{ top: filtersPos.top, right: filtersPos.right }}>
               <div className={styles.filtersDropdownHeader}>
                 <span className={styles.filtersDropdownTitle}>Filters</span>
                 {activeFilterCount > 0 && (
-                  <button className={styles.clearAllBtn} onClick={clearAll}>
-                    Clear all
-                  </button>
+                  <button className={styles.clearAllBtn} onClick={clearAll}>Clear all</button>
                 )}
               </div>
 
               <div className={styles.filterSection}>
                 <span className={styles.filterSectionLabel}>Status</span>
                 <div className={styles.filterGroup}>
-                  {['all', 'active', 'completed'].map(s => (
+                  {STATUSES.map(s => (
                     <button
                       key={s}
                       className={`${styles.filterBtn} ${filter.status === s ? styles.active : ''}`}
@@ -165,7 +164,7 @@ export default function FilterBar() {
               <div className={styles.filterSection}>
                 <span className={styles.filterSectionLabel}>Priority</span>
                 <div className={styles.filterGroup}>
-                  {['low', 'medium', 'high', 'critical'].map(p => (
+                  {PRIORITIES.map(p => (
                     <button
                       key={p}
                       className={`${styles.filterBtn} ${filter.priority === p ? styles.active : ''}`}
@@ -181,7 +180,7 @@ export default function FilterBar() {
                 <span className={styles.filterSectionLabel}>Category</span>
                 <select
                   className={styles.select}
-                  value={filter.category || ''}
+                  value={filter.category ?? ''}
                   onChange={e => set('category', e.target.value ? parseInt(e.target.value) : null)}
                 >
                   <option value="">All categories</option>
@@ -197,14 +196,14 @@ export default function FilterBar() {
                   <input
                     type="date"
                     className={`${styles.dateInput} ${filter.dateFrom ? styles.dateActive : ''}`}
-                    value={filter.dateFrom || ''}
+                    value={filter.dateFrom ?? ''}
                     onChange={e => set('dateFrom', e.target.value || null)}
                   />
                   <span className={styles.dateSep}>→</span>
                   <input
                     type="date"
                     className={`${styles.dateInput} ${filter.dateTo ? styles.dateActive : ''}`}
-                    value={filter.dateTo || ''}
+                    value={filter.dateTo ?? ''}
                     onChange={e => set('dateTo', e.target.value || null)}
                   />
                   {hasDateFilter && (

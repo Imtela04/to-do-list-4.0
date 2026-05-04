@@ -1,32 +1,44 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useAppStore } from '../../store/useAppStore';
 import { useCategoriesQuery } from '@/hooks/useCategoriesQuery';
-import { createTask, getCategories } from '@/api/services';
+import { createTask } from '@/api/services';
 import { useDraft } from '@/hooks/useDraft';
+import type { TaskPayload } from '@/types';
 import styles from './addtask.module.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { Pickaxe, Trash, Lock } from 'lucide-react';
 
-const PRIORITIES = ['low', 'medium', 'high', 'critical'];
+const PRIORITIES = ['low', 'medium', 'high', 'critical'] as const;
 const DRAFT_KEY  = 'draft_task';
 
-export default function AddTask({ open, setOpen }) {
+interface TaskForm {
+  title:       string;
+  description: string;
+  priority:    string;
+  category:    string;
+  due_date:    Date | null;
+  due_time:    Date | null;
+  timed:       boolean;
+}
+
+interface AddTaskProps {
+  open:    boolean;
+  setOpen: (open: boolean) => void;
+}
+
+export default function AddTask({ open, setOpen }: AddTaskProps) {
   const queryClient = useQueryClient();
-  const limits      = useAppStore(s => s.limits);
-  const level       = useAppStore(s => s.level);
-
+  
   const { data: categories = [] } = useCategoriesQuery();
+  const { save, load, clear }     = useDraft<TaskForm>(DRAFT_KEY);
 
-
-  const { save, load, clear } = useDraft(DRAFT_KEY);
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<TaskForm>({
     title: '', description: '', priority: '', category: '',
     due_date: null, due_time: null, timed: false,
   });
   const [hasDraft, setHasDraft]     = useState(!!load());
-  const [limitError, setLimitError] = useState(null);
+  const [limitError, setLimitError] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -35,38 +47,38 @@ export default function AddTask({ open, setOpen }) {
       if (draft) {
         setForm({ ...draft, due_date: draft.due_date ? new Date(draft.due_date) : null });
       } else {
-        setForm({ title: '', description: '', priority: '', category: '', due_date: null, timed: false });
+        setForm({ title: '', description: '', priority: '', category: '', due_date: null, due_time: null, timed: false });
       }
     }
   }, [open]);
 
-  const set = (key, val) => {
+  const set = <K extends keyof TaskForm>(key: K, val: TaskForm[K]): void => {
     setForm(f => {
       const updated = { ...f, [key]: val };
       const isEmpty = !updated.title && !updated.description && !updated.priority && !updated.category && !updated.due_date;
       if (isEmpty) { clear(); setHasDraft(false); }
-      else { save({ ...updated, due_date: updated.due_date?.toISOString() ?? null }); setHasDraft(true); }
+      else { save({ ...updated, due_date: updated.due_date ?? null }); setHasDraft(true); }
       return updated;
     });
   };
 
   const addMutation = useMutation({
-    mutationFn: (payload) => createTask(payload),
+    mutationFn: (payload: TaskPayload) => createTask(payload),
     onSuccess: (res) => {
-      queryClient.setQueryData(['tasks'], old => [res.data, ...(old ?? [])]);
-      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.setQueryData(['tasks'], (old: unknown[]) => [res.data, ...(old ?? [])]);
+      void queryClient.invalidateQueries({ queryKey: ['tasks'] });
       clear();
       setHasDraft(false);
       setOpen(false);
     },
-    onError: (err) => {
+    onError: (err: { response?: { status: number; data?: { limit_reached?: boolean; detail?: string } } }) => {
       if (err.response?.status === 403 && err.response?.data?.limit_reached) {
-        setLimitError(err.response.data.detail);
+        setLimitError(err.response.data.detail ?? 'Limit reached');
       }
     },
   });
 
-  const handleSubmit = () => {
+  const handleSubmit = (): void => {
     if (!form.title.trim()) return;
     setLimitError(null);
 
@@ -84,16 +96,16 @@ export default function AddTask({ open, setOpen }) {
     addMutation.mutate({
       title:       form.title,
       description: form.description,
-      priority:    form.priority,
+      priority:    form.priority as TaskPayload['priority'],
       category:    form.category,
       deadline,
     });
   };
 
-  const handleCancel  = () => setOpen(false);
-  const handleDiscard = () => {
+  const handleCancel  = (): void => setOpen(false);
+  const handleDiscard = (): void => {
     clear(); setHasDraft(false);
-    setForm({ title: '', description: '', priority: '', category: '', due_date: null, timed: false });
+    setForm({ title: '', description: '', priority: '', category: '', due_date: null, due_time: null, timed: false });
     setOpen(false);
   };
 
@@ -107,14 +119,12 @@ export default function AddTask({ open, setOpen }) {
           <button className={styles.discardBtn} onClick={handleDiscard}><Trash size={13} /></button>
         </div>
       )}
-
       {limitError && (
         <div className={styles.limitError}>
           <Lock size={13} />
           <span>{limitError}</span>
         </div>
       )}
-
       <input
         autoFocus
         className={styles.titleInput}
@@ -130,7 +140,6 @@ export default function AddTask({ open, setOpen }) {
         onChange={e => set('description', e.target.value)}
         rows={2}
       />
-
       <div className={styles.row}>
         <div className={styles.field}>
           <label className={styles.label}>Priority</label>
@@ -147,7 +156,6 @@ export default function AddTask({ open, setOpen }) {
             ))}
           </div>
         </div>
-
         <div className={styles.field}>
           <label className={styles.label}>Category</label>
           <select className={styles.select} value={form.category} onChange={e => set('category', e.target.value)}>
@@ -157,12 +165,11 @@ export default function AddTask({ open, setOpen }) {
             ))}
           </select>
         </div>
-
         <div className={styles.field}>
           <label className={styles.label}>Due Date</label>
           <DatePicker
             selected={form.due_date}
-            onChange={date => {
+            onChange={(date: Date | null) => {
               if (!date) { set('due_date', null); set('timed', false); set('due_time', null); return; }
               set('due_date', date);
             }}
@@ -172,7 +179,6 @@ export default function AddTask({ open, setOpen }) {
             popperPlacement="top-start"
           />
         </div>
-
         {form.due_date && (
           <div className={styles.field}>
             <label className={styles.label}>
@@ -180,7 +186,7 @@ export default function AddTask({ open, setOpen }) {
             </label>
             <DatePicker
               selected={form.due_time}
-              onChange={time => { set('due_time', time); set('timed', !!time); }}
+              onChange={(time: Date | null) => { set('due_time', time); set('timed', !!time); }}
               placeholderText="No time set"
               showTimeSelect
               showTimeSelectOnly
@@ -193,7 +199,6 @@ export default function AddTask({ open, setOpen }) {
           </div>
         )}
       </div>
-
       <div className={styles.actions}>
         <button className={styles.cancelBtn} onClick={handleCancel}>Cancel</button>
         <button

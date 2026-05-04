@@ -34,6 +34,10 @@ CSRF_TRUSTED_ORIGINS = [
     'https://what-do.up.railway.app',
 ]
 
+render_url = os.environ.get('RENDER_URL', '')
+if render_url:
+    CSRF_TRUSTED_ORIGINS.append(render_url)
+
 INSTALLED_APPS = [
     'corsheaders',
     'apps.todo.apps.TodoConfig',
