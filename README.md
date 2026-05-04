@@ -4,7 +4,7 @@
 
 ![what-do dashboard](./screenshot.png)
 
-**Live demo → [what-do.up.railway.app](https://what-do.up.railway.app)**
+**Live demo → [what-do.onrender.com](https://what-do.onrender.com)**
 
 ---
 
@@ -15,6 +15,7 @@
 - **Categories** — organise tasks into colour-coded categories
 - **Sticky notes** — freeform notes board for quick thoughts
 - **Calendar view** — see tasks laid out by date
+- **Pomodoro timer** — built-in focus timer with XP rewards on session completion
 - **Live clock** — real-time clock and date displayed in the sidebar
 - **Completion stats** — track total, done, active, and overdue tasks at a glance
 - **Task filtering & search** — filter by status, sort by priority or due date, full-text search
@@ -48,6 +49,7 @@ what-do has a built-in XP and leveling system that rewards consistent productivi
 | Critical priority bonus | +10 |
 | Finish before deadline | +5 |
 | Daily streak bonus (per day, max 3) | +5 |
+| Complete a Pomodoro session | +5 |
 | Uncomplete a task | -5 |
 
 ---
@@ -58,25 +60,32 @@ what-do has a built-in XP and leveling system that rewards consistent productivi
 |---|---|
 | Backend | Django 6 + Django REST Framework |
 | Auth | SimpleJWT with token rotation & blacklisting |
-| Frontend | React 19 + Vite |
+| Frontend | React 19 + TypeScript + Vite |
+| State management | TanStack Query (server state) + Zustand (UI state) |
 | Styling | CSS Modules |
-| Database | PostgreSQL (production) · SQLite (local) |
-| Deployment | Railway (single service, single URL) |
+| Database | PostgreSQL via Neon (production) · SQLite (local) |
+| Deployment | Render (Docker) + Neon (database) |
 | Static files | WhiteNoise — Django serves the Vite build directly |
 
 ---
 
 ## Architecture
 
-Django serves the entire app — the React frontend is built by Vite and served as static files through WhiteNoise. No separate frontend service, no CORS issues in production.
+Django serves the entire app — the React frontend is built by Vite inside Docker and served as static files through WhiteNoise. No separate frontend service, no CORS issues in production.
 
 ```
-Browser → Railway URL
-           └── Django + Gunicorn
-                ├── WhiteNoise → /static/assets/* (Vite build)
-                ├── /api/**    → DRF views
-                └── /*         → index.html (React SPA)
+Browser → Render URL
+           └── Docker container
+                ├── Gunicorn + Django
+                │    ├── WhiteNoise → /static/assets/* (Vite build)
+                │    ├── /api/**    → DRF views
+                │    └── /*         → index.html (React SPA)
+                └── Neon PostgreSQL (external)
 ```
+
+### State management
+
+Server data (tasks, categories, notes, profile) lives in TanStack Query's cache with optimistic updates and automatic invalidation. UI state (filters, XP, level, streak) lives in Zustand. The two never overlap.
 
 ---
 
@@ -132,36 +141,44 @@ App runs at **http://localhost:5173**
 
 ## Tests
 
-The backend has 92 tests covering models, XP logic, API endpoints, authentication, and access control.
+### Backend — 92 tests
 
 ```bash
 python manage.py test apps.accounts apps.todo
 ```
 
-Test coverage includes XP calculation and level-up logic, streak tracking and bonus XP, task/category/note limits per level, JWT auth (register, login, token refresh), task CRUD and ownership enforcement, and unauthenticated access rejection.
+Covers XP calculation and level-up logic, streak tracking and bonus XP, task/category/note limits per level, JWT auth (register, login, token refresh), task CRUD and ownership enforcement, and unauthenticated access rejection.
+
+### Frontend — 28 tests
+
+```bash
+cd frontend && npm run test:run
+```
+
+Covers TanStack Query hooks (auth gating, error states, paginated responses), optimistic mutation logic (toggle, delete, add task) with rollback on failure, and Zustand store actions (profile sync, XP updates, filter logic, `getFilteredTasks` sorting and filtering).
 
 ---
 
-## Deployment (Railway)
+## Deployment (Render + Neon)
 
-The app is deployed as a single Railway service using Docker.
+The app is deployed as a single Render web service using Docker, with a Neon PostgreSQL database.
 
 ```dockerfile
 FROM python:3.12-slim
-# Installs Node, builds Vite, runs collectstatic + migrate, starts Gunicorn
+# Installs Node, builds Vite with VITE_API_URL, runs collectstatic + migrate, starts Gunicorn
 ```
 
-### Environment variables required on Railway
+### Environment variables required on Render
 
 | Variable | Value |
 |---|---|
 | `SECRET_KEY` | Django secret key |
 | `DEBUG` | `False` |
-| `ALLOWED_HOSTS` | `your-app.up.railway.app` |
-| `DATABASE_URL` | Set automatically by Railway Postgres |
-| `CORS_ALLOWED_ORIGINS` | `https://your-app.up.railway.app` |
-| `VITE_API_URL` | `https://your-app.up.railway.app/api` |
-| `PORT` | `8000` |
+| `ALLOWED_HOSTS` | `your-app.onrender.com` |
+| `DATABASE_URL` | Neon PostgreSQL connection string |
+| `CORS_ALLOWED_ORIGINS` | `https://your-app.onrender.com` |
+| `VITE_API_URL` | `https://your-app.onrender.com/api` |
+| `RENDER_URL` | `https://your-app.onrender.com` |
 
 ---
 
@@ -173,13 +190,17 @@ to-do-list-4.0/
 │   ├── todo/          # tasks, categories, sticky notes, views, tests
 │   └── accounts/      # user auth, profiles, XP, leveling, tests
 ├── config/            # settings, urls, wsgi, middleware
-├── frontend/          # React + Vite source
+├── frontend/          # React + TypeScript + Vite source
 │   └── src/
 │       ├── api/       # axios client + services
 │       ├── components/
-│       ├── context/
-│       ├── hooks/
-│       └── pages/
+│       ├── context/   # ThemeContext
+│       ├── hooks/     # useTasksQuery, useCategoriesQuery, useNotesQuery, useProfileQuery, useDataLoader
+│       ├── pages/     # home, login, register
+│       ├── store/     # useAppStore (Zustand)
+│       ├── types/     # shared TypeScript interfaces
+│       ├── utils/     # filterTasks
+│       └── test/      # Vitest + React Testing Library
 ├── frontend_dist/     # Vite build output (gitignored)
 ├── staticfiles/       # collectstatic output (gitignored)
 ├── Dockerfile
