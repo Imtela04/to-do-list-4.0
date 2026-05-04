@@ -60,6 +60,12 @@ function useCountdown(deadline: string | null, timed: boolean): string | null {
         if (diffDays < 0)        { setRemaining(null); return; }
         else if (diffDays === 0) setRemaining('due today');
         else if (diffDays === 1) setRemaining('due tomorrow');
+        else if (diffDays >= 730) setRemaining(`due in ${Math.floor(diffDays/365)}y`);
+        else if (diffDays >= 365) setRemaining(`due next year`);
+        else if (diffDays >= 60) setRemaining(`due in ${Math.floor(diffDays/30)}m`);
+        else if (diffDays >= 30) setRemaining(`due next month`);
+        else if (diffDays >= 14) setRemaining(`due in ${Math.floor(diffDays/7)}w`);
+        else if (diffDays >= 7) setRemaining('due next week');
         else                     setRemaining(`${diffDays}d`);
         return;
       }
