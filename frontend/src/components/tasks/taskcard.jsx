@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { format, isPast, isToday, addDays } from 'date-fns';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
-
-import { toggleTask, deleteTask, updateTask as updateTaskApi, getCategories } from '@/api/services';
+import { useCategoriesQuery } from '@/hooks/useCategoriesQuery';
+import { toggleTask, deleteTask, updateTask as updateTaskApi } from '@/api/services';
 import styles from './taskcard.module.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -65,13 +65,8 @@ export default function TaskCard({ task }) {
   const queryClient = useQueryClient();
   const updateXp    = useAppStore(s => s.updateXp);
 
-  const { data: categories = [] } = useQuery({
-    queryKey: ['categories'],
-    queryFn:  async () => {
-      const res = await getCategories();
-      return res.data;
-    },
-  });
+  const { data: categories = [] } = useCategoriesQuery();
+
 
   const [deleting, setDeleting]           = useState(false);
   const [editing, setEditing]             = useState(false);

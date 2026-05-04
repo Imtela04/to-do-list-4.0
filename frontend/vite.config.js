@@ -9,9 +9,17 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
-  base: process.env.NODE_ENV === 'production' ? '/static/' : '/',  // ← fix
+  base: process.env.NODE_ENV === 'production' ? '/static/' : '/',
   build: {
     outDir: '../frontend_dist',
     emptyOutDir: true,
+  },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: './src/test/setup.js',
+    alias: {
+      '@': path.resolve(__dirname, './src'),
+    },
   },
 })

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import styles from './clock.module.css';
-import { useQuery } from '@tanstack/react-query';  // add this
 import { useTasksQuery } from '@/hooks/useTasksQuery';          // add this
 
 

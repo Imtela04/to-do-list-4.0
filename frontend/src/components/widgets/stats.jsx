@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
 import { useTasksQuery } from '@/hooks/useTasksQuery';  // add this
 import styles from '@/components/widgets/stats.module.css';
 

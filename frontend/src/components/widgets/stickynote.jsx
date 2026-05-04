@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
-import { createStickyNote, updateStickyNote, deleteStickyNote, getStickyNotes } from '@/api/services';
+import { createStickyNote, updateStickyNote, deleteStickyNote } from '@/api/services';
 import styles from './stickynote.module.css';
 import { PenLine, Trash, PenBox, Lock } from 'lucide-react';
 import { useDraft } from '../../hooks/useDraft';
-
+import { useNotesQuery } from '../../hooks/useNotesQuery';
 const NOTE_COLORS = ['#7c6aff', '#ff6a9e', '#6affdc', '#ffaa6a', '#6ab4ff', '#c96aff'];
 
 export default function StickyNotes() {
@@ -14,10 +14,8 @@ export default function StickyNotes() {
   const counts      = useAppStore(s => s.counts);
   const level       = useAppStore(s => s.level);
 
-  const { data: stickyNotes = [] } = useQuery({
-    queryKey: ['notes'],
-    queryFn:  async () => { const res = await getStickyNotes(); return res.data; },
-  });
+  const { data: stickyNotes = [] } = useNotesQuery();
+
 
   const [adding, setAdding]         = useState(false);
   const [newColor, setNewColor]     = useState(NOTE_COLORS[0]);

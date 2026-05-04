@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
-import { createTask, deleteTask, toggleTask, getTasks } from '@/api/services';
+import { createTask, deleteTask, toggleTask } from '@/api/services';
 import { ChevronLeft, ChevronRight, Plus, X, Check, Lock } from 'lucide-react';
 import styles from './calendarview.module.css';
-
+import { useTasksQuery } from '@/hooks/useTasksQuery';
 const MONTHS = ['January','February','March','April','May','June',
   'July','August','September','October','November','December'];
 const DAYS_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];

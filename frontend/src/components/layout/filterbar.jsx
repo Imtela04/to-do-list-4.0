@@ -1,8 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
-import { useQuery } from '@tanstack/react-query';  // add this
-import { getCategories } from '@/api/services';     // add this
 import { useAppStore } from '@/store/useAppStore';
-
+import { useCategoriesQuery } from '@/hooks/useCategoriesQuery';
 import styles from './filterbar.module.css';
 import { ArrowUpDown, CalendarArrowDown, CalendarArrowUp, CircleAlert, CalendarClock, ArrowDownAZ, SlidersHorizontal, X } from 'lucide-react';
 
@@ -16,14 +14,8 @@ const SORT_OPTIONS = [
 
 export default function FilterBar() {
   const filter     = useAppStore(s => s.filter);
-  const { data: categories = [] } = useQuery({
-    queryKey: ['categories'],
-    queryFn: async () => {
-      const res = await getCategories();
-      return res.data;
-    },
-    enabled: !!localStorage.getItem('authToken'),
-  });
+  const { data: categories = [] } = useCategoriesQuery();
+
   const setFilter  = useAppStore(s => s.setFilter);
 
   const set = (key, val) => setFilter({ [key]: val });

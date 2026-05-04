@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query';      // can remove if useTasksQuery is self-contained
 import { useAppStore } from '../../store/useAppStore';
 import { useState, useEffect } from 'react';
 import { useTasksQuery } from '@/hooks/useTasksQuery';  // ← your new hook

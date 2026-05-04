@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
-
+import { useCategoriesQuery } from '@/hooks/useCategoriesQuery';
 import { createTask, getCategories } from '@/api/services';
 import { useDraft } from '@/hooks/useDraft';
 import styles from './addtask.module.css';
@@ -17,13 +17,8 @@ export default function AddTask({ open, setOpen }) {
   const limits      = useAppStore(s => s.limits);
   const level       = useAppStore(s => s.level);
 
-  const { data: categories = [] } = useQuery({
-    queryKey: ['categories'],
-    queryFn:  async () => {
-      const res = await getCategories();
-      return res.data;
-    },
-  });
+  const { data: categories = [] } = useCategoriesQuery();
+
 
   const { save, load, clear } = useDraft(DRAFT_KEY);
   const [form, setForm] = useState({

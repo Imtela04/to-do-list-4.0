@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '@/store/useAppStore';
-import { createCategory, deleteCategory, getCategories, getTasks } from '@/api/services';
+import { createCategory, deleteCategory } from '@/api/services';
 import styles from './categorypanel.module.css';
 import { Lock } from 'lucide-react';
 import { useTasksQuery } from '../../hooks/useTasksQuery';
@@ -16,11 +16,7 @@ export default function Categories() {
   const setFilter      = useAppStore(s => s.setFilter);
 
   const { data: tasks = [] } = useTasksQuery();
-
-  const { data: categories = [] } = useQuery({
-    queryKey: ['categories'],
-    queryFn:  async () => { const res = await getCategories(); return res.data; },
-  });
+  const { data: categories = [] } = useCategoriesQuery();
 
   const [adding, setAdding]         = useState(false);
   const [name, setName]             = useState('');

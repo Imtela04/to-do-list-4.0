@@ -3,7 +3,6 @@ import { useAppStore } from '@/store/useAppStore';
 import styles from './greetings.module.css';
 import { isToday } from 'date-fns';
 import { PenLine } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';  // add this
 import { useTasksQuery } from '@/hooks/useTasksQuery';          // add this
 
 function getTimeGreeting(allDone) {
