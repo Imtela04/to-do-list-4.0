@@ -8,17 +8,18 @@ import StickyNotes from '@/components/widgets/stickynote';
 import Categories from '@/components/categories/categorypanel';
 import UserNav from '@/components/layout/usernav';
 import styles from './home.module.css';
-import { ClockAlert, Menu, X, NotebookPen, LayoutList, CalendarDays } from 'lucide-react';
+import { ClockAlert, Menu, X, NotebookPen, LayoutList, CalendarDays, Timer } from 'lucide-react';
 import SessionGuard from '@/components/layout/sessionguard';
 import LevelUpToast from '@/components/layout/leveluptoast';
 import Pomodoro from '../components/widgets/pomodoro';
-import { Timer } from 'lucide-react';
+
+type View = 'list' | 'calendar';
 
 export default function Dashboard() {
-  const [sidebarOpen, setSidebarOpen]     = useState(false);
-  const [notesOpen, setNotesOpen]         = useState(false);
-  const [view, setView]                   = useState('list'); // 'list' | 'calendar'
-  const [pomodoroOpen, setPomodoroOpen ]  = useState(false);
+  const [sidebarOpen, setSidebarOpen]   = useState(false);
+  const [notesOpen, setNotesOpen]       = useState(false);
+  const [view, setView]                 = useState<View>('list');
+  const [pomodoroOpen, setPomodoroOpen] = useState(false);
   return (
     <SessionGuard>
       <LevelUpToast />

@@ -1,20 +1,24 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSessionTimer } from '@/hooks/useSessionTimer';
 import styles from './sessionguard.module.css';
 
-export default function SessionGuard({ children }) {
+interface Props {
+  children: ReactNode;
+}
+
+export default function SessionGuard({ children }: Props) {
   const [warning, setWarning] = useState(false);
   const navigate = useNavigate();
 
-  const handleExpire = useCallback(() => {
+  const handleExpire = useCallback((): void => {
     setWarning(false);
     localStorage.removeItem('authToken');
     window.dispatchEvent(new Event('auth-change'));
     navigate('/login');
   }, [navigate]);
 
-  const handleWarn = useCallback(() => {
+  const handleWarn = useCallback((): void => {
     setWarning(true);
   }, []);
 
@@ -23,17 +27,17 @@ export default function SessionGuard({ children }) {
     onExpire: handleExpire,
   });
 
-  const handleContinue = () => {
+  const handleContinue = (): void => {
     setWarning(false);
-    reset(); // restart the timer
+    reset();
   };
 
-  const handleLogout = () => {
+  const handleLogout = (): void => {
     clear();
     handleExpire();
   };
 
-  if (!warning) return children;
+  if (!warning) return <>{children}</>;
 
   return (
     <>
@@ -46,12 +50,8 @@ export default function SessionGuard({ children }) {
             Your session will expire in <strong>5 minutes</strong> due to inactivity.
           </p>
           <div className={styles.actions}>
-            <button className={styles.logoutBtn} onClick={handleLogout}>
-              Log out
-            </button>
-            <button className={styles.continueBtn} onClick={handleContinue}>
-              Continue session
-            </button>
+            <button className={styles.logoutBtn} onClick={handleLogout}>Log out</button>
+            <button className={styles.continueBtn} onClick={handleContinue}>Continue session</button>
           </div>
         </div>
       </div>

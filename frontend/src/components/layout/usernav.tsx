@@ -13,15 +13,11 @@ const COLOR_PICKERS = [
   { variable: '--bg-primary',       label: 'Background' },
 ];
 
-const LEVEL_LABELS = {
-  1: 'Novice',
-  2: 'Apprentice',
-  3: 'Journeyman',
-  4: 'Expert',
-  5: 'Master',
+const LEVEL_LABELS: Record<number, string> = {
+  1: 'Novice', 2: 'Apprentice', 3: 'Journeyman', 4: 'Expert', 5: 'Master',
 };
 
-function getInitials(username) {
+function getInitials(username: string): string {
   if (!username) return '?';
   const parts = username.trim().split(/[\s_-]+/);
   if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
@@ -30,8 +26,7 @@ function getInitials(username) {
 
 export default function UserNav() {
   const [open, setOpen]             = useState(false);
-  const [openPicker, setOpenPicker] = useState(null);
-
+  const [openPicker, setOpenPicker] = useState<string | null>(null);
   const username   = useAppStore(s => s.username);
   const xp         = useAppStore(s => s.xp);
   const level      = useAppStore(s => s.level);
@@ -40,12 +35,11 @@ export default function UserNav() {
   const resetState = useAppStore(s => s.resetState);
 
   const { theme, custom, applyTheme, updateCustomColor } = useTheme();
-  const drawerRef = useRef(null);
-  const btnRef    = useRef(null);
+  const drawerRef = useRef<HTMLDivElement | null>(null);
+  const btnRef    = useRef<HTMLButtonElement | null>(null);
   const navigate  = useNavigate();
-  const [pos, setPos] = useState({ left: 0, bottom: 0 });
-
-  const LEVEL_XP    = { 1: 0, 2: 50, 3: 150, 4: 350, 5: 700 };
+  const [pos, setPos] = useState<{ left: number; bottom: number }>({ left: 0, bottom: 0 });
+  const LEVEL_XP: Record<number, number> = { 1: 0, 2: 50, 3: 150, 4: 350, 5: 700 };
   const prevLevelXp = LEVEL_XP[level] ?? 0;
   const xpInLevel   = xp - prevLevelXp;
   const xpNeeded    = nextLevelXp ? nextLevelXp - prevLevelXp : xpInLevel;
@@ -53,8 +47,9 @@ export default function UserNav() {
 
   useEffect(() => {
     if (!open) return;
-    const handler = (e) => {
-      if (!drawerRef.current?.contains(e.target) && !btnRef.current?.contains(e.target)) {
+    const handler = (e: MouseEvent): void => {
+      const target = e.target as Node | null;
+      if (!drawerRef.current?.contains(target) && !btnRef.current?.contains(target)) {
         setOpen(false);
         setOpenPicker(null);
       }

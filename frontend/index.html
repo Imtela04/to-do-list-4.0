@@ -9,7 +9,7 @@
         .then(res => {
           const { mode, custom_colors } = res.data;
           const colors = custom_colors || DEFAULT_CUSTOM;
-          localStorage.setItem('theme', mode || 'dark');  // ← add this
+          localStorage.setItem('theme', mode || 'dark');
           setTheme(mode || 'dark');
           setCustom(colors);
           applyThemeToDom(mode || 'dark', colors);
@@ -19,6 +19,6 @@
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

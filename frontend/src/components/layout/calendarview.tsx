@@ -1,16 +1,27 @@
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import type { AxiosResponse } from 'axios';
 import { useAppStore } from '../../store/useAppStore';
 import { createTask, deleteTask, toggleTask } from '@/api/services';
 import { ChevronLeft, ChevronRight, Plus, X, Check, Lock } from 'lucide-react';
 import styles from './calendarview.module.css';
 import { useTasksQuery } from '@/hooks/useTasksQuery';
+import type { Task, TaskPayload, XpResult } from '@/types';
+
 const MONTHS = ['January','February','March','April','May','June',
   'July','August','September','October','November','December'];
 const DAYS_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-const PRIORITY_COLORS = {
+const PRIORITY_COLORS: Record<string, string> = {
   low: '#6ab4ff', medium: '#6affdc', high: '#ffaa6a', critical: '#ff6a6a',
 };
+
+interface SelectedDay {
+  year:  number;
+  month: number;
+  day:   number;
+}
+
+type MutateCtx = { previous?: Task[] };
 
 export default function CalendarView() {
   const queryClient = useQueryClient();
@@ -19,25 +30,25 @@ export default function CalendarView() {
 
   const { data: tasks = [] } = useTasksQuery();
 
-  const [calMonth, setCalMonth]       = useState(new Date());
-  const [selectedDay, setSelectedDay] = useState(null);
-  const [newTitle, setNewTitle]       = useState('');
-  const [adding, setAdding]           = useState(false);
-  const [limitError, setLimitError]   = useState(null);
+  const [calMonth, setCalMonth]     = useState(new Date());
+  const [selectedDay, setSelectedDay] = useState<SelectedDay | null>(null);
+  const [newTitle, setNewTitle]     = useState('');
+  const [adding, setAdding]         = useState(false);
+  const [limitError, setLimitError] = useState<string | null>(null);
 
   const year  = calMonth.getFullYear();
   const month = calMonth.getMonth();
 
   const firstDay    = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const calCells    = Array(firstDay).fill(null).concat(
-    Array.from({ length: daysInMonth }, (_, i) => i + 1)
-  );
-
+  const calCells: (number | null)[] = [
+    ...Array(firstDay).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ];
   const today       = new Date();
   const tasksLocked = limits.tasks !== null && tasks.length >= limits.tasks;
 
-  const tasksByDay = {};
+  const tasksByDay: Record<number, Task[]> = {};
   tasks.forEach(t => {
     if (!t.deadline) return;
     const d = new Date(t.deadline);
@@ -47,50 +58,55 @@ export default function CalendarView() {
     tasksByDay[day].push(t);
   });
 
-  const selectedTasks = selectedDay ? (tasksByDay[selectedDay.day] || []) : [];
+  const selectedTasks = selectedDay ? (tasksByDay[selectedDay.day] ?? []) : [];
 
-  const addMutation = useMutation({
+  const addMutation = useMutation<AxiosResponse<Task>, Error, TaskPayload, MutateCtx>({
     mutationFn: (payload) => createTask(payload),
     onSuccess: (res) => {
-      queryClient.setQueryData(['tasks'], old => [res.data, ...(old ?? [])]);
+      queryClient.setQueryData(['tasks'], (old: Task[] | undefined) => [res.data, ...(old ?? [])]);
       queryClient.invalidateQueries({ queryKey: ['tasks'] });
       setNewTitle('');
       setAdding(false);
     },
-    onError: (err) => {
-      if (err.response?.status === 403 && err.response?.data?.limit_reached) {
-        setLimitError(err.response.data.detail);
+    onError: (err: unknown) => {
+      const e = err as { response?: { status?: number; data?: { limit_reached?: boolean; detail?: string } } };
+      if (e.response?.status === 403 && e.response?.data?.limit_reached) {
+        setLimitError(e.response.data.detail ?? null);
       }
     },
   });
 
-  const toggleMutation = useMutation({
+  const toggleMutation = useMutation<
+    AxiosResponse<{ xp_result?: XpResult }>, Error, { id: number; completed: boolean }, MutateCtx
+  >({
     mutationFn: ({ id, completed }) => toggleTask(id, completed),
     onMutate: async ({ id, completed }) => {
       await queryClient.cancelQueries({ queryKey: ['tasks'] });
-      const previous = queryClient.getQueryData(['tasks']);
-      queryClient.setQueryData(['tasks'], old =>
+      const previous = queryClient.getQueryData<Task[]>(['tasks']);
+      queryClient.setQueryData(['tasks'], (old: Task[] | undefined) =>
         old?.map(t => t.id === id ? { ...t, completed } : t) ?? []
       );
       return { previous };
     },
-    onError:   (err, vars, ctx) => queryClient.setQueryData(['tasks'], ctx.previous),
+    onError: (_err, _vars, ctx) => queryClient.setQueryData(['tasks'], ctx?.previous),
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
   });
 
-  const deleteMutation = useMutation({
+  const deleteMutation = useMutation<AxiosResponse, Error, number, MutateCtx>({
     mutationFn: (id) => deleteTask(id),
     onMutate: async (id) => {
       await queryClient.cancelQueries({ queryKey: ['tasks'] });
-      const previous = queryClient.getQueryData(['tasks']);
-      queryClient.setQueryData(['tasks'], old => old?.filter(t => t.id !== id) ?? []);
+      const previous = queryClient.getQueryData<Task[]>(['tasks']);
+      queryClient.setQueryData(['tasks'], (old: Task[] | undefined) =>
+        old?.filter(t => t.id !== id) ?? []
+      );
       return { previous };
     },
-    onError:   (err, vars, ctx) => queryClient.setQueryData(['tasks'], ctx.previous),
+    onError: (_err, _vars, ctx) => queryClient.setQueryData(['tasks'], ctx?.previous),
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
   });
 
-  const handleDayClick = (day) => {
+  const handleDayClick = (day: number | null): void => {
     if (!day) return;
     if (selectedDay?.day === day && selectedDay?.month === month && selectedDay?.year === year) {
       setSelectedDay(null);
@@ -101,7 +117,7 @@ export default function CalendarView() {
     setAdding(false);
   };
 
-  const handleAddTask = () => {
+  const handleAddTask = (): void => {
     if (!newTitle.trim() || !selectedDay) return;
     if (tasksLocked) { setLimitError(`Reach Level ${level + 1} to add more tasks`); return; }
     setLimitError(null);
@@ -109,11 +125,11 @@ export default function CalendarView() {
     addMutation.mutate({ title: newTitle.trim(), deadline: deadline.toISOString(), completed: false });
   };
 
-  const prevMonth = () => setCalMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1));
-  const nextMonth = () => setCalMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1));
-  const goToday   = () => { setCalMonth(new Date()); setSelectedDay(null); };
-  const isToday    = (day) => day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
-  const isSelected = (day) => selectedDay?.day === day && selectedDay?.month === month && selectedDay?.year === year;
+  const prevMonth  = (): void => setCalMonth(m => new Date(m.getFullYear(), m.getMonth() - 1, 1));
+  const nextMonth  = (): void => setCalMonth(m => new Date(m.getFullYear(), m.getMonth() + 1, 1));
+  const goToday    = (): void => { setCalMonth(new Date()); setSelectedDay(null); };
+  const isToday    = (day: number): boolean => day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+  const isSelected = (day: number): boolean => selectedDay?.day === day && selectedDay?.month === month && selectedDay?.year === year;
 
   return (
     <div className={styles.wrapper}>
@@ -128,7 +144,7 @@ export default function CalendarView() {
         </div>
         <div className={styles.cells}>
           {calCells.map((day, i) => {
-            const dayTasks = day ? (tasksByDay[day] || []) : [];
+            const dayTasks = day ? (tasksByDay[day] ?? []) : [];
             const active   = dayTasks.filter(t => !t.completed);
             const done     = dayTasks.filter(t => t.completed);
             return (
@@ -142,7 +158,7 @@ export default function CalendarView() {
                     <span className={styles.dayNum}>{day}</span>
                     <div className={styles.pills}>
                       {active.slice(0, 3).map(t => (
-                        <span key={t.id} className={styles.pill} style={{ background: PRIORITY_COLORS[t.priority] || 'var(--accent-primary)' }} title={t.title}>
+                        <span key={t.id} className={styles.pill} style={{ background: PRIORITY_COLORS[t.priority] ?? 'var(--accent-primary)' }} title={t.title}>
                           {t.title}
                         </span>
                       ))}

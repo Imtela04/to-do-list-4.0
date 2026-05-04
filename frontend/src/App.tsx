@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import type { ReactNode } from 'react';
 import Dashboard from '@/pages/home';
 import Login from '@/pages/login';
 import Register from '@/pages/register';
@@ -12,18 +13,18 @@ import { useAppStore } from '@/store/useAppStore';
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime:        1000 * 60 * 5,  // data stays fresh for 5 minutes
-      retry:            1,              // retry failed requests once
-      refetchOnWindowFocus: false,      // don't refetch just because user switched tabs
+      staleTime:           1000 * 60 * 5,
+      retry:               1,
+      refetchOnWindowFocus: false,
     },
   },
 });
 
-function PrivateRoute({ children }) {
+function PrivateRoute({ children }: { children: ReactNode }) {
   const token = localStorage.getItem('authToken');
   if (!token) return <Navigate to="/login" />;
   try {
-    const payload = JSON.parse(atob(token.split('.')[1]));
+    const payload = JSON.parse(atob(token.split('.')[1])) as { exp: number };
     if (payload.exp * 1000 < Date.now()) {
       localStorage.removeItem('authToken');
       return <Navigate to="/login" />;
@@ -31,10 +32,10 @@ function PrivateRoute({ children }) {
   } catch {
     return <Navigate to="/login" />;
   }
-  return children;
+  return <AppLoader>{children}</AppLoader>;
 }
 
-function AppLoader({ children }) {
+function AppLoader({ children }: { children: ReactNode }) {
   useDataLoader();
   return children;
 }
@@ -45,25 +46,26 @@ export default function App() {
 
   useEffect(() => {
     const handleAuthChange = () => {
-      queryClient.clear();  // ← wipe the React Query cache on logout
-      resetState();
+      const isLoggedIn = !!localStorage.getItem('authToken');
+      if (!isLoggedIn) {
+        queryClient.clear();
+        resetState();
+      }
       setAuthKey(k => k + 1);
     };
     window.addEventListener('auth-change', handleAuthChange);
     return () => window.removeEventListener('auth-change', handleAuthChange);
-  }, []);
+  }, [resetState]);
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider key={authKey}>
-        <AppLoader key={authKey}>
-          <Routes>
-            <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </AppLoader>
+      <ThemeProvider>
+        <Routes key={authKey}>
+          <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </ThemeProvider>
       <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>

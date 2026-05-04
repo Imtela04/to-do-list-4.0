@@ -4,17 +4,30 @@ import { completePomodoro } from '@/api/services';
 import { Play, Pause, RotateCcw, X, Timer } from 'lucide-react';
 import styles from './pomodoro.module.css';
 import { useTasksQuery } from '@/hooks/useTasksQuery';
-const MODES = {
-  work:  { label: 'Focus',       duration: 25 * 60, color: '#7c6aff' },
-  short: { label: 'Short Break', duration: 5 * 60,  color: '#6affdc' },
-  long:  { label: 'Long Break',  duration: 15 * 60, color: '#6ab4ff' },
+import type { Task } from '@/types';
+
+type ModeKey = 'work' | 'short' | 'long';
+
+interface Mode {
+  label:    string;
+  duration: number;
+  color:    string;
+}
+
+const MODES: Record<ModeKey, Mode> = {
+  work:  { label: 'Focus',        duration: 25 * 60, color: '#7c6aff' },
+  short: { label: 'Short Break',  duration: 5 * 60,  color: '#6affdc' },
+  long:  { label: 'Long Break',   duration: 15 * 60, color: '#6ab4ff' },
 };
 
-const SESSION_CYCLE = ['work', 'short', 'work', 'short', 'work', 'short', 'work', 'long'];
+const SESSION_CYCLE: ModeKey[] = ['work', 'short', 'work', 'short', 'work', 'short', 'work', 'long'];
 
-export default function Pomodoro({ onClose }) {
+interface Props {
+  onClose: () => void;
+}
+
+export default function Pomodoro({ onClose }: Props) {
   const pomodoroComplete = useAppStore(s => s.pomodoroComplete);
-
   const { data: tasks = [] } = useTasksQuery();
 
   const [modeIndex, setModeIndex] = useState(0);
@@ -22,12 +35,13 @@ export default function Pomodoro({ onClose }) {
   const [running, setRunning]     = useState(false);
   const [sessions, setSessions]   = useState(0);
   const [taskId, setTaskId]       = useState('');
-  const [xpToast, setXpToast]     = useState(null);
-  const intervalRef = useRef(null);
-  const audioRef    = useRef(null);
+  const [xpToast, setXpToast]     = useState<string | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const audioRef    = useRef<HTMLAudioElement | null>(null);
 
-  const mode   = MODES[SESSION_CYCLE[modeIndex % SESSION_CYCLE.length]];
-  const isWork = SESSION_CYCLE[modeIndex % SESSION_CYCLE.length] === 'work';
+  const currentKey   = SESSION_CYCLE[modeIndex % SESSION_CYCLE.length];
+  const mode         = MODES[currentKey];
+  const isWork       = currentKey === 'work';
 
   const total        = mode.duration;
   const pct          = ((total - timeLeft) / total) * 100;
@@ -35,9 +49,9 @@ export default function Pomodoro({ onClose }) {
   const circumference = 2 * Math.PI * radius;
   const strokeDash   = circumference - (pct / 100) * circumference;
 
-  const handleSessionComplete = useCallback(async () => {
+  const handleSessionComplete = useCallback(async (): Promise<void> => {
     setRunning(false);
-    clearInterval(intervalRef.current);
+    if (intervalRef.current) clearInterval(intervalRef.current);
 
     if (audioRef.current) {
       audioRef.current.currentTime = 0;
@@ -66,18 +80,18 @@ export default function Pomodoro({ onClose }) {
         return t - 1;
       });
     }, 1000);
-    return () => clearInterval(intervalRef.current);
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [running, handleSessionComplete]);
 
-  const handleReset = () => {
+  const handleReset = (): void => {
     setRunning(false);
-    clearInterval(intervalRef.current);
+    if (intervalRef.current) clearInterval(intervalRef.current);
     setTimeLeft(mode.duration);
   };
 
-  const switchMode = (key) => {
+  const switchMode = (key: ModeKey): void => {
     setRunning(false);
-    clearInterval(intervalRef.current);
+    if (intervalRef.current) clearInterval(intervalRef.current);
     const idx = SESSION_CYCLE.indexOf(key);
     setModeIndex(idx >= 0 ? idx : 0);
     setTimeLeft(MODES[key].duration);
@@ -85,8 +99,7 @@ export default function Pomodoro({ onClose }) {
 
   const mins = String(Math.floor(timeLeft / 60)).padStart(2, '0');
   const secs = String(timeLeft % 60).padStart(2, '0');
-
-  const linkedTask = tasks.find(t => t.id === parseInt(taskId));
+  const linkedTask = tasks.find((t: Task) => t.id === parseInt(taskId));
 
   return (
     <div className={styles.panel}>
@@ -96,10 +109,10 @@ export default function Pomodoro({ onClose }) {
         <button className={styles.closeBtn} onClick={onClose}><X size={14} /></button>
       </div>
       <div className={styles.tabs}>
-        {Object.entries(MODES).map(([key, { label }]) => (
+        {(Object.entries(MODES) as [ModeKey, Mode][]).map(([key, { label }]) => (
           <button
             key={key}
-            className={`${styles.tab} ${SESSION_CYCLE[modeIndex % SESSION_CYCLE.length] === key ? styles.tabActive : ''}`}
+            className={`${styles.tab} ${currentKey === key ? styles.tabActive : ''}`}
             onClick={() => switchMode(key)}
           >
             {label}
@@ -110,7 +123,9 @@ export default function Pomodoro({ onClose }) {
         {xpToast && <span className={styles.xpToast}>{xpToast}</span>}
         <svg width="140" height="140" viewBox="0 0 140 140">
           <circle cx="70" cy="70" r={radius} fill="none" stroke="var(--bg-secondary)" strokeWidth="8" />
-          <circle cx="70" cy="70" r={radius} fill="none" stroke={mode.color} strokeWidth="8" strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={strokeDash} transform="rotate(-90 70 70)" style={{ transition: 'stroke-dashoffset 0.5s ease' }} />
+          <circle cx="70" cy="70" r={radius} fill="none" stroke={mode.color} strokeWidth="8"
+            strokeLinecap="round" strokeDasharray={circumference} strokeDashoffset={strokeDash}
+            transform="rotate(-90 70 70)" style={{ transition: 'stroke-dashoffset 0.5s ease' }} />
         </svg>
         <div className={styles.timerText}>
           <span className={styles.time}>{mins}:{secs}</span>
@@ -119,7 +134,11 @@ export default function Pomodoro({ onClose }) {
       </div>
       <div className={styles.controls}>
         <button className={styles.controlBtn} onClick={handleReset}><RotateCcw size={16} /></button>
-        <button className={`${styles.controlBtn} ${styles.playBtn}`} style={{ borderColor: mode.color, color: mode.color }} onClick={() => setRunning(r => !r)}>
+        <button
+          className={`${styles.controlBtn} ${styles.playBtn}`}
+          style={{ borderColor: mode.color, color: mode.color }}
+          onClick={() => setRunning(r => !r)}
+        >
           {running ? <Pause size={20} /> : <Play size={20} />}
         </button>
         <span className={styles.sessionCount}>{sessions} session{sessions !== 1 ? 's' : ''} today</span>
@@ -127,7 +146,7 @@ export default function Pomodoro({ onClose }) {
       <div className={styles.taskLink}>
         <select className={styles.taskSelect} value={taskId} onChange={e => setTaskId(e.target.value)}>
           <option value="">No task linked</option>
-          {tasks.filter(t => !t.completed).map(t => (
+          {tasks.filter((t: Task) => !t.completed).map((t: Task) => (
             <option key={t.id} value={t.id}>{t.title}</option>
           ))}
         </select>

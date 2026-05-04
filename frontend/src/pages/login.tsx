@@ -1,21 +1,27 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { login } from "../api/services";
+import { useState } from 'react';
+import type { FormEvent } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
+import { login } from '../api/services';
 import { useAppStore } from '@/store/useAppStore';
 import styles from './login.module.css';
 
-export default function Login() {
-  const [form, setForm]       = useState({ username: "", password: "" });
-  const [error, setError]     = useState("");
-  const [loading, setLoading] = useState(false);
-  const navigate              = useNavigate();
-  const resetState            = useAppStore(s => s.resetState);
+interface LoginForm {
+  username: string;
+  password: string;
+}
 
-  const handleSubmit = async (e) => {
+export default function Login() {
+  const [form, setForm]     = useState<LoginForm>({ username: '', password: '' });
+  const [error, setError]   = useState('');
+  const [loading, setLoading] = useState(false);
+  const navigate            = useNavigate();
+  const resetState          = useAppStore(s => s.resetState);
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
-    setError("");
+    setError('');
     if (!form.username.trim() || !form.password.trim()) {
-      setError("All fields are required");
+      setError('All fields are required');
       return;
     }
     setLoading(true);
@@ -24,12 +30,13 @@ export default function Login() {
       localStorage.setItem('authToken', res.data.access);
       localStorage.setItem('refreshToken', res.data.refresh);
       resetState();
-      window.dispatchEvent(new Event('auth-change')); // triggers AppLoader remount → useDataLoader refetches
+      window.dispatchEvent(new Event('auth-change'));
       navigate('/');
-    } catch (err) {
-      const detail = err.response?.data?.detail
-        || err.response?.data?.non_field_errors?.[0]
-        || "Invalid credentials";
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { detail?: string; non_field_errors?: string[] } } };
+      const detail = e.response?.data?.detail
+        ?? e.response?.data?.non_field_errors?.[0]
+        ?? 'Invalid credentials';
       setError(detail);
     } finally {
       setLoading(false);
@@ -62,17 +69,15 @@ export default function Login() {
             type="submit"
             disabled={loading}
             className={styles.button}
-            onMouseOver={e => e.currentTarget.style.background = "var(--accent-hover)"}
-            onMouseOut={e => e.currentTarget.style.background = "var(--accent-primary)"}
+            onMouseOver={e => { e.currentTarget.style.background = 'var(--accent-hover)'; }}
+            onMouseOut={e =>  { e.currentTarget.style.background = 'var(--accent-primary)'; }}
           >
-            {loading ? "Logging in..." : "Login"}
+            {loading ? 'Logging in...' : 'Login'}
           </button>
         </form>
         <p className={styles.registerText}>
-          Don't have an account?{" "}
-          <Link to="/register" className={styles.registerLink}>
-            Register here
-          </Link>
+          Don't have an account?{' '}
+          <Link to="/register" className={styles.registerLink}>Register here</Link>
         </p>
       </div>
     </div>
