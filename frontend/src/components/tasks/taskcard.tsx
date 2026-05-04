@@ -233,7 +233,7 @@ export default function TaskCard({ task }: TaskCardProps) {
     const existingDeadline = task.deadline ? new Date(task.deadline) : null;
     setEditForm({
       title:       task.title,
-      description: task.description,
+      description: task.description ?? '',
       priority:    task.priority,
       category:    task.category?.id?.toString() ?? '',
       deadline:    existingDeadline,
@@ -249,8 +249,8 @@ export default function TaskCard({ task }: TaskCardProps) {
     e?.stopPropagation();
     const changes: Partial<TaskPayload> = {};
 
-    if (editForm.title.trim())       changes.title       = editForm.title.trim();
-    if (editForm.description.trim()) changes.description = editForm.description.trim();
+    if (editForm.title?.trim())       changes.title       = editForm.title.trim();
+    if (editForm.description?.trim()) changes.description = editForm.description.trim();
     if (editForm.priority)           changes.priority    = editForm.priority as TaskPayload['priority'];
     if (editForm.category)           changes.category    = parseInt(editForm.category);
 
