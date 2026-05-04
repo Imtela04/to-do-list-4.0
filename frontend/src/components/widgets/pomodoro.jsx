@@ -3,7 +3,7 @@ import { useAppStore } from '../../store/useAppStore';
 import { completePomodoro } from '@/api/services';
 import { Play, Pause, RotateCcw, X, Timer } from 'lucide-react';
 import styles from './pomodoro.module.css';
-
+import { useTasksQuery } from '@/hooks/useTasksQuery';
 const MODES = {
   work:  { label: 'Focus',       duration: 25 * 60, color: '#7c6aff' },
   short: { label: 'Short Break', duration: 5 * 60,  color: '#6affdc' },

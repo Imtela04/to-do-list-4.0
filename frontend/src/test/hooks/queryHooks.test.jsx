@@ -1,3 +1,7 @@
+vi.unmock('@/hooks/useTasksQuery');
+vi.unmock('@/hooks/useCategoriesQuery');
+vi.unmock('@/hooks/useNotesQuery');
+
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { QueryClientProvider } from '@tanstack/react-query';

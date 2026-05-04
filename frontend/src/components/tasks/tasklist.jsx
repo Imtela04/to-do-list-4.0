@@ -7,6 +7,7 @@ import FilterBar from '@/components/layout/filterbar';
 import styles from './tasklist.module.css';
 import { format } from 'date-fns';
 import { Calendar, Lock } from 'lucide-react';
+import { getFilteredTasks } from '@/utils/filterTasks';
 
 const PAGE_SIZE = 8;
 
@@ -15,11 +16,8 @@ export default function TaskList() {
   const limits           = useAppStore(s => s.limits);
   const level            = useAppStore(s => s.level);
   const setFilter        = useAppStore(s => s.setFilter);
-  const getFilteredTasks = useAppStore(s => s.getFilteredTasks);
-
-  const { data: tasks = [], isLoading } = useTasksQuery(); // ← single declaration
-
-  const filteredTasks = getFilteredTasks(tasks); // ← was missing entirely
+  const { data: tasks = [], isLoading } = useTasksQuery();
+  const filteredTasks = getFilteredTasks(tasks, filter);
 
   const [addOpen, setAddOpen] = useState(false);
   const [page, setPage]       = useState(1);

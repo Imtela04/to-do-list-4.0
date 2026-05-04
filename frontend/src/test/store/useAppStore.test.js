@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useAppStore } from '@/store/useAppStore';
 import { mockTask } from '../utils';
+import { getFilteredTasks } from '@/utils/filterTasks';
 
 // reset store between tests
 beforeEach(() => {
@@ -93,7 +94,7 @@ describe('useAppStore - filters', () => {
   });
 });
 
-describe('useAppStore - getFilteredTasks', () => {
+describe('getFilteredTasks utility', () => {  // ← renamed
   const tasks = [
     mockTask({ id: 1, title: 'Buy groceries', priority: 'low',      completed: false }),
     mockTask({ id: 2, title: 'Write report',  priority: 'high',     completed: false }),
@@ -102,48 +103,46 @@ describe('useAppStore - getFilteredTasks', () => {
       deadline: new Date(Date.now() + 86400000).toISOString() }),
   ];
 
-  beforeEach(() => useAppStore.getState().resetState());
+  const defaultFilter = {
+    search: '', category: null, priority: null,
+    status: 'all', sort: 'newest', deadlineDay: null,
+    dateFrom: null, dateTo: null,
+  };
 
   it('returns all tasks with default filter', () => {
-    const result = useAppStore.getState().getFilteredTasks(tasks);
+    const result = getFilteredTasks(tasks, defaultFilter);
     expect(result).toHaveLength(4);
   });
 
   it('filters by search term', () => {
-    useAppStore.getState().setFilter({ search: 'report' });
-    const result = useAppStore.getState().getFilteredTasks(tasks);
+    const result = getFilteredTasks(tasks, { ...defaultFilter, search: 'report' });
     expect(result).toHaveLength(1);
     expect(result[0].title).toBe('Write report');
   });
 
   it('filters by priority', () => {
-    useAppStore.getState().setFilter({ priority: 'high' });
-    const result = useAppStore.getState().getFilteredTasks(tasks);
+    const result = getFilteredTasks(tasks, { ...defaultFilter, priority: 'high' });
     expect(result).toHaveLength(1);
     expect(result[0].priority).toBe('high');
   });
 
   it('filters active tasks only', () => {
-    useAppStore.getState().setFilter({ status: 'active' });
-    const result = useAppStore.getState().getFilteredTasks(tasks);
+    const result = getFilteredTasks(tasks, { ...defaultFilter, status: 'active' });
     expect(result.every(t => !t.completed)).toBe(true);
   });
 
   it('filters completed tasks only', () => {
-    useAppStore.getState().setFilter({ status: 'completed' });
-    const result = useAppStore.getState().getFilteredTasks(tasks);
+    const result = getFilteredTasks(tasks, { ...defaultFilter, status: 'completed' });
     expect(result.every(t => t.completed)).toBe(true);
   });
 
   it('sorts by priority', () => {
-    useAppStore.getState().setFilter({ sort: 'priority' });
-    const result = useAppStore.getState().getFilteredTasks(tasks);
+    const result = getFilteredTasks(tasks, { ...defaultFilter, sort: 'priority' });
     expect(result[0].priority).toBe('critical');
   });
 
   it('sorts alphabetically', () => {
-    useAppStore.getState().setFilter({ sort: 'alpha' });
-    const result = useAppStore.getState().getFilteredTasks(tasks);
+    const result = getFilteredTasks(tasks, { ...defaultFilter, sort: 'alpha' });
     expect(result[0].title).toBe('Buy groceries');
   });
 
@@ -152,7 +151,8 @@ describe('useAppStore - getFilteredTasks', () => {
       ...tasks,
       mockTask({ id: 5, title: 'Pinned', pinned: true }),
     ];
-    const result = useAppStore.getState().getFilteredTasks(withPinned);
+    const result = getFilteredTasks(withPinned, defaultFilter);
     expect(result[0].pinned).toBe(true);
   });
 });
+

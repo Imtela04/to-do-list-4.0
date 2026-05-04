@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>what-do</title>
+    <script>
+      getTheme()
+        .then(res => {
+          const { mode, custom_colors } = res.data;
+          const colors = custom_colors || DEFAULT_CUSTOM;
+          localStorage.setItem('theme', mode || 'dark');  // ← add this
+          setTheme(mode || 'dark');
+          setCustom(colors);
+          applyThemeToDom(mode || 'dark', colors);
+        })
+        .catch(() => {});
+    </script>
+    <script type="module" crossorigin src="/static/assets/index-BBN7d6OO.js"></script>
+    <link rel="stylesheet" crossorigin href="/static/assets/index-DnFMOCQQ.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
