@@ -7,6 +7,7 @@ from datetime import datetime, timezone as dt_timezone
 from .serializers import TodoSerializer, CategorySerializer, StickyNoteSerializer
 from .models import Todo, Category, StickyNotes
 from apps.accounts.models import UserProfile
+from django.utils import timezone
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -136,8 +137,15 @@ def task_detail(request, task_id):
     if 'description' in request.data:
         task.description = request.data['description']
     if 'completed' in request.data:
-        val = request.data['completed']
-        task.completed = val if isinstance(val, bool) else str(val).lower() == 'true'
+        print(f"completed value: {request.data['completed']}, type: {type(request.data['completed'])}")
+        new_completed = request.data['completed']
+        if isinstance(new_completed, str):
+            new_completed = new_completed.lower() == 'true'
+        task.completed = new_completed
+        if task.completed and not was_completed:
+            task.completed_at = timezone.now()
+        elif not task.completed:
+            task.completed_at = None
     if 'deadline' in request.data:
         task.deadline = parse_deadline(request.data['deadline'])
     if 'category' in request.data:

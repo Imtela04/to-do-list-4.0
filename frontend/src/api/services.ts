@@ -2,7 +2,7 @@ import type { AxiosResponse } from 'axios';
 import client from './client';
 import type {
   Task, Category, StickyNote, Profile,
-  Theme, XpResult, PomodoroResult, AuthTokens,
+  Theme, PomodoroResult, AuthTokens,
   LoginCredentials, RegisterData,
   TaskPayload, CategoryPayload, NotePayload, ThemePayload,
 } from '@/types';

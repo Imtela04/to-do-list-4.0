@@ -39,9 +39,13 @@ export default function Greeting() {
     setNameInput(greeting || username || '');
   }, [username, greeting]);
 
-  const todayTasks = tasks.filter((t: Task) => t.deadline && isToday(new Date(t.deadline)));
-  const completed  = todayTasks.filter((t: Task) => t.completed).length;
-  const total      = todayTasks.length;
+  const todayTasks = tasks.filter((t: Task) => {
+    const dueToday       = t.deadline && isToday(new Date(t.deadline));
+    const completedToday = t.completed_at && isToday(new Date(t.completed_at));
+    return dueToday || completedToday;
+  });
+  const completed = todayTasks.filter((t: Task) => t.completed).length;
+  const total     = todayTasks.length;
   const allDone    = total > 0 && completed === total;
 
   const handleSave = (): void => {

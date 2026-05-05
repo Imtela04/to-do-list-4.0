@@ -11,10 +11,10 @@ import 'react-datepicker/dist/react-datepicker.css';
 import { Pin, PinOff, Trash, SquarePen, CalendarPlus, Hourglass } from 'lucide-react';
 
 const PRIORITY_MAP: Record<string, { color: string; label: string }> = {
-  low:      { color: '#6ab4ff', label: 'Low' },
-  medium:   { color: '#6affdc', label: 'Medium' },
-  high:     { color: '#ffaa6a', label: 'High' },
-  critical: { color: '#ff6a6a', label: 'Critical' },
+  low:      { color: 'var(--priority-low)', label: 'Low' },
+  medium:   { color: 'var(--priority-medium)', label: 'Medium' },
+  high:     { color: 'var(--priority-high)', label: 'High' },
+  critical: { color: 'var(--priority-critical)', label: 'Critical' },
 };
 
 const PRIORITIES = ['low', 'medium', 'high', 'critical'] as const;

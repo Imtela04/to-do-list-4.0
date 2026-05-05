@@ -14,6 +14,7 @@ export interface Task {
   completed:   boolean;
   pinned:      boolean;
   created_at:  string;
+  completed_at: string | null;
 }
 
 export interface StickyNote {
