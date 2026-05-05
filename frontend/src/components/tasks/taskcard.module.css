@@ -403,3 +403,9 @@
   opacity: 0.85;
   pointer-events: none;
 }
+
+@media (hover: none) {
+  .actions {
+    opacity: 1;
+  }
+}
