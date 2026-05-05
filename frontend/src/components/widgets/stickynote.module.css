@@ -281,7 +281,7 @@
 }
 
 .deleteBtn:hover {
-  color: var(--priority-critical);
+  color: var(--danger);
 }
 .confirmOverlay {
   position: absolute;

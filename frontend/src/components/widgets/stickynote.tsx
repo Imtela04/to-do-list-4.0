@@ -291,7 +291,7 @@ export default function StickyNotes() {
                 {editingId === note.id ? '✓' : <PenBox size={12} />}
               </button>
               <button
-                className={styles.noteBtn}
+                className={styles.deleteBtn}
                 onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(note.id); }}
               >
                 <Trash size={12} />
