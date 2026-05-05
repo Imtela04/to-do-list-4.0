@@ -136,21 +136,21 @@ export default function TaskCard({ task }: TaskCardProps) {
 
   // ── Mutations ──────────────────────────────────────────────
   const toggleMutation = useMutation({
-  mutationFn: ({ completed }: { completed: boolean }) => 
-    toggleTask(task.id, completed, completed ? false : task.pinned),
-    onMutate: async ({ completed }: ToggleMutationVars) => {
-      await queryClient.cancelQueries({ queryKey: ['tasks'] });
-      const previous = queryClient.getQueryData<Task[]>(['tasks']);
-      optimisticUpdate({ ...task, completed, pinned: completed ? false:task.pinned });
-      return { previous };
-    },
-    onSuccess: (res) => {
-      const xpResult = res.data.xp_result;
-      if (xpResult) updateXp(xpResult as XpResult);
-    },
-    onError:   (_err: Error, _vars: ToggleMutationVars, ctx: MutationContext | undefined) => { if (ctx) rollback(ctx); },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
-  });
+    mutationFn: ({ completed }: { completed: boolean }) => 
+      toggleTask(task.id, completed, completed ? false : task.pinned),
+      onMutate: async ({ completed }: ToggleMutationVars) => {
+        await queryClient.cancelQueries({ queryKey: ['tasks'] });
+        const previous = queryClient.getQueryData<Task[]>(['tasks']);
+        optimisticUpdate({ ...task, completed, pinned: completed ? false:task.pinned });
+        return { previous };
+      },
+      onSuccess: (res) => {
+        const xpResult = res.data.xp_result;
+        if (xpResult) updateXp(xpResult as XpResult);
+      },
+      onError:   (_err: Error, _vars: ToggleMutationVars, ctx: MutationContext | undefined) => { if (ctx) rollback(ctx); },
+      onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
+    });
 
   const updateMutation = useMutation({
     mutationFn: ({ changes }: UpdateMutationVars) => updateTaskApi(task.id, changes),

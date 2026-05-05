@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '@/store/useAppStore';
 import { createCategory, deleteCategory, updateCategory } from '@/api/services';
-import type { Category } from '@/types';
+import type { Task, Category } from '@/types';
 import type { AxiosResponse } from 'axios';
 import styles from './categorypanel.module.css';
 import { Lock, PenBox } from 'lucide-react';
@@ -21,7 +21,7 @@ interface ApiError {
     data?: { limit_reached?: boolean; detail?: string };
   };
 }
-type UpdateVars  = { id: number; content: string };
+type UpdateVars = { id: number; content: string; icon: string };
 type MutateCtx   = { previous?: Category[] };
 
 export default function Categories() {
@@ -39,7 +39,7 @@ export default function Categories() {
   const [icon, setIcon]             = useState<string>(ICONS[0]);
   const [limitError, setLimitError] = useState<string | null>(null);
   const [editingId, setEditingId]   = useState<number | null>(null);
-  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [editingIcon, setEditingIcon] = useState<string>(ICONS[0]);
   const editEditorRef = useRef<HTMLDivElement | null>(null);
   const categoriesLocked = limits.categories !== null && categories.length >= limits.categories;
 
@@ -71,15 +71,24 @@ export default function Categories() {
     UpdateVars,
     MutateCtx
   >({
-    mutationFn: ({ id, content }) => updateCategory(id, { name: content }),
-    onMutate: async ({ id, content }) => {
+    mutationFn: ({ id, content, icon }) => updateCategory(id, { name: content, icon }),
+    onMutate: async ({ id, content, icon }) => {
       await queryClient.cancelQueries({ queryKey: ['categories'] });
       const previous = queryClient.getQueryData<Category[]>(['categories']);
       queryClient.setQueryData(['categories'], (old: Category[] | undefined) =>
-        old?.map(n => n.id === id ? { ...n, name: content } : n) ?? []
+        old?.map(n => n.id === id ? { ...n, name: content, icon } : n) ?? []
       );
-      return { previous };
     },
+    onSuccess: (_res, { id, content, icon }) => {
+      queryClient.setQueryData(['tasks'], (old: Task[] | undefined) =>
+        old?.map(t =>
+          t.category?.id === id
+            ? { ...t, category: { ...t.category, name: content, icon } }
+            : t
+        ) ?? []
+      );
+    },
+
     onError: (_err, _vars, ctx) => queryClient.setQueryData(['categories'], ctx?.previous),
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['categories'] }),
   });
@@ -99,11 +108,14 @@ export default function Categories() {
   });
 
   useEffect(() => {
-      if (editingId && editEditorRef.current) {
-        const cat = categories.find((n: Category) => n.id === editingId);
-        if (cat) editEditorRef.current.innerHTML = cat.name;
+    if (editingId && editEditorRef.current) {
+      const cat = categories.find((n: Category) => n.id === editingId);
+      if (cat) {
+        editEditorRef.current.innerHTML = cat.name;
+        setEditingIcon(cat.icon); // ← set current icon
       }
-    }, [editingId]);
+    }
+  }, [editingId]);
   
 
   const handleAdd = (): void => {
@@ -120,9 +132,9 @@ export default function Categories() {
   };
 
   const handleSaveEdit = (cat: Category): void => {
-      const content = editEditorRef.current?.innerHTML || '';
-      updateMutation.mutate({ id: cat.id, content });
-      setEditingId(null);
+    const content = editEditorRef.current?.innerHTML || '';
+    updateMutation.mutate({ id: cat.id, content, icon: editingIcon });
+    setEditingId(null);
   };
   const uncategorisedCount = tasks.filter(t => !t.category).length;
 
@@ -202,21 +214,32 @@ export default function Categories() {
               <span className={styles.itemIcon}>{cat.icon}</span>
               
               {editingId === cat.id ? (
-                <div
-                  ref={editEditorRef}
-                  className={styles.editInput}
-                  contentEditable
-                  suppressContentEditableWarning
-                  onClick={e => e.stopPropagation()}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') { e.preventDefault(); handleSaveEdit(cat); }
-                    if (e.key === 'Escape') setEditingId(null);
-                  }}
-                />
+                <div onClick={e => e.stopPropagation()}>
+                  <div
+                    ref={editEditorRef}
+                    className={styles.editInput}
+                    contentEditable
+                    suppressContentEditableWarning
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') { e.preventDefault(); handleSaveEdit(cat); }
+                      if (e.key === 'Escape') setEditingId(null);
+                    }}
+                  />
+                  <div className={styles.colorRow}>
+                    {ICONS.map(i => (
+                      <button
+                        key={i}
+                        className={`${styles.dot} ${editingIcon === i ? styles.selected : ''}`}
+                        onClick={() => setEditingIcon(i)}
+                      >
+                        {i}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               ) : (
                 <span className={styles.catName}>{cat.name}</span>
               )}
-
               <span className={styles.count}>{count}</span>
               <button
                 className={styles.editBtn}
@@ -226,7 +249,6 @@ export default function Categories() {
                     handleSaveEdit(cat);
                   } else {
                     setEditingId(cat.id);
-                    setExpandedId(cat.id);
                   }
                 }}
               >
