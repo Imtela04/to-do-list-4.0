@@ -171,3 +171,9 @@
   color: var(--text-primary);
   border-color: var(--border-medium);
 }
+
+@media (hover: none) {
+  .delBtn { opacity: 1; }
+  .editBtn { opacity: 1; }
+  .item:hover { background: transparent; }
+}

@@ -32,8 +32,7 @@ export default function StickyNotes() {
   const [editingId, setEditingId]   = useState<number | null>(null);
   const [expandedId, setExpandedId] = useState<number | null>(null);
   const [limitError, setLimitError] = useState<string | null>(null);
-
-  const addEditorRef  = useRef<HTMLDivElement | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);  const addEditorRef  = useRef<HTMLDivElement | null>(null);
   const editEditorRef = useRef<HTMLDivElement | null>(null);
   const { save: saveDraft, load: loadDraft, clear: clearDraft } = useDraft('draft_note');
   const [hasNoteDraft, setHasNoteDraft] = useState(!!loadDraft());
@@ -94,7 +93,9 @@ export default function StickyNotes() {
       }
     }
   };
-
+  const handleDelete = (id: number): void => {
+    deleteMutation.mutate(id);
+  };
   const addMutation = useMutation<
     AxiosResponse<StickyNote>,
     Error,
@@ -174,7 +175,7 @@ export default function StickyNotes() {
   return (
     <div className={styles.panel}>
       <div className={styles.header}>
-        <span className={styles.title}>STICKY NOTES</span>
+        {/* <span className={styles.title}>STICKY NOTES</span> */}
         {notesLocked || notesAtLimit ? (
           <button
             className={`${styles.addBtn} ${styles.locked}`}
@@ -276,10 +277,7 @@ export default function StickyNotes() {
                 onClick={e => e.stopPropagation()}
               />
             ) : (
-              <p
-                className={styles.noteText}
-                dangerouslySetInnerHTML={{ __html: note.note }}
-              />
+              <p className={styles.noteText} dangerouslySetInnerHTML={{ __html: note.note }} />
             )}
             <div className={styles.noteActions}>
               <button
@@ -290,15 +288,25 @@ export default function StickyNotes() {
                   else { setEditingId(note.id); setExpandedId(note.id); }
                 }}
               >
-                {editingId === note.id ? '✓' : <span><PenBox size={12} /></span>}
+                {editingId === note.id ? '✓' : <PenBox size={12} />}
               </button>
               <button
                 className={styles.noteBtn}
-                onClick={(e) => { e.stopPropagation(); deleteMutation.mutate(note.id); }}
+                onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(note.id); }}
               >
                 <Trash size={12} />
               </button>
             </div>
+
+            {confirmDeleteId === note.id && (
+              <div className={styles.confirmOverlay}>
+                <p className={styles.confirmText}>Delete this note?</p>
+                <div className={styles.confirmActions}>
+                  <button className={styles.confirmCancel} onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(null); }}>Cancel</button>
+                  <button className={styles.confirmDelete} onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(null); handleDelete(note.id); }}>Delete</button>
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>

@@ -405,7 +405,7 @@
 }
 
 @media (hover: none) {
-  .actions {
-    opacity: 1;
-  }
+  .actions { opacity: 1; }
+  .card:hover { transform: none; box-shadow: none; background: var(--bg-glass); border-color: var(--border-subtle); }
+  .card:hover .tooltip { display: none; }
 }

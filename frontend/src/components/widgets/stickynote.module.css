@@ -16,7 +16,7 @@
   cursor: pointer;
   transition: all var(--transition-fast);
   width: 100%;
-  justify-content: left;
+  justify-content: right;
 }
 .addBtn:hover {
   color: var(--accent-primary);
@@ -278,4 +278,60 @@
   background: var(--bg-secondary);
   border-radius: 6px;
   margin-bottom: 8px;
+}
+
+.deleteBtn:hover {
+  color: var(--priority-critical);
+}
+.confirmOverlay {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-card);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  gap: 8px;
+  animation: fadeIn 150ms ease both;
+  border: 1px solid rgba(255, 68, 68, 0.25);
+  z-index: 10;
+}
+
+.confirmText {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.confirmActions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.confirmCancel {
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  background: var(--bg-glass);
+  border: 1px solid var(--border-subtle);
+  cursor: pointer;
+}
+
+.confirmDelete {
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  color: white;
+  background: rgba(255, 68, 68, 0.8);
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+@media (hover: none) {
+  .noteActions { opacity: 1; }
+  .note:hover { border-color: var(--border-subtle); }
+
 }
