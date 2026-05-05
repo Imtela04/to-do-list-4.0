@@ -27,8 +27,14 @@ export function getFilteredTasks(tasks: Task[], filter: Filter): Task[] {
       return true;
     })
     .sort((a, b) => {
+      // pinned always first
       if (a.pinned && !b.pinned) return -1;
       if (!a.pinned && b.pinned) return 1;
+
+      // completed always last
+      if (a.completed && !b.completed) return 1;
+      if (!a.completed && b.completed) return -1;
+
       switch (filter.sort) {
         case 'newest':   return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
         case 'oldest':   return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
@@ -40,5 +46,6 @@ export function getFilteredTasks(tasks: Task[], filter: Filter): Task[] {
         case 'alpha': return a.title.localeCompare(b.title);
         default:      return 0;
       }
+      
     });
 }
