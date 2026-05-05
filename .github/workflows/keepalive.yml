@@ -1,0 +1,11 @@
+name: Keep Alive
+on:
+  schedule:
+    - cron: '*/14 * * * *'
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping site
+        run: curl https://what-do.onrender.com/api/me/ || true

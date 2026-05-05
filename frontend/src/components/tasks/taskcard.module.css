@@ -91,20 +91,18 @@
 }
 
 .editInput {
-  background: transparent;
-  border: none;
-  border-bottom: 1px solid var(--border-medium);
-  outline: none;
-  font-size: 1rem;
-  font-weight: 500;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  padding: 6px 10px;
+  font-size: 0.8rem;
   color: var(--text-primary);
-  padding: 8px 0;
-  width: 100%;
+  outline: none;
   transition: border-color var(--transition-fast);
+  cursor: pointer;
 }
 
-.editnput:focus { border-bottom-color: var(--accent-primary); }
-.editInput::placeholder { color: var(--text-muted); }
+.editInput:focus { border-color: var(--accent-primary); }
 
 .meta {
   display: flex;

@@ -332,7 +332,7 @@ export default function TaskCard({ task }: TaskCardProps) {
               value={editForm.category}
               onChange={e => set('category', e.target.value)}
             >
-              <option value="">Category (unchanged)</option>
+              <option value="">Category</option>
               {categories.map(c => (
                 <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
               ))}
