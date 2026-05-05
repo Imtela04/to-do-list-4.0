@@ -34,6 +34,7 @@ export const toggleTask = (id: number, completed: boolean, pinned?: boolean) =>
 // ── Categories ────────────────────────────────────────────────
 export const getCategories  = ():                       Promise<AxiosResponse<Category[]>> => client.get('/categories/');
 export const createCategory = (data: CategoryPayload):  Promise<AxiosResponse<Category>>  => client.post('/categories/', data);
+export const updateCategory = (id: number, data: Partial<CategoryPayload>): Promise<AxiosResponse<Category>> => client.patch(`/categories/${id}/`, data);
 export const deleteCategory = (id: number):             Promise<AxiosResponse>             => client.delete(`/categories/${id}/`);
 
 // ── Sticky notes ──────────────────────────────────────────────

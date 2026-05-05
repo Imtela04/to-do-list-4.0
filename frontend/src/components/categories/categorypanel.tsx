@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '@/store/useAppStore';
-import { createCategory, deleteCategory } from '@/api/services';
+import { createCategory, deleteCategory, updateCategory } from '@/api/services';
 import type { Category } from '@/types';
+import type { AxiosResponse } from 'axios';
 import styles from './categorypanel.module.css';
-import { Lock } from 'lucide-react';
+import { Lock, PenBox } from 'lucide-react';
 import { useTasksQuery } from '../../hooks/useTasksQuery';
 import { useCategoriesQuery } from '../../hooks/useCategoriesQuery';
 
@@ -20,6 +21,8 @@ interface ApiError {
     data?: { limit_reached?: boolean; detail?: string };
   };
 }
+type UpdateVars  = { id: number; content: string };
+type MutateCtx   = { previous?: Category[] };
 
 export default function Categories() {
   const queryClient    = useQueryClient();
@@ -35,7 +38,9 @@ export default function Categories() {
   const [name, setName]             = useState('');
   const [icon, setIcon]             = useState<string>(ICONS[0]);
   const [limitError, setLimitError] = useState<string | null>(null);
-
+  const [editingId, setEditingId]   = useState<number | null>(null);
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const editEditorRef = useRef<HTMLDivElement | null>(null);
   const categoriesLocked = limits.categories !== null && categories.length >= limits.categories;
 
   const toggleFilter = (val: number | 'uncategorised'): void =>
@@ -60,6 +65,25 @@ export default function Categories() {
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['categories'] }),
   });
 
+  const updateMutation = useMutation<
+    AxiosResponse<Category>,
+    Error,
+    UpdateVars,
+    MutateCtx
+  >({
+    mutationFn: ({ id, content }) => updateCategory(id, { name: content }),
+    onMutate: async ({ id, content }) => {
+      await queryClient.cancelQueries({ queryKey: ['categories'] });
+      const previous = queryClient.getQueryData<Category[]>(['categories']);
+      queryClient.setQueryData(['categories'], (old: Category[] | undefined) =>
+        old?.map(n => n.id === id ? { ...n, name: content } : n) ?? []
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, ctx) => queryClient.setQueryData(['categories'], ctx?.previous),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['categories'] }),
+  });
+
   const deleteMutation = useMutation({
     mutationFn: (id: number) => deleteCategory(id),
     onMutate: async (id: number): Promise<CategoryMutationContext> => {
@@ -74,6 +98,14 @@ export default function Categories() {
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['categories'] }),
   });
 
+  useEffect(() => {
+      if (editingId && editEditorRef.current) {
+        const cat = categories.find((n: Category) => n.id === editingId);
+        if (cat) editEditorRef.current.innerHTML = cat.name;
+      }
+    }, [editingId]);
+  
+
   const handleAdd = (): void => {
     if (!name.trim()) return;
     setLimitError(null);
@@ -87,6 +119,11 @@ export default function Categories() {
     deleteMutation.mutate(id);
   };
 
+  const handleSaveEdit = (cat: Category): void => {
+      const content = editEditorRef.current?.innerHTML || '';
+      updateMutation.mutate({ id: cat.id, content });
+      setEditingId(null);
+  };
   const uncategorisedCount = tasks.filter(t => !t.category).length;
 
   return (
@@ -160,11 +197,41 @@ export default function Categories() {
             <div
               key={cat.id}
               className={`${styles.item} ${activeCategory === cat.id ? styles.itemActive : ''}`}
-              onClick={() => toggleFilter(cat.id)}
+              onClick={() => { if (editingId !== cat.id) toggleFilter(cat.id); }}
             >
               <span className={styles.itemIcon}>{cat.icon}</span>
-              <span className={styles.catName}>{cat.name}</span>
+              
+              {editingId === cat.id ? (
+                <div
+                  ref={editEditorRef}
+                  className={styles.editInput}
+                  contentEditable
+                  suppressContentEditableWarning
+                  onClick={e => e.stopPropagation()}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') { e.preventDefault(); handleSaveEdit(cat); }
+                    if (e.key === 'Escape') setEditingId(null);
+                  }}
+                />
+              ) : (
+                <span className={styles.catName}>{cat.name}</span>
+              )}
+
               <span className={styles.count}>{count}</span>
+              <button
+                className={styles.editBtn}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  if (editingId === cat.id) {
+                    handleSaveEdit(cat);
+                  } else {
+                    setEditingId(cat.id);
+                    setExpandedId(cat.id);
+                  }
+                }}
+              >
+                {editingId === cat.id ? '✓' : <PenBox size={12} />}
+              </button>
               <button className={styles.delBtn} onClick={e => handleDelete(e, cat.id)}>✕</button>
             </div>
           );
