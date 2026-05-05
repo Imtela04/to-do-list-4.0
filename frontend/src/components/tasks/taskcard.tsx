@@ -136,11 +136,12 @@ export default function TaskCard({ task }: TaskCardProps) {
 
   // ── Mutations ──────────────────────────────────────────────
   const toggleMutation = useMutation({
-    mutationFn: ({ completed }: ToggleMutationVars) => toggleTask(task.id, completed),
+  mutationFn: ({ completed }: { completed: boolean }) => 
+    toggleTask(task.id, completed, completed ? false : task.pinned),
     onMutate: async ({ completed }: ToggleMutationVars) => {
       await queryClient.cancelQueries({ queryKey: ['tasks'] });
       const previous = queryClient.getQueryData<Task[]>(['tasks']);
-      optimisticUpdate({ ...task, completed });
+      optimisticUpdate({ ...task, completed, pinned: completed ? false:task.pinned });
       return { previous };
     },
     onSuccess: (res) => {

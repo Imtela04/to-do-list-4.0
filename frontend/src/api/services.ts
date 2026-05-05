@@ -28,8 +28,8 @@ export const getTasks    = (params: Record<string, unknown> = {}): Promise<Axios
 export const createTask  = (data: TaskPayload):           Promise<AxiosResponse<Task>> => client.post('/tasks/', data);
 export const updateTask  = (id: number, data: Partial<TaskPayload>): Promise<AxiosResponse<Task>> => client.patch(`/tasks/${id}/`, data);
 export const deleteTask  = (id: number):                  Promise<AxiosResponse> =>       client.delete(`/tasks/${id}/`);
-export const toggleTask  = (id: number, completed: boolean): Promise<AxiosResponse<{ xp_result?: XpResult }>> =>
-  client.patch(`/tasks/${id}/`, { completed });
+export const toggleTask = (id: number, completed: boolean, pinned?: boolean) => 
+  client.patch(`/tasks/${id}/`, { completed, ...(pinned !== undefined && { pinned }) });
 
 // ── Categories ────────────────────────────────────────────────
 export const getCategories  = ():                       Promise<AxiosResponse<Category[]>> => client.get('/categories/');

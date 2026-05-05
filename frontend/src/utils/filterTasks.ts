@@ -31,9 +31,10 @@ export function getFilteredTasks(tasks: Task[], filter: Filter): Task[] {
       if (a.pinned && !b.pinned) return -1;
       if (!a.pinned && b.pinned) return 1;
 
-      // completed always last
+      // completed always last(even pinned)
       if (a.completed && !b.completed) return 1;
       if (!a.completed && b.completed) return -1;
+      
 
       switch (filter.sort) {
         case 'newest':   return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
