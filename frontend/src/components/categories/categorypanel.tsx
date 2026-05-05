@@ -72,26 +72,27 @@ export default function Categories() {
     MutateCtx
   >({
     mutationFn: ({ id, content, icon }) => updateCategory(id, { name: content, icon }),
-    onMutate: async ({ id, content, icon }) => {
-      await queryClient.cancelQueries({ queryKey: ['categories'] });
-      const previous = queryClient.getQueryData<Category[]>(['categories']);
-      queryClient.setQueryData(['categories'], (old: Category[] | undefined) =>
-        old?.map(n => n.id === id ? { ...n, name: content, icon } : n) ?? []
-      );
-    },
-    onSuccess: (_res, { id, content, icon }) => {
-      queryClient.setQueryData(['tasks'], (old: Task[] | undefined) =>
-        old?.map(t =>
-          t.category?.id === id
-            ? { ...t, category: { ...t.category, name: content, icon } }
-            : t
-        ) ?? []
-      );
-    },
+      onMutate: async ({ id, content, icon }) => {
+        await queryClient.cancelQueries({ queryKey: ['categories'] });
+        const previous = queryClient.getQueryData<Category[]>(['categories']);
+        queryClient.setQueryData(['categories'], (old: Category[] | undefined) =>
+          old?.map(n => n.id === id ? { ...n, name: content, icon } : n) ?? []
+        );
+        return { previous }
+      },
+      onSuccess: (_res, { id, content, icon }) => {
+        queryClient.setQueryData(['tasks'], (old: Task[] | undefined) =>
+          old?.map(t =>
+            t.category?.id === id
+              ? { ...t, category: { ...t.category, name: content, icon } }
+              : t
+          ) ?? []
+        );
+      },
 
-    onError: (_err, _vars, ctx) => queryClient.setQueryData(['categories'], ctx?.previous),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['categories'] }),
-  });
+      onError: (_err, _vars, ctx) => queryClient.setQueryData(['categories'], ctx?.previous),
+      onSettled: () => queryClient.invalidateQueries({ queryKey: ['categories'] }),
+    });
 
   const deleteMutation = useMutation({
     mutationFn: (id: number) => deleteCategory(id),
