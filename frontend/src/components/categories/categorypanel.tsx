@@ -5,7 +5,7 @@ import { createCategory, deleteCategory, updateCategory } from '@/api/services';
 import type { Task, Category } from '@/types';
 import type { AxiosResponse } from 'axios';
 import styles from './categorypanel.module.css';
-import { Lock, PenBox } from 'lucide-react';
+import { Lock, PenBox, Trash, Ban } from 'lucide-react';
 import { useTasksQuery } from '../../hooks/useTasksQuery';
 import { useCategoriesQuery } from '../../hooks/useCategoriesQuery';
 
@@ -42,6 +42,7 @@ export default function Categories() {
   const [editingIcon, setEditingIcon] = useState<string>(ICONS[0]);
   const editEditorRef = useRef<HTMLDivElement | null>(null);
   const categoriesLocked = limits.categories !== null && categories.length >= limits.categories;
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
   const toggleFilter = (val: number | 'uncategorised'): void =>
     setFilter({ category: activeCategory === val ? null : val });
@@ -127,8 +128,7 @@ export default function Categories() {
     setAdding(false);
   };
 
-  const handleDelete = (e: React.MouseEvent, id: number): void => {
-    e.stopPropagation();
+  const handleDelete = (id: number): void => {
     deleteMutation.mutate(id);
   };
 
@@ -255,7 +255,17 @@ export default function Categories() {
               >
                 {editingId === cat.id ? '✓' : <PenBox size={12} />}
               </button>
-              <button className={styles.delBtn} onClick={e => handleDelete(e, cat.id)}>✕</button>
+              <button className={styles.delBtn} onClick={e => { e.stopPropagation(); setConfirmDeleteId(cat.id); }}><Trash size={12}/></button>
+
+              {confirmDeleteId === cat.id && (
+                <div className={styles.confirmOverlay}>
+                  <p className={styles.confirmText}>Delete category?</p>
+                  <div className={styles.confirmActions}>
+                    <button className={styles.confirmCancel} onClick={e => { e.stopPropagation(); setConfirmDeleteId(null); }}><Ban size={12}/></button>
+                    <button className={styles.confirmDelete} onClick={e => { e.stopPropagation(); setConfirmDeleteId(null); handleDelete(cat.id); }}><Trash size={12}/></button>
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}

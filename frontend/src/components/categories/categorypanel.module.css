@@ -23,7 +23,7 @@
   line-height: 1;
 }
 .addBtn:hover { background: var(--accent-primary); border-color: var(--accent-primary); color: white; }
-.editBtn {
+.editBtn .delBtn {
   font-size: 0.7rem;
   color: var(--text-muted);
   padding: 2px 6px;
@@ -86,6 +86,7 @@
   padding: 8px 10px;
   border-radius: var(--radius-sm);
   transition: background var(--transition-fast);
+  position: relative;
 }
 .item:hover { background: var(--bg-glass); }
 .item:hover .delBtn .editBtn{ opacity: 1; }
@@ -111,15 +112,7 @@
   border-radius: var(--radius-full);
 }
 
-.delBtn {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  opacity: 0;
-  padding: 2px 5px;
-  border-radius: var(--radius-sm);
-  transition: all var(--transition-fast);
-}
-.delBtn:hover { background: rgba(255,68,68,0.15); color: #ff4444; }
+.delBtn:hover { color: #ff4444; }
 
 .empty {
   font-size: 0.78rem;
@@ -170,6 +163,52 @@
 .cancelFormBtn:hover {
   color: var(--text-primary);
   border-color: var(--border-medium);
+}
+
+.confirmOverlay {
+  position: absolute;
+  inset: 0;
+  background: var(--bg-card);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  gap: 8px;
+  border: 1px solid rgba(255, 68, 68, 0.25);
+  z-index: 10;
+}
+
+.confirmText {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.confirmActions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.confirmCancel {
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  background: var(--bg-glass);
+  border: 1px solid var(--border-subtle);
+  cursor: pointer;
+}
+
+.confirmDelete {
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  color: white;
+  background: rgba(255, 68, 68, 0.8);
+  border: 1px solid transparent;
+  cursor: pointer;
 }
 
 @media (hover: none) {
