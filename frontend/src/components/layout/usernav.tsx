@@ -74,6 +74,7 @@ export default function UserNav() {
   };
 
   const initials = getInitials(username);
+  if (!username) return null;
 
   return (
     <div className={styles.parent}>
