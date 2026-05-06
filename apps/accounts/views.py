@@ -95,9 +95,10 @@ def me(request):
 
 
 def create_onboarding_data(user):
-    getting_started = Category.objects.create(owner=user, name='Getting Started', icon='🚀')
-    personal        = Category.objects.create(owner=user, name='Personal', icon='👤')
-    work            = Category.objects.create(owner=user, name='Work', icon='💼')
+    getting_started = Category.objects.create(owner=user, name='Getting Started', icon='🚀', is_onboarding=True)
+    personal        = Category.objects.create(owner=user, name='Personal', icon='👤', is_onboarding=True)
+    work            = Category.objects.create(owner=user, name='Work', icon='💼', is_onboarding=True)
+
     now = timezone.now()
 
     Todo.objects.create(
@@ -105,38 +106,45 @@ def create_onboarding_data(user):
         description='This is a task. Click the checkmark to complete it and earn XP!',
         priority='low', category=getting_started, pinned=True,
         deadline=now + timedelta(days=1),
+        is_onboarding=True
     )
     Todo.objects.create(
         owner=user, title='Try creating a new task',
         description='Hit the + button to create your first task.',
         priority='medium', category=getting_started,
         deadline=now + timedelta(days=2),
+        is_onboarding=True
     )
     Todo.objects.create(
         owner=user, title='Organise with categories',
         description='Categories help you group tasks. Click + next to CATEGORIES to create one.',
         priority='medium', category=getting_started,
         deadline=now + timedelta(days=3),
+        is_onboarding=True
     )
     Todo.objects.create(
         owner=user, title='Plan your week',
         description='A sample personal task to get you started.',
         priority='medium', category=personal,
         deadline=now + timedelta(days=3),
+        is_onboarding=True
     )
     Todo.objects.create(
         owner=user, title='First work task',
         description='Try setting this to high priority.',
         priority='high', category=work,
         deadline=now + timedelta(days=1),
+        is_onboarding=True
     )
     StickyNotes.objects.create(
         owner=user, color='#7c6aff',
         note='📌 Complete tasks to earn XP and level up!\n\nHigher priority tasks and on-time completions earn bonus XP. Keep your streak going for even more!',
+        is_onboarding=True
     )
     StickyNotes.objects.create(
         owner=user, color='#f59e0b',
         note='🎯 Priority XP bonuses:\n\nLow → 10 XP\nMedium → 10 XP\nHigh → 15 XP\nCritical → 20 XP\n+5 bonus for finishing before deadline!',
+        is_onboarding=True
     )
 
 

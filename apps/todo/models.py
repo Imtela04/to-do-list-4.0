@@ -5,6 +5,7 @@ from django.contrib.auth.models import User
 class Category(models.Model):
     name = models.CharField(max_length=255)
     icon = models.CharField(max_length=10, default='🏷️')
+    is_onboarding = models.BooleanField(default=False)
 
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='categories')
     def __str__(self):
@@ -28,12 +29,14 @@ class Todo(models.Model):
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='todos')
     created_at = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
+    is_onboarding = models.BooleanField(default=False)
     def __str__(self):
         return self.title
 
 class StickyNotes(models.Model):
     note = models.TextField(null=True, blank=True)
     color = models.CharField(max_length=20, default='#7c6aff')  # ← add this
+    is_onboarding = models.BooleanField(default=False)
 
     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sticky_notes')
     created_at = models.DateTimeField(auto_now_add=True)
