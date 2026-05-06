@@ -106,13 +106,13 @@ class TasksViewTest(TestCase):
         self.assertEqual(res.status_code, 404)
     def test_uncomplete_task_deducts_xp(self):
         task = Todo.objects.create(owner=self.user, title='XP task', priority='low', completed=True)
-        print(task.completed)  # should print True
+        #printtask.completed)  # should print True
         self.profile.xp = 50
         self.profile.save()
         res = self.client.patch(f'/api/tasks/{task.id}/', {'completed': False})
-        print(res.data)  # check if xp_result is in response
+        #printres.data)  # check if xp_result is in response
         self.profile.refresh_from_db()
-        print(self.profile.xp)  # what is it actually?
+        #printself.profile.xp)  # what is it actually?
         self.assertEqual(self.profile.xp, 45)
 
 

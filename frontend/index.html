@@ -5,16 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>what-do</title>
     <script>
-      getTheme()
-        .then(res => {
-          const { mode, custom_colors } = res.data;
-          const colors = custom_colors || DEFAULT_CUSTOM;
-          localStorage.setItem('theme', mode || 'dark');
-          setTheme(mode || 'dark');
-          setCustom(colors);
-          applyThemeToDom(mode || 'dark', colors);
-        })
-        .catch(() => {});
+      (function() {
+        const theme = localStorage.getItem('theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', theme);
+      })();
     </script>
   </head>
   <body>

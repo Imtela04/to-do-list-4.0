@@ -15,6 +15,7 @@ from decouple import config
 import dj_database_url
 import os
 
+  
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -23,12 +24,21 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 
-SECRET_KEY = config('SECRET_KEY', default=os.environ.get('SECRET_KEY'))
+SECRET_KEY = config('SECRET_KEY')
 
 
 DEBUG = os.environ.get('DEBUG', 'False') == 'True'
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
+if not DEBUG:
+    SECURE_SSL_REDIRECT              = True
+    SECURE_HSTS_SECONDS              = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS   = True
+    SESSION_COOKIE_SECURE            = True
+    CSRF_COOKIE_SECURE               = True
+    SECURE_BROWSER_XSS_FILTER        = True
+    SECURE_CONTENT_TYPE_NOSNIFF      = True
+  
 # Application definition
 CSRF_TRUSTED_ORIGINS = [
     'https://what-do.up.railway.app',
@@ -83,7 +93,6 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'config.middleware.CSRFExemptMiddleware',  # ← replaces CsrfViewMiddleware
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -140,12 +149,23 @@ AUTH_PASSWORD_VALIDATORS = [
 from datetime import timedelta
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,       # new refresh token on each use
     'BLACKLIST_AFTER_ROTATION': True,    # old refresh tokens get blacklisted
 }
 
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': { 'class': 'logging.StreamHandler' },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'WARNING',
+    },
+}
 
 REST_FRAMEWORK={
     'DEFAULT_AUTHENTICATION_CLASSES':(
@@ -154,10 +174,22 @@ REST_FRAMEWORK={
     'DEFAULT_PERMISSION_CLASSES':(
         'rest_framework.permissions.IsAuthenticated',
     ),
-    'DEFAULT_RENDERER_CLASSES':(
+    'DEFAULT_RENDERER_CLASSES': (
+        'rest_framework.renderers.JSONRenderer',
+    ) if not DEBUG else (
         'rest_framework.renderers.JSONRenderer',
         'rest_framework.renderers.BrowsableAPIRenderer',
     ),
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '20/hour',   # limits login attempts
+        'user': '1000/hour',
+        'login': '10/hour',
+    }
+
 }
 # Internationalization
 # https://docs.djangoproject.com/en/6.0/topics/i18n/

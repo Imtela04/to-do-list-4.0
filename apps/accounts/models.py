@@ -39,7 +39,9 @@ class UserProfile(models.Model):
     last_completed_date = models.DateField(null=True, blank=True)
     pomodoros_today     = models.IntegerField(default=0)
     last_pomodoro_date  = models.DateField(null=True, blank=True)
-
+    failed_login_attempts = models.IntegerField(default=0)
+    lockout_until         = models.DateTimeField(null=True, blank=True)
+    
     def __str__(self):
         return f'{self.user.username} profile'
 

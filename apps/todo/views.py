@@ -8,6 +8,10 @@ from .serializers import TodoSerializer, CategorySerializer, StickyNoteSerialize
 from .models import Todo, Category, StickyNotes
 from apps.accounts.models import UserProfile
 from django.utils import timezone
+import bleach
+
+ALLOWED_TAGS = ['p', 'br', 'strong', 'em', 'img', 'ul', 'ol', 'li']
+ALLOWED_ATTRS = {'img': ['src', 'style', 'alt']}
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -98,6 +102,8 @@ def tasks(request):
     title = request.data.get('title', '').strip()
     if not title:
         return Response({'detail': 'Title is required'}, status=status.HTTP_400_BAD_REQUEST)
+    if len(title) > 255:
+        return Response({'detail': 'Title too long'}, status=status.HTTP_400_BAD_REQUEST)
     if Todo.objects.filter(title=title, owner=request.user).exists():
         return Response({'detail': 'Task already exists'}, status=status.HTTP_409_CONFLICT)
 
@@ -123,7 +129,7 @@ def task_detail(request, task_id):
     task = Todo.objects.filter(id=task_id, owner=request.user).first()
     if not task:
         return Response({'detail': 'Task not found'}, status=status.HTTP_404_NOT_FOUND)
-
+    
     if request.method == 'DELETE':
         task.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -137,7 +143,6 @@ def task_detail(request, task_id):
     if 'description' in request.data:
         task.description = request.data['description']
     if 'completed' in request.data:
-        print(f"completed value: {request.data['completed']}, type: {type(request.data['completed'])}")
         new_completed = request.data['completed']
         if isinstance(new_completed, str):
             new_completed = new_completed.lower() == 'true'
@@ -154,6 +159,17 @@ def task_detail(request, task_id):
         task.priority = request.data['priority']
     if 'pinned' in request.data:
         task.pinned = request.data['pinned']
+    if 'title' in request.data:
+        title = request.data['title'].strip()
+        if len(title) > 255:
+            return Response({'detail': 'Title too long'}, status=status.HTTP_400_BAD_REQUEST)
+        task.title = title
+    if 'description' in request.data:
+        desc = (request.data['description'] or '').strip()
+        if len(desc) > 2000:
+            return Response({'detail': 'Description too long'}, status=status.HTTP_400_BAD_REQUEST)
+        task.description = desc or None
+
     task.save()
 
     # XP logic — only when completion state changes
@@ -190,7 +206,11 @@ def categories(request):
     icon = request.data.get('icon', '🏷️').strip()
     if not name:
         return Response({'detail': 'Name is required'}, status=status.HTTP_400_BAD_REQUEST)
-
+    if len(name) > 100:
+        return Response({'detail': 'Name too long (max 100 characters)'}, status=status.HTTP_400_BAD_REQUEST)
+    if len(icon) > 10:
+        return Response({'detail': 'Invalid icon'}, status=status.HTTP_400_BAD_REQUEST)
+    
     profile = get_profile(request.user)
     allowed, message = check_limit(profile, 'categories')
     if not allowed:
@@ -230,13 +250,16 @@ def notes(request):
     content = request.data.get('note', '').strip()
     if not content:
         return Response({'detail': 'Content is required'}, status=status.HTTP_400_BAD_REQUEST)
+    if len(content) > 10000:
+        return Response({'detail': 'Note too long (max 10,000 characters)'}, status=status.HTTP_400_BAD_REQUEST)
 
     profile = get_profile(request.user)
     allowed, message = check_limit(profile, 'notes')
     if not allowed:
         return Response({'detail': message, 'limit_reached': True}, status=status.HTTP_403_FORBIDDEN)
 
-    note = StickyNotes.objects.create(note=content, owner=request.user)
+    clean_content = bleach.clean(content, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRS)
+    note = StickyNotes.objects.create(note=clean_content, owner=request.user)
     return Response(StickyNoteSerializer(note).data, status=status.HTTP_201_CREATED)
 
 
@@ -249,7 +272,10 @@ def note_detail(request, pk):
         note.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    note.note  = request.data.get('note', note.note)
+    ALLOWED_TAGS = ['p', 'br', 'strong', 'em', 'img', 'ul', 'ol', 'li']
+    ALLOWED_ATTRS = {'img': ['src', 'style', 'alt']}
+
+    note.note = bleach.clean(request.data.get('note', note.note), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRS)
     note.color = request.data.get('color', note.color)
     note.save()
     return Response(StickyNoteSerializer(note).data)

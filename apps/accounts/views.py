@@ -9,7 +9,6 @@ from django.utils import timezone
 from datetime import timedelta
 from apps.todo.models import Category, Todo, StickyNotes
 
-
 class ThemeView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -26,13 +25,20 @@ class ThemeView(APIView):
 
     def post(self, request):
         profile = self.get_or_create_profile(request.user)
-        profile.theme_mode = request.data.get('mode', profile.theme_mode)
-        profile.theme_custom_colors = request.data.get('custom_colors', profile.theme_custom_colors)
+        mode = request.data.get('mode', profile.theme_mode)
+        colors = request.data.get('custom_colors', profile.theme_custom_colors)
+
+        # add these guards
+        VALID_MODES = {'light', 'dark', 'custom'}
+        if mode not in VALID_MODES:
+            return Response({'detail': 'Invalid theme mode.'}, status=400)
+        if colors is not None and not isinstance(colors, dict):
+            return Response({'detail': 'Invalid custom colors.'}, status=400)
+
+        profile.theme_mode = mode
+        profile.theme_custom_colors = colors
         profile.save()
-        return Response({
-            'mode': profile.theme_mode,
-            'custom_colors': profile.theme_custom_colors,
-        })
+        return Response({'mode': profile.theme_mode, 'custom_colors': profile.theme_custom_colors})
 
 
 @api_view(['GET'])
@@ -123,7 +129,11 @@ def register(request):
             {'message': 'User created successfully'},
             status=status.HTTP_201_CREATED
         )
-    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    # sanitize the error — don't reveal whether username exists
+    errors = serializer.errors
+    if 'username' in errors:
+        errors = {'detail': 'Registration failed. Please check your details.'}
+    return Response(errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -131,3 +141,29 @@ def complete_pomodoro(request):
     profile, _ = UserProfile.objects.get_or_create(user=request.user)
     result = profile.complete_pomodoro()
     return Response(result)
+
+MAX_ATTEMPTS = 10
+LOCKOUT_DURATION = timedelta(minutes=30)
+
+def check_lockout(user):
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+    if profile.lockout_until and profile.lockout_until > timezone.now():
+        remaining = (profile.lockout_until - timezone.now()).seconds // 60
+        return False, f'Account locked. Try again in {remaining} minutes.'
+    return True, None
+
+def record_failed_login(username):
+    from django.contrib.auth.models import User
+    user = User.objects.filter(username=username).first()
+    if not user: return
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+    profile.failed_login_attempts += 1
+    if profile.failed_login_attempts >= MAX_ATTEMPTS:
+        profile.lockout_until = timezone.now() + LOCKOUT_DURATION
+    profile.save()
+
+def record_successful_login(user):
+    profile, _ = UserProfile.objects.get_or_create(user=user)
+    profile.failed_login_attempts = 0
+    profile.lockout_until = None
+    profile.save()

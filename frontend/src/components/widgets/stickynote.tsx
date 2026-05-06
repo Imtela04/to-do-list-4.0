@@ -8,6 +8,7 @@ import { PenLine, Trash, PenBox, Lock } from 'lucide-react';
 import { useDraft } from '../../hooks/useDraft';
 import { useNotesQuery } from '../../hooks/useNotesQuery';
 import type { StickyNote } from '@/types';
+import DOMPurify from 'dompurify';
 
 const NOTE_COLORS: string[] = ['#7c6aff', '#ff6a9e', '#6affdc', '#ffaa6a', '#6ab4ff', '#c96aff'];
 
@@ -277,7 +278,7 @@ export default function StickyNotes() {
                 onClick={e => e.stopPropagation()}
               />
             ) : (
-              <p className={styles.noteText} dangerouslySetInnerHTML={{ __html: note.note }} />
+              <p className={styles.noteText} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(note.note) }} />
             )}
             <div className={styles.noteActions}>
               <button
