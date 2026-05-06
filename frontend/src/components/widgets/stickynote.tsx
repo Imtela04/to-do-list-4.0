@@ -38,7 +38,7 @@ export default function StickyNotes() {
   const { save: saveDraft, load: loadDraft, clear: clearDraft } = useDraft('draft_note');
   const [hasNoteDraft, setHasNoteDraft] = useState(!!loadDraft());
 
-  const notesLocked  = limits.notes !== null && counts.notes >= limits.notes;
+  const notesLocked = limits.notes !== null && counts.notes >= limits.notes;  
   const notesAtLimit = limits.notes === 0;
 
   const normalizeNoteHtml = (html: string) => 

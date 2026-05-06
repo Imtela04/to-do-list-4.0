@@ -87,9 +87,9 @@ def me(request):
             'notes':      limits['notes'],
         },
         'counts': {
-            'tasks':      Todo.objects.filter(owner=request.user).count(),
-            'categories': Category.objects.filter(owner=request.user).count(),
-            'notes':      StickyNotes.objects.filter(owner=request.user).count(),
+            'tasks':      Todo.objects.filter(owner=request.user, is_onboarding=False).count(),
+            'categories': Category.objects.filter(owner=request.user, is_onboarding=False).count(),
+            'notes':      StickyNotes.objects.filter(owner=request.user, is_onboarding=False).count(),
         },
     })
 

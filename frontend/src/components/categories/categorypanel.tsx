@@ -41,7 +41,9 @@ export default function Categories() {
   const [editingId, setEditingId]   = useState<number | null>(null);
   const [editingIcon, setEditingIcon] = useState<string>(ICONS[0]);
   const editEditorRef = useRef<HTMLDivElement | null>(null);
-  const categoriesLocked = limits.categories !== null && categories.length >= limits.categories;
+
+  const counts = useAppStore(s=>s.counts);
+  const categoriesLocked = limits.categories !== null && counts.categories >= limits.categories;
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
   const toggleFilter = (val: number | 'uncategorised'): void =>

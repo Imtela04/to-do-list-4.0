@@ -27,8 +27,9 @@ export default function TaskList() {
 
   const totalPages  = Math.ceil(filteredTasks.length / PAGE_SIZE);
   const paginated   = filteredTasks.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-  const tasksLocked = limits.tasks !== null && tasks.length >= limits.tasks;
-
+// correct — uses the server-side count which excludes onboarding
+  const counts = useAppStore(s => s.counts);
+  const tasksLocked = limits.tasks !== null && counts.tasks >= limits.tasks;
   const pageItems = Array.from({ length: totalPages }, (_, i) => i + 1)
     .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
     .reduce<(number | '...')[]>((acc, p, idx, arr) => {

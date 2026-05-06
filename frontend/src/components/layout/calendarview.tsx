@@ -46,8 +46,9 @@ export default function CalendarView() {
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ];
   const today       = new Date();
-  const tasksLocked = limits.tasks !== null && tasks.length >= limits.tasks;
-
+// correct — uses the server-side count which excludes onboarding
+  const counts = useAppStore(s => s.counts);
+  const tasksLocked = limits.tasks !== null && counts.tasks >= limits.tasks;
   const tasksByDay: Record<number, Task[]> = {};
   tasks.forEach(t => {
     if (!t.deadline) return;
