@@ -41,6 +41,13 @@ export default function StickyNotes() {
   const notesLocked  = limits.notes !== null && counts.notes >= limits.notes;
   const notesAtLimit = limits.notes === 0;
 
+  const normalizeNoteHtml = (html: string) => 
+    html
+      .replace(/<div><br><\/div>/gi, '<br>')
+      .replace(/<div>/gi, '<p>')
+      .replace(/<\/div>/gi, '</p>')
+      .replace(/<p><\/p>/gi, '<br>');
+  
   useEffect(() => {
     if (adding && addEditorRef.current) {
       const draft = loadDraft() as NoteDraft | null;
@@ -160,16 +167,18 @@ export default function StickyNotes() {
   });
 
   const handleAdd = (): void => {
-    const content = addEditorRef.current?.innerHTML || '';
-    const hasContent = content.trim() || content.includes('<img');
+    const rawContent = addEditorRef.current?.innerHTML || '';
+    const hasContent = rawContent.trim() || rawContent.includes('<img');
     if (!hasContent) return;
     setLimitError(null);
-    addMutation.mutate({ note: content, color: newColor });
+    const normalizedContent = normalizeNoteHtml(rawContent);
+    addMutation.mutate({ note: normalizedContent, color: newColor });
   };
 
   const handleSaveEdit = (note: StickyNote): void => {
-    const content = editEditorRef.current?.innerHTML || '';
-    updateMutation.mutate({ id: note.id, content });
+    const rawContent = editEditorRef.current?.innerHTML || '';
+    const normalizedContent = normalizeNoteHtml(rawContent);
+    updateMutation.mutate({ id: note.id, content: normalizedContent });
     setEditingId(null);
   };
 

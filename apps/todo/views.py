@@ -2,6 +2,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+import re
 from django.shortcuts import get_object_or_404
 from datetime import datetime, timezone as dt_timezone
 from .serializers import TodoSerializer, CategorySerializer, StickyNoteSerializer
@@ -11,7 +12,14 @@ from django.utils import timezone
 import bleach
 
 ALLOWED_TAGS = ['p', 'br', 'strong', 'em', 'img', 'ul', 'ol', 'li']
-ALLOWED_ATTRS = {'img': ['src', 'style', 'alt']}
+ALLOWED_ATTRS = {'img': ['src', 'alt']}
+
+
+def normalize_note_html(html: str) -> str:
+    html = re.sub(r'<div(?: [^>]*)?>', '<p>', html)
+    html = re.sub(r'</div>', '</p>', html)
+    html = re.sub(r'<p><br></p>', '<br>', html)
+    return html
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -164,12 +172,6 @@ def task_detail(request, task_id):
         if len(title) > 255:
             return Response({'detail': 'Title too long'}, status=status.HTTP_400_BAD_REQUEST)
         task.title = title
-    if 'description' in request.data:
-        desc = (request.data['description'] or '').strip()
-        if len(desc) > 2000:
-            return Response({'detail': 'Description too long'}, status=status.HTTP_400_BAD_REQUEST)
-        task.description = desc or None
-
     task.save()
 
     # XP logic — only when completion state changes
@@ -250,15 +252,19 @@ def notes(request):
     content = request.data.get('note', '').strip()
     if not content:
         return Response({'detail': 'Content is required'}, status=status.HTTP_400_BAD_REQUEST)
-    if len(content) > 10000:
-        return Response({'detail': 'Note too long (max 10,000 characters)'}, status=status.HTTP_400_BAD_REQUEST)
 
     profile = get_profile(request.user)
     allowed, message = check_limit(profile, 'notes')
     if not allowed:
         return Response({'detail': message, 'limit_reached': True}, status=status.HTTP_403_FORBIDDEN)
 
-    clean_content = bleach.clean(content, tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRS)
+    clean_content = bleach.clean(
+        normalize_note_html(content),
+        tags=ALLOWED_TAGS,
+        attributes=ALLOWED_ATTRS,
+        protocols=['http', 'https', 'data'],
+        strip=True,
+    )
     note = StickyNotes.objects.create(note=clean_content, owner=request.user)
     return Response(StickyNoteSerializer(note).data, status=status.HTTP_201_CREATED)
 
@@ -272,10 +278,16 @@ def note_detail(request, pk):
         note.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    ALLOWED_TAGS = ['p', 'br', 'strong', 'em', 'img', 'ul', 'ol', 'li']
-    ALLOWED_ATTRS = {'img': ['src', 'style', 'alt']}
+    request_content = request.data.get('note', note.note)
+    normalized_content = normalize_note_html(request_content)
 
-    note.note = bleach.clean(request.data.get('note', note.note), tags=ALLOWED_TAGS, attributes=ALLOWED_ATTRS)
+    note.note = bleach.clean(
+        normalized_content,
+        tags=ALLOWED_TAGS,
+        attributes=ALLOWED_ATTRS,
+        protocols=['http', 'https', 'data'],
+        strip=True,
+    )
     note.color = request.data.get('color', note.color)
     note.save()
     return Response(StickyNoteSerializer(note).data)
