@@ -49,3 +49,13 @@ export const saveTheme = (payload: ThemePayload): Promise<AxiosResponse<Theme>> 
 
 // ── Pomodoro ──────────────────────────────────────────────────
 export const completePomodoro = (): Promise<AxiosResponse<PomodoroResult>> => client.post('/auth/pomodoro/complete/');
+
+// ── Subtasks ──────────────────────────────────────────────────────────────────
+export const getSubtasks    = (taskId: number):                           Promise<AxiosResponse<Subtask[]>> =>
+  client.get(`/tasks/${taskId}/subtasks/`);
+export const createSubtask  = (taskId: number, data: { title: string }): Promise<AxiosResponse<Subtask>> =>
+  client.post(`/tasks/${taskId}/subtasks/`, data);
+export const updateSubtask  = (taskId: number, subtaskId: number, data: Partial<{ title: string; completed: boolean }>): Promise<AxiosResponse<Task>> =>
+  client.patch(`/tasks/${taskId}/subtasks/${subtaskId}/`, data);
+export const deleteSubtask  = (taskId: number, subtaskId: number):        Promise<AxiosResponse<Task>> =>
+  client.delete(`/tasks/${taskId}/subtasks/${subtaskId}/`);

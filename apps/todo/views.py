@@ -5,14 +5,15 @@ from rest_framework.permissions import IsAuthenticated
 import re
 from django.shortcuts import get_object_or_404
 from datetime import datetime, timezone as dt_timezone
-from .serializers import TodoSerializer, CategorySerializer, StickyNoteSerializer
-from .models import Todo, Category, StickyNotes
+from .serializers import TodoSerializer, CategorySerializer, StickyNoteSerializer, SubtaskSerializer
+from .models import Todo, Category, StickyNotes, Subtask
 from apps.accounts.models import UserProfile
 from django.utils import timezone
 import bleach
 
 ALLOWED_TAGS = ['p', 'br', 'strong', 'em', 'img', 'ul', 'ol', 'li']
 ALLOWED_ATTRS = {'img': ['src', 'alt']}
+SUBTASK_LIMIT = 10
 
 
 def normalize_note_html(html: str) -> str:
@@ -74,6 +75,39 @@ def check_limit(profile, resource):
         return False, f'You\'ve reached the maximum {resource} limit.'
 
     return True, None
+
+def sync_parent_completion(task, profile):
+    """
+    Called after a subtask is toggled.
+    If all subtasks complete → complete parent + award XP.
+    If any subtask incomplete → uncomplete parent + deduct XP.
+    Returns xp_result or None.
+    """
+    xp_result    = None
+    was_completed = task.completed
+
+    if task.all_subtasks_complete():
+        if not task.completed:
+            task.completed    = True
+            task.completed_at = timezone.now()
+            task.save()
+            xp_result = profile.award_xp(task)
+    else:
+        if task.completed:
+            task.completed    = False
+            task.completed_at = None
+            task.save()
+            profile.deduct_xp()
+            xp_result = {
+                'xp_gained':  -5,
+                'total_xp':   profile.xp,
+                'leveled_up': False,
+                'new_level':  profile.level,
+                'streak':     profile.streak,
+            }
+
+    return xp_result
+
 
 
 
@@ -137,28 +171,40 @@ def task_detail(request, task_id):
     task = Todo.objects.filter(id=task_id, owner=request.user).first()
     if not task:
         return Response({'detail': 'Task not found'}, status=status.HTTP_404_NOT_FOUND)
-    
+
     if request.method == 'DELETE':
         task.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    # PATCH
     was_completed = task.completed
     xp_result     = None
 
     if 'title' in request.data:
-        task.title = request.data['title']
+        title = request.data['title'].strip()
+        if len(title) > 255:
+            return Response({'detail': 'Title too long'}, status=status.HTTP_400_BAD_REQUEST)
+        task.title = title
+
     if 'description' in request.data:
-        task.description = request.data['description']
+        desc = (request.data['description'] or '').strip()
+        if len(desc) > 2000:
+            return Response({'detail': 'Description too long'}, status=status.HTTP_400_BAD_REQUEST)
+        task.description = desc or None
+
     if 'completed' in request.data:
         new_completed = request.data['completed']
         if isinstance(new_completed, str):
             new_completed = new_completed.lower() == 'true'
         task.completed = new_completed
-        if task.completed and not was_completed:
+
+        # cascade to subtasks
+        if new_completed:
+            task.subtasks.all().update(completed=True, completed_at=timezone.now())
             task.completed_at = timezone.now()
-        elif not task.completed:
+        else:
+            task.subtasks.all().update(completed=False, completed_at=None)
             task.completed_at = None
+
     if 'deadline' in request.data:
         task.deadline = parse_deadline(request.data['deadline'])
     if 'category' in request.data:
@@ -167,14 +213,9 @@ def task_detail(request, task_id):
         task.priority = request.data['priority']
     if 'pinned' in request.data:
         task.pinned = request.data['pinned']
-    if 'title' in request.data:
-        title = request.data['title'].strip()
-        if len(title) > 255:
-            return Response({'detail': 'Title too long'}, status=status.HTTP_400_BAD_REQUEST)
-        task.title = title
+
     task.save()
 
-    # XP logic — only when completion state changes
     if 'completed' in request.data:
         profile = get_profile(request.user)
         if task.completed and not was_completed:
@@ -185,15 +226,14 @@ def task_detail(request, task_id):
                 'xp_gained':  -5,
                 'total_xp':   profile.xp,
                 'leveled_up': False,
-                'new_level':  profile.level,   # ← add this
+                'new_level':  profile.level,
                 'streak':     profile.streak,
             }
+
     data = TodoSerializer(task).data
     if xp_result:
         data['xp_result'] = xp_result
-
     return Response(data)
-
 
 # ── Categories ─────────────────────────────────────────────────────────────────
 
@@ -291,3 +331,76 @@ def note_detail(request, pk):
     note.color = request.data.get('color', note.color)
     note.save()
     return Response(StickyNoteSerializer(note).data)
+
+# ── Subtasks ───────────────────────────────────────────────────────────────────
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def subtasks(request, task_id):
+    task = Todo.objects.filter(id=task_id, owner=request.user).first()
+    if not task:
+        return Response({'detail': 'Task not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        return Response(SubtaskSerializer(task.subtasks.all(), many=True).data)
+
+    # POST — create subtask
+    title = request.data.get('title', '').strip()
+    if not title:
+        return Response({'detail': 'Title is required'}, status=status.HTTP_400_BAD_REQUEST)
+    if len(title) > 255:
+        return Response({'detail': 'Title too long'}, status=status.HTTP_400_BAD_REQUEST)
+    if task.subtasks.count() >= SUBTASK_LIMIT:
+        return Response(
+            {'detail': f'Maximum {SUBTASK_LIMIT} subtasks per task.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    subtask = Subtask.objects.create(task=task, title=title)
+    return Response(SubtaskSerializer(subtask).data, status=status.HTTP_201_CREATED)
+
+
+@api_view(['PATCH', 'DELETE'])
+@permission_classes([IsAuthenticated])
+def subtask_detail(request, task_id, subtask_id):
+    task = Todo.objects.filter(id=task_id, owner=request.user).first()
+    if not task:
+        return Response({'detail': 'Task not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    subtask = Subtask.objects.filter(id=subtask_id, task=task).first()
+    if not subtask:
+        return Response({'detail': 'Subtask not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'DELETE':
+        subtask.delete()
+        # re-check parent after deletion
+        profile   = get_profile(request.user)
+        xp_result = sync_parent_completion(task, profile)
+        data      = TodoSerializer(task).data
+        if xp_result:
+            data['xp_result'] = xp_result
+        return Response(data)
+
+    # PATCH — toggle or rename
+    if 'title' in request.data:
+        title = request.data['title'].strip()
+        if len(title) > 255:
+            return Response({'detail': 'Title too long'}, status=status.HTTP_400_BAD_REQUEST)
+        subtask.title = title
+
+    if 'completed' in request.data:
+        new_completed = request.data['completed']
+        if isinstance(new_completed, str):
+            new_completed = new_completed.lower() == 'true'
+        subtask.completed    = new_completed
+        subtask.completed_at = timezone.now() if new_completed else None
+
+    subtask.save()
+
+    profile   = get_profile(request.user)
+    xp_result = sync_parent_completion(task, profile)
+
+    data = TodoSerializer(task).data
+    if xp_result:
+        data['xp_result'] = xp_result
+    return Response(data)

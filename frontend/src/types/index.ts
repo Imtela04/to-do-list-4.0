@@ -15,6 +15,15 @@ export interface Task {
   pinned:      boolean;
   created_at:  string;
   completed_at: string | null;
+  subtasks: Subtask[];
+}
+
+export interface Subtask {
+  id:           number;
+  title:        string;
+  completed:    boolean;
+  completed_at: string | null;
+  created_at:   string;
 }
 
 export interface StickyNote {

@@ -1,411 +1,175 @@
 .card {
   display: flex;
   align-items: flex-start;
-  gap: 12px;
-  padding: 14px 16px;
-  background: var(----bg-glass);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  position: relative;
+  gap: 16px;
+  padding: 18px 18px;
+  background: rgba(15, 23, 42, 0.76);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 24px;
+  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(18px);
   overflow: hidden;
-  transition: all var(--transition-base);
-  animation: fadeIn 400ms cubic-bezier(0.4, 0, 0.2, 1) both;
+  transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease,
+    background 220ms ease;
   cursor: default;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
 .card:hover {
-  background: var(--bg-card);
-  border-color: var(--border-medium);
   transform: translateY(-1px);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+  border-color: rgba(124, 106, 255, 0.22);
+  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.22);
+  background: rgba(18, 28, 48, 0.86);
 }
 
-.card:hover .actions { opacity: 1; }
-
-.priorityBar {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  opacity: 0.7;
-}
-
-.completed {
-  opacity: 0.5;
-}
-.completed .title {
-  text-decoration: line-through;
-  color: var(--text-muted);
-}
-
-.deleting {
-  opacity: 0;
-  transform: translateX(20px) scale(0.96);
-  pointer-events: none;
-}
-
-.checkbox {
-  width: 22px;
-  height: 22px;
-  min-width: 22px;
-  border-radius: 6px;
-  border: 2px solid var(--border-medium);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all var(--transition-fast);
-  margin-top: 1px;
-  flex-shrink: 0;
-}
-
-.checkbox:hover {
-  border-color: var(--accent-primary);
-  background: rgba(124, 106, 255, 0.1);
-}
-
-.checked {
-  background: var(--accent-primary);
-  border-color: var(--accent-primary);
-}
-
-.content {
+.body {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 14px;
 }
 
-.title {
-  font-size: 0.9rem;
-  font-weight: 500;
+.bodyExpanded {
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.mainContent {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.subtaskPanel {
+  width: 300px;
+  min-width: 260px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 22px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
+}
+
+.subtaskPanelHeader {
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
   color: var(--text-primary);
-  line-height: 1.4;
-  word-break: break-word;
 }
 
-.editInput {
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-medium);
-  border-radius: var(--radius-sm);
-  padding: 6px 10px;
-  font-size: 0.8rem;
-  color: var(--text-primary);
-  outline: none;
-  transition: border-color var(--transition-fast);
-  cursor: pointer;
+.subtaskList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.editInput:focus { border-color: var(--accent-primary); }
-
-.meta {
+.subtaskItem {
   display: flex;
   align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  transition: transform 180ms ease, background 180ms ease,
+    border-color 180ms ease;
 }
 
-.category {
-  font-size: 0.65rem;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  padding: 2px 8px;
-  border-radius: var(--radius-full);
-  border: 1px solid;
-  background: transparent;
+.subtaskItem:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(124, 106, 255, 0.16);
 }
 
-.priorityBadge {
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  font-weight: 500;
-}
-
-.due {
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  color: var(--text-muted);
-}
-
-.overdue {
-  color: var(--priority-critical);
-}
-
-.dueToday {
-  color: var(--accent-warm);
-}
-
-.actions {
-  display: flex;
-  align-items: center;  /* add this */
-  opacity: 0;
-  transition: opacity var(--transition-fast);
-}
-
-.actionBtn {
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-sm);
+.subtaskToggle {
+  width: 20px;
+  height: 20px;
+  border: 2px solid rgba(255, 255, 255, 0.22);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.06);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-muted);
-  transition: all var(--transition-fast);
+  transition: all 180ms ease;
 }
 
-.actionBtn:hover {
-  background: var(--bg-glass-hover);
+.subtaskToggle:hover {
+  border-color: rgba(124, 106, 255, 0.42);
+}
+
+.subtaskDone {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: white;
+}
+
+.subtaskDone svg {
+  width: 12px;
+  height: 12px;
+}
+
+.subtaskTitle {
+  flex: 1;
+  font-size: 0.84rem;
   color: var(--text-primary);
+  line-height: 1.5;
 }
 
-.deleteBtn:hover {
-  background: rgba(255, 68, 68, 0.15);
-  color: var(--priority-critical);
-}
-
-.tooltip {
-    display: none;
-    flex-direction: column;
-    gap: 6px;
-    margin-top: 8px;
-    font-size: 0.75rem;
-    opacity: 0.85;
-}
-
-.tooltip span {
-    display: block;  /* ← add this, forces each item to its own line */
-}
-
-.card:hover .tooltip {
-    display: flex;
-}
-
-
-.editForm {
-  background: var(--bg-card);
-  border: 1px solid var(--border-accent);
-  border-radius: var(--radius-lg);
-  padding: 18px;
-  box-shadow: 0 0 40px rgba(124, 106, 255, 0.1);
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.strikethrough {
+  text-decoration: line-through;
+  color: var(--text-muted);
+  opacity: 0.68;
   
 }
 
-
-.priorities {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
+.completed{
+  opacity: 0.60;
 }
 
-.prioBtn {
-    padding: 3px 10px;
-    border-radius: 20px;
-    border: 1px solid transparent;
-    font-size: 0.7rem;
-    cursor: pointer;
-    background: var(--surface);
-    color: var(--text);
-    text-transform: capitalize;
-    transition: all 0.2s;
+.subtaskAddRow,
+.subtaskAddBtn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
 }
 
-.prioActive {
-    opacity: 1;
-    font-weight: 600;
+.subtaskAddRow {
+  padding: 10px 12px;
 }
 
-.editActions {
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
-    margin-top: 4px;
-}
-
-.cancelBtn {
-    padding: 4px 12px;
-    border-radius: 20px;
-    border: 1px solid var(--surface);
-    background: transparent;
-    color: var(--text);
-    cursor: pointer;
-    font-size: 0.75rem;
-}
-
-.saveBtn {
-    padding: 4px 12px;
-    border-radius: 20px;
-    border: none;
-    background: var(--accent);
-    color: #fff;
-    cursor: pointer;
-    font-size: 0.75rem;
-}
-
-.activeDot {
-  display: block;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--accent-tertiary);
-  box-shadow: 0 0 6px var(--accent-tertiary);
-  animation: pulse 2s ease-in-out infinite;
-}
-.confirmOverlay {
-  position: absolute;
-  inset: 0;
-  background: var(--bg-card);
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 16px;
-  gap: 12px;
-  animation: fadeIn 150ms ease both;
-  border: 1px solid rgba(255, 68, 68, 0.25);
-  z-index: 10;
-}
-
-.confirmText {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  white-space: nowrap;
-}
-
-.confirmActions {
-  display: flex;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.confirmCancel {
-  padding: 4px 12px;
-  border-radius: var(--radius-full);
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  background: var(--bg-glass);
-  border: 1px solid var(--border-subtle);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-.confirmCancel:hover {
-  color: var(--text-primary);
-  border-color: var(--border-medium);
-}
-
-.confirmDelete {
-  padding: 4px 12px;
-  border-radius: var(--radius-full);
-  font-size: 0.75rem;
-  color: white;
-  background: rgba(255, 68, 68, 0.8);
-  border: 1px solid transparent;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-.confirmDelete:hover {
-  background: rgb(255, 68, 68);
-}
-/* Expanded card state */
-.cardExpanded {
-  background: var(--bg-card);
-  border-color: var(--border-medium);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
-}
-
-.cardExpanded .actions {
-  opacity: 1;
-}
-
-/* Override hover-only tooltip — now click controlled */
-.card:hover .tooltip {
-  display: none; /* disable old hover behaviour */
-}
-
-.tooltipExpanded {
-  display: flex !important;
-}
-
-/* Always show actions when expanded */
-.actionsVisible {
-  opacity: 1 !important;
-}
-
-/* Countdown */
-.countdown {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  color: var(--accent-tertiary);
-  margin-top: 2px;
-}
-
-.countdownOverdue {
-  color: var(--danger);
-}
-
-.nextDayBtn:hover {
-  background: rgba(106, 180, 255, 0.15);
-  color: #6ab4ff;
-}
-
-.timeToggle {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  padding: 3px 8px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-subtle);
-  background: var(--bg-glass);
-  cursor: pointer;
-  transition: all var(--transition-fast);
-  margin-top: 4px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-.timeToggle:hover { color: var(--accent-primary); border-color: var(--accent-primary); }
-.timeToggleOn {
-  color: var(--accent-primary);
-  border-color: var(--accent-primary);
-  background: rgba(124, 106, 255, 0.08);
-}
-
-.dateTimeRow {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-}
-
-.dateTimeRow .editInput {
+.subtaskInput {
   flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 0.85rem;
+  color: var(--text-primary);
 }
 
-.pinned {
-  color: var(--accent-primary) !important;
-  background: rgba(124, 106, 255, 0.1);
-}
-.pinnedBadge {
-  position: absolute;
-  top: 8px;
-  left: 8px;  /* changed from right to left */
-  color: var(--accent-primary);
-  opacity: 0.85;
-  pointer-events: none;
+.subtaskLimit{
+  color: var(--danger);
+  font-size: small;
 }
 
-@media (hover: none) {
-  .actions { opacity: 1; }
-  .card:hover { transform: none; box-shadow: none; background: var(--bg-glass); border-color: var(--border-subtle); }
-  .card:hover .tooltip { display: none; }
+.taskProgressBar {
+  width: 100%;
+  height: 6px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 4px;
+  margin: 8px 0 0 0;
+  overflow: hidden;
+  position: relative;
+}
+.taskProgressBarFill {
+  height: 100%;
+  background: var(--accent-primary);
+  border-radius: 4px;
+  transition: width 0.3s cubic-bezier(.4,0,.2,1);
 }

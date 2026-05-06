@@ -1,23 +1,32 @@
 from rest_framework import serializers
 from apps.accounts.serializers import UserPublicSerializer
-from apps.todo.models import Todo, Category, StickyNotes
+from apps.todo.models import Todo, Category, StickyNotes, Subtask
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
-        model = Category
+        model  = Category
         fields = ['id', 'name', 'icon']
-        read_only_fields = ['id', 'is_onboarding']
-class TodoSerializer(serializers.ModelSerializer):
-    owner = UserPublicSerializer(read_only=True)
-    category = CategorySerializer(read_only=True)
+
+class SubtaskSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Todo
-        fields = ['id', 'title', 'completed', 'description', 'deadline', 'category', 'priority', 'owner', 'created_at', 'pinned', 'completed_at']
-        read_only_fields = ['id', 'owner', 'created_at', 'is_onboarding']
-        
+        model  = Subtask
+        fields = ['id', 'title', 'completed', 'completed_at', 'created_at']
+
+class TodoSerializer(serializers.ModelSerializer):
+    owner    = UserPublicSerializer(read_only=True)
+    category = CategorySerializer(read_only=True)
+    subtasks = SubtaskSerializer(many=True, read_only=True)
+
+    class Meta:
+        model  = Todo
+        fields = [
+            'id', 'title', 'completed', 'description', 'deadline',
+            'category', 'priority', 'owner', 'created_at', 'pinned',
+            'completed_at', 'subtasks',
+        ]
+
 class StickyNoteSerializer(serializers.ModelSerializer):
     owner = UserPublicSerializer(read_only=True)
     class Meta:
-        model = StickyNotes
+        model  = StickyNotes
         fields = ['id', 'note', 'color', 'owner']
-        read_only_fields = ['id', 'is_onboarding']

@@ -3,31 +3,26 @@ import { format, isPast, isToday, addDays } from 'date-fns';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
 import { useCategoriesQuery } from '@/hooks/useCategoriesQuery';
-import { toggleTask, deleteTask, updateTask as updateTaskApi } from '@/api/services';
+import { toggleTask, deleteTask, updateTask as updateTaskApi, createSubtask, updateSubtask, deleteSubtask } from '@/api/services';
 import type { Task, TaskPayload, XpResult } from '@/types';
 import styles from './taskcard.module.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { Pin, PinOff, Trash, SquarePen, CalendarPlus, Hourglass } from 'lucide-react';
+import { Pin, PinOff, Trash, SquarePen, CalendarPlus, Hourglass, Plus, Check, GitBranch } from 'lucide-react';
 
 const PRIORITY_MAP: Record<string, { color: string; label: string }> = {
-  low:      { color: 'var(--priority-low)', label: 'Low' },
-  medium:   { color: 'var(--priority-medium)', label: 'Medium' },
-  high:     { color: 'var(--priority-high)', label: 'High' },
+  low:      { color: 'var(--priority-low)',      label: 'Low'      },
+  medium:   { color: 'var(--priority-medium)',   label: 'Medium'   },
+  high:     { color: 'var(--priority-high)',     label: 'High'     },
   critical: { color: 'var(--priority-critical)', label: 'Critical' },
 };
 
 const PRIORITIES = ['low', 'medium', 'high', 'critical'] as const;
-// add these interfaces near the top of the file, with the other interfaces
+const SUBTASK_LIMIT = 10;
 
-interface ToggleMutationVars {
-  completed: boolean;
-}
-
-interface UpdateMutationVars {
-  changes: Partial<TaskPayload>;
-  updated: Task;
-}
+interface ToggleMutationVars  { completed: boolean; }
+interface UpdateMutationVars  { changes: Partial<TaskPayload>; updated: Task; }
+interface MutationContext     { previous: Task[] | undefined; }
 
 interface EditForm {
   title:       string;
@@ -38,51 +33,40 @@ interface EditForm {
   timed:       boolean;
 }
 
-interface MutationContext {
-  previous: Task[] | undefined;
-}
-
 function useCountdown(deadline: string | null, timed: boolean): string | null {
   const [remaining, setRemaining] = useState<string | null>('');
 
   useEffect(() => {
     if (!deadline) return;
-
     const calc = () => {
       const due = new Date(deadline);
       const now = new Date();
-
       if (!timed) {
         const dueDay   = new Date(due.getFullYear(), due.getMonth(), due.getDate());
         const today    = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const diffDays = Math.round((dueDay.getTime() - today.getTime()) / 86400000);
-
-        if (diffDays < 0)        { setRemaining(null); return; }
-        else if (diffDays === 0) setRemaining('due today');
-        else if (diffDays === 1) setRemaining('due tomorrow');
-        else if (diffDays >= 730) setRemaining(`due in ${Math.floor(diffDays/365)}y`);
-        else if (diffDays >= 365) setRemaining(`due next year`);
-        else if (diffDays >= 60) setRemaining(`due in ${Math.floor(diffDays/30)}m`);
-        else if (diffDays >= 30) setRemaining(`due next month`);
-        else if (diffDays >= 14) setRemaining(`due in ${Math.floor(diffDays/7)}w`);
-        else if (diffDays >= 7) setRemaining('due next week');
-        else                     setRemaining(`${diffDays}d`);
+        if (diffDays < 0)         { setRemaining(null); return; }
+        else if (diffDays === 0)  setRemaining('due today');
+        else if (diffDays === 1)  setRemaining('due tomorrow');
+        else if (diffDays >= 730) setRemaining(`due in ${Math.floor(diffDays / 365)}y`);
+        else if (diffDays >= 365) setRemaining('due next year');
+        else if (diffDays >= 60)  setRemaining(`due in ${Math.floor(diffDays / 30)}m`);
+        else if (diffDays >= 30)  setRemaining('due next month');
+        else if (diffDays >= 14)  setRemaining(`due in ${Math.floor(diffDays / 7)}w`);
+        else if (diffDays >= 7)   setRemaining('due next week');
+        else                      setRemaining(`${diffDays}d`);
         return;
       }
-
       const diff = due.getTime() - now.getTime();
       if (diff <= 0) { setRemaining(null); return; }
-
       const d = Math.floor(diff / 86400000);
       const h = Math.floor((diff % 86400000) / 3600000);
       const m = Math.floor((diff % 3600000) / 60000);
       const s = Math.floor((diff % 60000) / 1000);
-
       if (d > 0)      setRemaining(`${d}d ${h}h ${m}m`);
       else if (h > 0) setRemaining(`${h}h ${m}m ${s}s`);
       else            setRemaining(`${m}m ${s}s`);
     };
-
     calc();
     const id = setInterval(calc, timed ? 1000 : 60000);
     return () => clearInterval(id);
@@ -110,8 +94,14 @@ export default function TaskCard({ task }: TaskCardProps) {
     title: '', description: '', priority: '', category: '', deadline: null, timed: false,
   });
 
+  // ── Subtask state ──────────────────────────────────────────
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
+  const [addingSubtask, setAddingSubtask]     = useState(false);
+  const subtaskInputRef = useRef<HTMLInputElement>(null);
+
   const cardRef    = useRef<HTMLDivElement>(null);
   const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const category   = task.category;
   const priority   = PRIORITY_MAP[task.priority] ?? PRIORITY_MAP.low;
   const dueDate    = task.deadline ? new Date(task.deadline) : null;
@@ -121,7 +111,15 @@ export default function TaskCard({ task }: TaskCardProps) {
     ? (isTimed ? isPast(dueDate) : isPast(dueDate) && !isToday(dueDate))
     : false;
 
-  const countdown = useCountdown(task.deadline, isTimed);
+  const countdown       = useCountdown(task.deadline, isTimed);
+  const subtasks        = task.subtasks ?? [];
+  const completedCount  = subtasks.filter(s => s.completed).length;
+  const hasSubtasks     = subtasks.length > 0;
+  const atSubtaskLimit  = subtasks.length >= SUBTASK_LIMIT;
+
+  useEffect(() => {
+    if (addingSubtask) subtaskInputRef.current?.focus();
+  }, [addingSubtask]);
 
   // ── Optimistic helpers ─────────────────────────────────────
   const optimisticUpdate = (updatedTask: Task): void => {
@@ -134,23 +132,32 @@ export default function TaskCard({ task }: TaskCardProps) {
     queryClient.setQueryData(['tasks'], ctx.previous);
   };
 
-  // ── Mutations ──────────────────────────────────────────────
+  // helper — apply xp_result from subtask responses
+  const handleXpResult = (data: { xp_result?: XpResult }): void => {
+    if (data.xp_result) updateXp(data.xp_result);
+  };
+
+  // ── Task mutations ─────────────────────────────────────────
   const toggleMutation = useMutation({
-    mutationFn: ({ completed }: { completed: boolean }) => 
+    mutationFn: ({ completed }: ToggleMutationVars) =>
       toggleTask(task.id, completed, completed ? false : task.pinned),
-      onMutate: async ({ completed }: ToggleMutationVars) => {
-        await queryClient.cancelQueries({ queryKey: ['tasks'] });
-        const previous = queryClient.getQueryData<Task[]>(['tasks']);
-        optimisticUpdate({ ...task, completed, pinned: completed ? false:task.pinned });
-        return { previous };
-      },
-      onSuccess: (res) => {
-        const xpResult = res.data.xp_result;
-        if (xpResult) updateXp(xpResult as XpResult);
-      },
-      onError:   (_err: Error, _vars: ToggleMutationVars, ctx: MutationContext | undefined) => { if (ctx) rollback(ctx); },
-      onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
-    });
+    onMutate: async ({ completed }: ToggleMutationVars) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      const previous = queryClient.getQueryData<Task[]>(['tasks']);
+      optimisticUpdate({
+        ...task,
+        completed,
+        pinned:   completed ? false : task.pinned,
+        subtasks: completed
+          ? subtasks.map(s => ({ ...s, completed: true }))
+          : subtasks.map(s => ({ ...s, completed: false })),
+      });
+      return { previous };
+    },
+    onSuccess: (res) => { handleXpResult(res.data); },
+    onError:   (_err: Error, _vars: ToggleMutationVars, ctx: MutationContext | undefined) => { if (ctx) rollback(ctx); },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
+  });
 
   const updateMutation = useMutation({
     mutationFn: ({ changes }: UpdateMutationVars) => updateTaskApi(task.id, changes),
@@ -173,6 +180,70 @@ export default function TaskCard({ task }: TaskCardProps) {
       return { previous };
     },
     onError:   (_err: Error, _vars: void, ctx: MutationContext | undefined) => { if (ctx) rollback(ctx); },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
+  });
+
+  // ── Subtask mutations ──────────────────────────────────────
+  const addSubtaskMutation = useMutation({
+    mutationFn: (title: string) => createSubtask(task.id, { title }),
+    onSuccess: (res) => {
+      // backend returns new subtask, merge into cache
+      queryClient.setQueryData<Task[]>(['tasks'], old =>
+        old?.map(t => t.id === task.id
+          ? { ...t, subtasks: [...(t.subtasks ?? []), res.data] }
+          : t
+        ) ?? []
+      );
+      setNewSubtaskTitle('');
+      setAddingSubtask(false);
+    },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
+  });
+
+  const toggleSubtaskMutation = useMutation({
+    mutationFn: ({ subtaskId, completed }: { subtaskId: number; completed: boolean }) =>
+      updateSubtask(task.id, subtaskId, { completed }),
+    onMutate: async ({ subtaskId, completed }) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      const previous = queryClient.getQueryData<Task[]>(['tasks']);
+      // optimistically update the subtask
+      queryClient.setQueryData<Task[]>(['tasks'], old =>
+        old?.map(t => t.id === task.id
+          ? { ...t, subtasks: t.subtasks.map(s => s.id === subtaskId ? { ...s, completed } : s) }
+          : t
+        ) ?? []
+      );
+      return { previous };
+    },
+    onSuccess: (res) => {
+      // backend returns full updated parent task with new completion state + xp
+      const updatedTask: Task = res.data as unknown as Task;
+      optimisticUpdate(updatedTask);
+      handleXpResult(res.data as unknown as { xp_result?: XpResult });
+    },
+    onError:   (_err: Error, _vars: unknown, ctx: MutationContext | undefined) => { if (ctx) rollback(ctx); },
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
+  });
+
+  const deleteSubtaskMutation = useMutation({
+    mutationFn: (subtaskId: number) => deleteSubtask(task.id, subtaskId),
+    onMutate: async (subtaskId) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      const previous = queryClient.getQueryData<Task[]>(['tasks']);
+      queryClient.setQueryData<Task[]>(['tasks'], old =>
+        old?.map(t => t.id === task.id
+          ? { ...t, subtasks: t.subtasks.filter(s => s.id !== subtaskId) }
+          : t
+        ) ?? []
+      );
+      return { previous };
+    },
+    onSuccess: (res) => {
+      const updatedTask: Task = res.data as unknown as Task;
+      optimisticUpdate(updatedTask);
+      handleXpResult(res.data as unknown as { xp_result?: XpResult });
+    },
+    onError:   (_err: Error, _vars: unknown, ctx: MutationContext | undefined) => { if (ctx) rollback(ctx); },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
   });
 
@@ -255,18 +326,15 @@ export default function TaskCard({ task }: TaskCardProps) {
   const handleSave = (e?: React.MouseEvent): void => {
     e?.stopPropagation();
     const changes: Partial<TaskPayload> = {};
-
     if (editForm.title?.trim())       changes.title       = editForm.title.trim();
     if (editForm.description?.trim()) changes.description = editForm.description.trim();
-    if (editForm.priority)           changes.priority    = editForm.priority as TaskPayload['priority'];
-    if (editForm.category)           changes.category    = parseInt(editForm.category);
-
+    if (editForm.priority)            changes.priority    = editForm.priority as TaskPayload['priority'];
+    if (editForm.category)            changes.category    = parseInt(editForm.category);
     if (editForm.deadline) {
       const d = new Date(editForm.deadline);
       if (!editForm.timed) d.setHours(23, 59, 0, 0);
       changes.deadline = d.toISOString();
     }
-
     if (Object.keys(changes).length > 0) {
       const updated: Task = {
         ...task,
@@ -277,8 +345,13 @@ export default function TaskCard({ task }: TaskCardProps) {
       };
       updateMutation.mutate({ changes, updated });
     }
-
     setEditing(false);
+  };
+
+  const handleAddSubtask = (): void => {
+    const title = newSubtaskTitle.trim();
+    if (!title || atSubtaskLimit) return;
+    addSubtaskMutation.mutate(title);
   };
 
   const set = <K extends keyof EditForm>(key: K, val: EditForm[K]): void =>
@@ -297,7 +370,7 @@ export default function TaskCard({ task }: TaskCardProps) {
         </button>
       </div>
 
-      <div className={styles.body}>
+      <div className={`${styles.body} ${expanded ? styles.bodyExpanded : ''}`}>
         {editing ? (
           <div className={styles.editForm}>
             <input
@@ -383,31 +456,125 @@ export default function TaskCard({ task }: TaskCardProps) {
           </div>
         ) : (
           <>
-            <p
-              className={`${styles.title} ${task.completed ? styles.strikethrough : ''}`}
-              style={{ color: task.priority ? priority.color : 'inherit' }}
-            >
-              {task.title}
-            </p>
-            {dueDate && !task.completed && (
-              <div className={`${styles.countdown} ${isOverdue ? styles.countdownOverdue : ''}`}>
-                <Hourglass size={11} />
-                {isOverdue ? `Overdue · ${format(dueDate, 'MMM d')}` : countdown}
+            <div className={`styles.mainContent  ${task.completed ? styles.completed : ''}`}>
+              <p
+                className={`${styles.title} ${task.completed ? styles.strikethrough : ''}`}
+                style={{ color: task.priority ? priority.color : 'inherit' }}
+              >
+                {task.title}
+              </p>
+
+              {/* subtask progress pill — always visible when subtasks exist */}
+              {hasSubtasks && (
+                
+                <div className={styles.subtaskProgress}>
+                  <div className={styles.taskProgressBar}>
+                    <div
+                      className={styles.taskProgressBarFill}
+                      style={{ width: `${(completedCount / subtasks.length) * 100}%` }}
+                    />
+                  </div>
+                  <span className={styles.subtaskCount}>
+                    {completedCount}/{subtasks.length}
+                  </span>
+                  <div className={styles.subtaskBar}>
+                    <div
+                      className={styles.subtaskBarFill}
+                      style={{ width: `${(completedCount / subtasks.length) * 100}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {dueDate && !task.completed && (
+                <div className={`${styles.countdown} ${isOverdue ? styles.countdownOverdue : ''}`}>
+                  <Hourglass size={11} />
+                  {isOverdue ? `Overdue · ${format(dueDate, 'MMM d')}` : countdown}
+                </div>
+              )}
+
+              {/* expanded details */}
+              <div className={`${styles.tooltip} ${expanded ? styles.tooltipExpanded : ''}`}>
+                {category && <span>{category.icon} {category.name}</span>}
+                {task.priority && <span>🎯 {priority.label}</span>}
+                {dueDate && (
+                  <span className={isOverdue ? styles.overdue : isDueToday ? styles.today : ''}>
+                    📅 {format(dueDate, 'MMM d, yyyy')}
+                    {dueDate.getHours() !== 0 || dueDate.getMinutes() !== 0
+                      ? ` · ${format(dueDate, 'h:mm aa')}`
+                      : ''}
+                  </span>
+                )}
+                {task.description && <span>📝 {task.description}</span>}
+              </div>
+            </div>
+
+            {expanded && (
+              <div className={styles.subtaskPanel} onClick={e => e.stopPropagation()}>
+                <div className={styles.subtaskPanelHeader}
+                  style={{ color: task.priority ? priority.color : 'inherit' }}>
+                    <GitBranch/>
+                </div>
+                <div className={styles.subtaskList}>
+                  {subtasks.map(subtask => (
+                    <div key={subtask.id} className={styles.subtaskItem}>
+                      <button
+                        className={`${styles.subtaskToggle} ${subtask.completed ? styles.subtaskDone : ''}`}
+                        onClick={() => toggleSubtaskMutation.mutate({
+                          subtaskId: subtask.id,
+                          completed: !subtask.completed,
+                        })}
+                      >
+                        {subtask.completed ? <Check size={10} /> : null}
+                      </button>
+                      <span className={`${styles.subtaskTitle} ${subtask.completed ? styles.strikethrough : ''}`}>
+                        {subtask.title}
+                      </span>
+                      <button
+                        className={styles.subtaskDelete}
+                        onClick={() => deleteSubtaskMutation.mutate(subtask.id)}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  ))}
+
+                  {!atSubtaskLimit && (
+                    addingSubtask ? (
+                      <div className={styles.subtaskAddRow}>
+                        <input
+                          ref={subtaskInputRef}
+                          className={styles.subtaskInput}
+                          placeholder="Subtask title..."
+                          value={newSubtaskTitle}
+                          onChange={e => setNewSubtaskTitle(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') handleAddSubtask();
+                            if (e.key === 'Escape') { setAddingSubtask(false); setNewSubtaskTitle(''); }
+                          }}
+                        />
+                        <button className={styles.subtaskConfirm} onClick={handleAddSubtask}>
+                          <Check size={12} />
+                        </button>
+                        <button className={styles.subtaskCancel} onClick={() => { setAddingSubtask(false); setNewSubtaskTitle(''); }}>
+                          ×
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        className={styles.subtaskAddBtn}
+                        onClick={() => setAddingSubtask(true)}
+                      >
+                        <Plus size={11} /> add subtask
+                      </button>
+                    )
+                  )}
+                  {atSubtaskLimit && (
+                    <p className={ styles.subtaskLimit}>Max subtasks limit reached</p>
+                  )}
+                </div>
               </div>
             )}
-            <div className={`${styles.tooltip} ${expanded ? styles.tooltipExpanded : ''}`}>
-              {category && <span>{category.icon} {category.name}</span>}
-              {task.priority && <span>🎯 {priority.label}</span>}
-              {dueDate && (
-                <span className={isOverdue ? styles.overdue : isDueToday ? styles.today : ''}>
-                  📅 {format(dueDate, 'MMM d, yyyy')}
-                  {dueDate.getHours() !== 0 || dueDate.getMinutes() !== 0
-                    ? ` · ${format(dueDate, 'h:mm aa')}`
-                    : ''}
-                </span>
-              )}
-              {task.description && <span>📝 {task.description}</span>}
-            </div>
           </>
         )}
       </div>
