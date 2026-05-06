@@ -57,7 +57,8 @@ def check_limit(profile, resource):
     elif resource == 'categories':
         count = Category.objects.filter(owner=user, is_onboarding=False).count()
     elif resource == 'notes':
-        count = StickyNotes.objects.filter(owner=user, is_onboarding=False).count()        return True, None
+        count = StickyNotes.objects.filter(owner=user, is_onboarding=False).count()        
+        return True, None
 
     if count >= limit:
         next_level = profile.level + 1
