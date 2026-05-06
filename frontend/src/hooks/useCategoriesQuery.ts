@@ -10,5 +10,6 @@ export function useCategoriesQuery(enabled = !!localStorage.getItem('authToken')
       return res.data;
     },
     enabled,
+    retry: false,
   });
 }

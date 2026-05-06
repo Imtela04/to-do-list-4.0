@@ -4,6 +4,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.views.generic import TemplateView
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from apps.accounts.views import LockableTokenObtainPairView
 
 class LoginView(TokenObtainPairView):
     throttle_classes = [ScopedRateThrottle]
@@ -16,7 +17,7 @@ class RefreshView(TokenRefreshView):
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/auth/login/',   LoginView.as_view()),
+    path('api/auth/login/', LockableTokenObtainPairView.as_view()),
     path('api/auth/refresh/', RefreshView.as_view()),
     path('api/auth/login/',   TokenObtainPairView.as_view()),
     path('api/auth/refresh/', TokenRefreshView.as_view()),

@@ -8,7 +8,29 @@ from .models import UserProfile, LEVEL_CONFIG, MAX_LEVEL
 from django.utils import timezone
 from datetime import timedelta
 from apps.todo.models import Category, Todo, StickyNotes
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.exceptions import AuthenticationFailed
 
+class LockableTokenObtainPairView(TokenObtainPairView):
+    def post(self, request, *args, **kwargs):
+        username = request.data.get('username', '')
+        from django.contrib.auth.models import User
+        user = User.objects.filter(username=username).first()
+
+        if user:
+            allowed, message = check_lockout(user)
+            if not allowed:
+                return Response({'detail': message}, status=status.HTTP_429_TOO_MANY_REQUESTS)
+
+        try:
+            response = super().post(request, *args, **kwargs)
+            if user:
+                record_successful_login(user)
+            return response
+        except Exception:
+            record_failed_login(username)
+            raise
+        
 class ThemeView(APIView):
     permission_classes = [IsAuthenticated]
 

@@ -11,5 +11,6 @@ export function useTasksQuery(enabled = !!localStorage.getItem('authToken')): Us
       return 'results' in data ? data.results : data;
     },
     enabled,
+    retry: false,
   });
 }

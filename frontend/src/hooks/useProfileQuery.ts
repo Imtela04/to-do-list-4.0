@@ -14,5 +14,6 @@ export function useProfileQuery(enabled = !!localStorage.getItem('authToken')): 
       return res.data;
     },
     enabled,
+    retry: false,
   });
 }
