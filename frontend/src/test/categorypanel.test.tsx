@@ -1,0 +1,43 @@
+import { render, screen, fireEvent } from '@testing-library/react';
+import { vi } from 'vitest';
+import CategoryPanel from '../components/categories/categorypanel';
+
+// Mock the hooks
+vi.mock('../hooks/useCategoriesQuery', () => ({
+  useCategoriesQuery: () => ({
+    data: [
+      { id: 1, name: 'Work', icon: '💼' },
+      { id: 2, name: 'Personal', icon: '👤' }
+    ],
+    isLoading: false,
+    error: null
+  })
+}));
+
+vi.mock('../hooks/useTasksQuery', () => ({
+  useTasksQuery: () => ({
+    data: [],
+    isLoading: false,
+    error: null
+  })
+}));
+
+describe('CategoryPanel', () => {
+  test('renders categories', () => {
+    render(<CategoryPanel />);
+    expect(screen.getByText('Work')).toBeInTheDocument();
+    expect(screen.getByText('Personal')).toBeInTheDocument();
+  });
+
+  test('shows add category button', () => {
+    render(<CategoryPanel />);
+    expect(screen.getByRole('button', { name: /add category/i })).toBeInTheDocument();
+  });
+
+  test('filters tasks by category', () => {
+    render(<CategoryPanel />);
+    const workCategory = screen.getByText('Work');
+    fireEvent.click(workCategory);
+    // Add assertions for filtering
+  });
+});
