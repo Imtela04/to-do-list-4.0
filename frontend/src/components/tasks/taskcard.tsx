@@ -1,3 +1,4 @@
+// taskcard.tsx — full replacement
 import { useState, useEffect, useRef } from 'react';
 import { format, isPast, isToday, addDays } from 'date-fns';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -8,7 +9,7 @@ import type { Task, TaskPayload, XpResult } from '@/types';
 import styles from './taskcard.module.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { Pin, PinOff, Trash, SquarePen, CalendarPlus, Hourglass, Plus, Check, GitBranch } from 'lucide-react';
+import { Pin, PinOff, Trash, SquarePen, CalendarPlus, Hourglass, Plus, Check } from 'lucide-react';
 
 const PRIORITY_MAP: Record<string, { color: string; label: string }> = {
   low:      { color: 'var(--priority-low)',      label: 'Low'      },
@@ -20,22 +21,16 @@ const PRIORITY_MAP: Record<string, { color: string; label: string }> = {
 const PRIORITIES = ['low', 'medium', 'high', 'critical'] as const;
 const SUBTASK_LIMIT = 10;
 
-interface ToggleMutationVars  { completed: boolean; }
-interface UpdateMutationVars  { changes: Partial<TaskPayload>; updated: Task; }
-interface MutationContext     { previous: Task[] | undefined; }
-
+interface ToggleMutationVars { completed: boolean; }
+interface UpdateMutationVars { changes: Partial<TaskPayload>; updated: Task; }
+interface MutationContext    { previous: Task[] | undefined; }
 interface EditForm {
-  title:       string;
-  description: string;
-  priority:    string;
-  category:    string;
-  deadline:    Date | null;
-  timed:       boolean;
+  title: string; description: string; priority: string;
+  category: string; deadline: Date | null; timed: boolean;
 }
 
 function useCountdown(deadline: string | null, timed: boolean): string | null {
   const [remaining, setRemaining] = useState<string | null>('');
-
   useEffect(() => {
     if (!deadline) return;
     const calc = () => {
@@ -71,16 +66,10 @@ function useCountdown(deadline: string | null, timed: boolean): string | null {
     const id = setInterval(calc, timed ? 1000 : 60000);
     return () => clearInterval(id);
   }, [deadline, timed]);
-
   return remaining;
 }
 
-interface TaskCardProps {
-  task:  Task;
-  index: number;
-}
-
-export default function TaskCard({ task }: TaskCardProps) {
+export default function TaskCard({ task }: { task: Task; index: number }) {
   const queryClient = useQueryClient();
   const updateXp    = useAppStore(s => s.updateXp);
   const { data: categories = [] } = useCategoriesQuery();
@@ -90,17 +79,21 @@ export default function TaskCard({ task }: TaskCardProps) {
   const [expanded, setExpanded]                   = useState(false);
   const [confirmDelete, setConfirmDelete]         = useState(false);
   const [confirmUncomplete, setConfirmUncomplete] = useState(false);
+  const [newSubtaskTitle, setNewSubtaskTitle]     = useState('');
+  const [addingSubtask, setAddingSubtask]         = useState(false);
   const [editForm, setEditForm] = useState<EditForm>({
     title: '', description: '', priority: '', category: '', deadline: null, timed: false,
   });
 
-  // ── Subtask state ──────────────────────────────────────────
-  const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
-  const [addingSubtask, setAddingSubtask]     = useState(false);
+  const cardRef        = useRef<HTMLDivElement>(null);
+  const clickTimer     = useRef<ReturnType<typeof setTimeout> | null>(null);
   const subtaskInputRef = useRef<HTMLInputElement>(null);
 
-  const cardRef    = useRef<HTMLDivElement>(null);
-  const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const subtasks       = task.subtasks ?? [];
+  const completedCount = subtasks.filter(s => s.completed).length;
+  const hasSubtasks    = subtasks.length > 0;
+  const atSubtaskLimit = subtasks.length >= SUBTASK_LIMIT;
+  const allDone        = hasSubtasks && completedCount === subtasks.length;
 
   const category   = task.category;
   const priority   = PRIORITY_MAP[task.priority] ?? PRIORITY_MAP.low;
@@ -110,34 +103,36 @@ export default function TaskCard({ task }: TaskCardProps) {
   const isOverdue  = dueDate && !task.completed
     ? (isTimed ? isPast(dueDate) : isPast(dueDate) && !isToday(dueDate))
     : false;
-
-  const countdown       = useCountdown(task.deadline, isTimed);
-  const subtasks        = task.subtasks ?? [];
-  const completedCount  = subtasks.filter(s => s.completed).length;
-  const hasSubtasks     = subtasks.length > 0;
-  const atSubtaskLimit  = subtasks.length >= SUBTASK_LIMIT;
+  const countdown  = useCountdown(task.deadline, isTimed);
 
   useEffect(() => {
     if (addingSubtask) subtaskInputRef.current?.focus();
   }, [addingSubtask]);
 
+  // ── Outside click collapse ─────────────────────────────────
+  useEffect(() => {
+    if (!expanded) return;
+    const handler = (e: MouseEvent) => {
+      if (cardRef.current && !cardRef.current.contains(e.target as Node)) setExpanded(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [expanded]);
+
   // ── Optimistic helpers ─────────────────────────────────────
-  const optimisticUpdate = (updatedTask: Task): void => {
+  const optimisticUpdate = (updated: Task) =>
     queryClient.setQueryData<Task[]>(['tasks'], old =>
-      old?.map(t => t.id === updatedTask.id ? updatedTask : t) ?? []
+      old?.map(t => t.id === updated.id ? updated : t) ?? []
     );
-  };
 
-  const rollback = (ctx: MutationContext): void => {
+  const rollback = (ctx: MutationContext) =>
     queryClient.setQueryData(['tasks'], ctx.previous);
-  };
 
-  // helper — apply xp_result from subtask responses
-  const handleXpResult = (data: { xp_result?: XpResult }): void => {
+  const handleXpResult = (data: { xp_result?: XpResult }) => {
     if (data.xp_result) updateXp(data.xp_result);
   };
 
-  // ── Task mutations ─────────────────────────────────────────
+  // ── Mutations ──────────────────────────────────────────────
   const toggleMutation = useMutation({
     mutationFn: ({ completed }: ToggleMutationVars) =>
       toggleTask(task.id, completed, completed ? false : task.pinned),
@@ -145,17 +140,14 @@ export default function TaskCard({ task }: TaskCardProps) {
       await queryClient.cancelQueries({ queryKey: ['tasks'] });
       const previous = queryClient.getQueryData<Task[]>(['tasks']);
       optimisticUpdate({
-        ...task,
-        completed,
+        ...task, completed,
         pinned:   completed ? false : task.pinned,
-        subtasks: completed
-          ? subtasks.map(s => ({ ...s, completed: true }))
-          : subtasks.map(s => ({ ...s, completed: false })),
+        subtasks: subtasks.map(s => ({ ...s, completed })),
       });
       return { previous };
     },
-    onSuccess: (res) => { handleXpResult(res.data); },
-    onError:   (_err: Error, _vars: ToggleMutationVars, ctx: MutationContext | undefined) => { if (ctx) rollback(ctx); },
+    onSuccess: (res) => handleXpResult(res.data),
+    onError:   (_e: Error, _v: ToggleMutationVars, ctx: MutationContext | undefined) => { if (ctx) rollback(ctx); },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
   });
 
@@ -167,7 +159,7 @@ export default function TaskCard({ task }: TaskCardProps) {
       optimisticUpdate(updated);
       return { previous };
     },
-    onError:   (_err: Error, _vars: UpdateMutationVars, ctx: MutationContext | undefined) => { if (ctx) rollback(ctx); },
+    onError:   (_e: Error, _v: UpdateMutationVars, ctx: MutationContext | undefined) => { if (ctx) rollback(ctx); },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
   });
 
@@ -179,20 +171,17 @@ export default function TaskCard({ task }: TaskCardProps) {
       queryClient.setQueryData<Task[]>(['tasks'], old => old?.filter(t => t.id !== task.id) ?? []);
       return { previous };
     },
-    onError:   (_err: Error, _vars: void, ctx: MutationContext | undefined) => { if (ctx) rollback(ctx); },
+    onError:   (_e: Error, _v: void, ctx: MutationContext | undefined) => { if (ctx) rollback(ctx); },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
   });
 
-  // ── Subtask mutations ──────────────────────────────────────
   const addSubtaskMutation = useMutation({
     mutationFn: (title: string) => createSubtask(task.id, { title }),
     onSuccess: (res) => {
-      // backend returns new subtask, merge into cache
       queryClient.setQueryData<Task[]>(['tasks'], old =>
         old?.map(t => t.id === task.id
           ? { ...t, subtasks: [...(t.subtasks ?? []), res.data] }
-          : t
-        ) ?? []
+          : t) ?? []
       );
       setNewSubtaskTitle('');
       setAddingSubtask(false);
@@ -206,22 +195,18 @@ export default function TaskCard({ task }: TaskCardProps) {
     onMutate: async ({ subtaskId, completed }) => {
       await queryClient.cancelQueries({ queryKey: ['tasks'] });
       const previous = queryClient.getQueryData<Task[]>(['tasks']);
-      // optimistically update the subtask
       queryClient.setQueryData<Task[]>(['tasks'], old =>
         old?.map(t => t.id === task.id
           ? { ...t, subtasks: t.subtasks.map(s => s.id === subtaskId ? { ...s, completed } : s) }
-          : t
-        ) ?? []
+          : t) ?? []
       );
       return { previous };
     },
     onSuccess: (res) => {
-      // backend returns full updated parent task with new completion state + xp
-      const updatedTask: Task = res.data as unknown as Task;
-      optimisticUpdate(updatedTask);
+      optimisticUpdate(res.data as unknown as Task);
       handleXpResult(res.data as unknown as { xp_result?: XpResult });
     },
-    onError:   (_err: Error, _vars: unknown, ctx: MutationContext | undefined) => { if (ctx) rollback(ctx); },
+    onError:   (_e: Error, _v: unknown, ctx: MutationContext | undefined) => { if (ctx) rollback(ctx); },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
   });
 
@@ -233,31 +218,20 @@ export default function TaskCard({ task }: TaskCardProps) {
       queryClient.setQueryData<Task[]>(['tasks'], old =>
         old?.map(t => t.id === task.id
           ? { ...t, subtasks: t.subtasks.filter(s => s.id !== subtaskId) }
-          : t
-        ) ?? []
+          : t) ?? []
       );
       return { previous };
     },
     onSuccess: (res) => {
-      const updatedTask: Task = res.data as unknown as Task;
-      optimisticUpdate(updatedTask);
+      optimisticUpdate(res.data as unknown as Task);
       handleXpResult(res.data as unknown as { xp_result?: XpResult });
     },
-    onError:   (_err: Error, _vars: unknown, ctx: MutationContext | undefined) => { if (ctx) rollback(ctx); },
+    onError:   (_e: Error, _v: unknown, ctx: MutationContext | undefined) => { if (ctx) rollback(ctx); },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
   });
 
   // ── Handlers ───────────────────────────────────────────────
-  useEffect(() => {
-    if (!expanded) return;
-    const handler = (e: MouseEvent) => {
-      if (cardRef.current && !cardRef.current.contains(e.target as Node)) setExpanded(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [expanded]);
-
-  const handleCardClick = (e: React.MouseEvent<HTMLDivElement>): void => {
+  const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).closest('button, input, textarea, select')) return;
     if (editing) return;
     if (clickTimer.current) {
@@ -272,7 +246,31 @@ export default function TaskCard({ task }: TaskCardProps) {
     }
   };
 
-  const handleMoveToNextDay = (e: React.MouseEvent): void => {
+  const handleToggle = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!task.completed) toggleMutation.mutate({ completed: true });
+    else setConfirmUncomplete(true);
+  };
+
+  const handleConfirmUncomplete = () => {
+    setConfirmUncomplete(false);
+    toggleMutation.mutate({ completed: false });
+  };
+
+  const handleDelete = () => {
+    setDeleting(true);
+    setTimeout(() => deleteMutation.mutate(), 300);
+  };
+
+  const handlePin = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    updateMutation.mutate({
+      changes: { pinned: !task.pinned },
+      updated: { ...task, pinned: !task.pinned },
+    });
+  };
+
+  const handleMoveToNextDay = (e: React.MouseEvent) => {
     e.stopPropagation();
     const tomorrow = addDays(new Date(), 1);
     tomorrow.setHours(23, 59, 0, 0);
@@ -282,31 +280,7 @@ export default function TaskCard({ task }: TaskCardProps) {
     });
   };
 
-  const handleToggle = (e: React.MouseEvent): void => {
-    e.stopPropagation();
-    if (!task.completed) toggleMutation.mutate({ completed: true });
-    else setConfirmUncomplete(true);
-  };
-
-  const handleConfirmUncomplete = (): void => {
-    setConfirmUncomplete(false);
-    toggleMutation.mutate({ completed: false });
-  };
-
-  const handleDelete = (): void => {
-    setDeleting(true);
-    setTimeout(() => deleteMutation.mutate(), 300);
-  };
-
-  const handlePin = (e: React.MouseEvent): void => {
-    e.stopPropagation();
-    updateMutation.mutate({
-      changes: { pinned: !task.pinned },
-      updated: { ...task, pinned: !task.pinned },
-    });
-  };
-
-  const openEdit = (e: React.MouseEvent): void => {
+  const openEdit = (e: React.MouseEvent) => {
     e.stopPropagation();
     const existingDeadline = task.deadline ? new Date(task.deadline) : null;
     setEditForm({
@@ -323,7 +297,7 @@ export default function TaskCard({ task }: TaskCardProps) {
     setEditing(true);
   };
 
-  const handleSave = (e?: React.MouseEvent): void => {
+  const handleSave = (e?: React.MouseEvent) => {
     e?.stopPropagation();
     const changes: Partial<TaskPayload> = {};
     if (editForm.title?.trim())       changes.title       = editForm.title.trim();
@@ -337,8 +311,7 @@ export default function TaskCard({ task }: TaskCardProps) {
     }
     if (Object.keys(changes).length > 0) {
       const updated: Task = {
-        ...task,
-        ...changes,
+        ...task, ...changes,
         category: editForm.category
           ? (categories.find(c => c.id === parseInt(editForm.category)) ?? task.category)
           : task.category,
@@ -348,30 +321,77 @@ export default function TaskCard({ task }: TaskCardProps) {
     setEditing(false);
   };
 
-  const handleAddSubtask = (): void => {
+  const handleAddSubtask = () => {
     const title = newSubtaskTitle.trim();
     if (!title || atSubtaskLimit) return;
     addSubtaskMutation.mutate(title);
   };
 
-  const set = <K extends keyof EditForm>(key: K, val: EditForm[K]): void =>
+  const set = <K extends keyof EditForm>(key: K, val: EditForm[K]) =>
     setEditForm(f => ({ ...f, [key]: val }));
 
+  // ── Render ─────────────────────────────────────────────────
   return (
     <div
       ref={cardRef}
-      className={`${styles.card} ${task.completed ? styles.completed : ''} ${deleting ? styles.deleting : ''} ${expanded ? styles.cardExpanded : ''}`}
+      className={[
+        styles.card,
+        task.completed ? styles.completed : '',
+        deleting       ? styles.deleting  : '',
+        expanded       ? styles.expanded  : '',
+      ].join(' ')}
       onClick={handleCardClick}
     >
-      {task.pinned && <span className={styles.pinnedBadge}><Pin size={13} /></span>}
-      <div className={styles.left}>
-        <button className={styles.toggle} onClick={handleToggle}>
-          {task.completed ? '✓' : <span className={styles.activeDot} />}
-        </button>
-      </div>
+      {/* Pin indicator */}
+      {task.pinned && <span className={styles.pinnedBadge}><Pin size={11} /></span>}
 
-      <div className={`${styles.body} ${expanded ? styles.bodyExpanded : ''}`}>
-        {editing ? (
+      {/* Toggle */}
+      <button className={styles.toggle} onClick={handleToggle}>
+        {task.completed
+          ? <Check size={12} strokeWidth={3} />
+          : <span className={styles.activeDot} />}
+      </button>
+
+      {/* Main content */}
+      <div className={styles.body}>
+
+        {/* ── Collapsed view ── */}
+        {!editing && (
+          <div className={styles.collapsed}>
+            <p
+              className={`${styles.title} ${task.completed ? styles.strikethrough : ''}`}
+              style={{ color: priority.color }}
+            >
+              {task.title}
+            </p>
+
+            <div className={styles.meta}>
+              {dueDate && !task.completed && (
+                <span className={`${styles.countdown} ${isOverdue ? styles.overdue : ''}`}>
+                  <Hourglass size={10} />
+                  {isOverdue ? `overdue · ${format(dueDate, 'MMM d')}` : countdown}
+                </span>
+              )}
+              {hasSubtasks && (
+                <span className={styles.subtaskBadge}>
+                  {completedCount}/{subtasks.length}
+                </span>
+              )}
+            </div>
+
+            {hasSubtasks && (
+              <div className={styles.progressBar}>
+                <div
+                  className={`${styles.progressFill} ${allDone ? styles.progressDone : ''}`}
+                  style={{ width: `${(completedCount / subtasks.length) * 100}%` }}
+                />
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ── Edit form ── */}
+        {editing && (
           <div className={styles.editForm}>
             <input
               autoFocus
@@ -400,15 +420,9 @@ export default function TaskCard({ task }: TaskCardProps) {
                 </button>
               ))}
             </div>
-            <select
-              className={styles.editInput}
-              value={editForm.category}
-              onChange={e => set('category', e.target.value)}
-            >
+            <select className={styles.editInput} value={editForm.category} onChange={e => set('category', e.target.value)}>
               <option value="">Category</option>
-              {categories.map(c => (
-                <option key={c.id} value={c.id}>{c.icon} {c.name}</option>
-              ))}
+              {categories.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
             </select>
             <div className={styles.dateTimeRow}>
               <DatePicker
@@ -439,10 +453,8 @@ export default function TaskCard({ task }: TaskCardProps) {
                     setEditForm(f => ({ ...f, deadline: d, timed: true }));
                   }}
                   placeholderText="+ time"
-                  showTimeSelect
-                  showTimeSelectOnly
-                  timeFormat="HH:mm"
-                  timeIntervals={15}
+                  showTimeSelect showTimeSelectOnly
+                  timeFormat="HH:mm" timeIntervals={15}
                   dateFormat="h:mm aa"
                   className={styles.editInput}
                   isClearable
@@ -454,170 +466,129 @@ export default function TaskCard({ task }: TaskCardProps) {
               <button className={styles.saveBtn} onClick={handleSave}>Save</button>
             </div>
           </div>
-        ) : (
-          <>
-            <div className={`styles.mainContent  ${task.completed ? styles.completed : ''}`}>
-              <p
-                className={`${styles.title} ${task.completed ? styles.strikethrough : ''}`}
-                style={{ color: task.priority ? priority.color : 'inherit' }}
-              >
-                {task.title}
-              </p>
+        )}
 
-              {/* subtask progress pill — always visible when subtasks exist */}
-              {hasSubtasks && (
-                
-                <div className={styles.subtaskProgress}>
-                  <div className={styles.taskProgressBar}>
-                    <div
-                      className={styles.taskProgressBarFill}
-                      style={{ width: `${(completedCount / subtasks.length) * 100}%` }}
-                    />
-                  </div>
-                  <span className={styles.subtaskCount}>
-                    {completedCount}/{subtasks.length}
-                  </span>
-                  <div className={styles.subtaskBar}>
-                    <div
-                      className={styles.subtaskBarFill}
-                      style={{ width: `${(completedCount / subtasks.length) * 100}%` }}
-                    />
-                  </div>
-                </div>
+        {/* ── Expanded details ── */}
+        {expanded && !editing && (
+          <div className={styles.expandedDetails} onClick={e => e.stopPropagation()}>
+            <div className={styles.detailChips}>
+              {category && (
+                <span className={styles.chip}>{category.icon} {category.name}</span>
               )}
-
-              {dueDate && !task.completed && (
-                <div className={`${styles.countdown} ${isOverdue ? styles.countdownOverdue : ''}`}>
-                  <Hourglass size={11} />
-                  {isOverdue ? `Overdue · ${format(dueDate, 'MMM d')}` : countdown}
-                </div>
+              {task.priority && (
+                <span className={styles.chip} style={{ color: priority.color }}>
+                  {priority.label}
+                </span>
               )}
-
-              {/* expanded details */}
-              <div className={`${styles.tooltip} ${expanded ? styles.tooltipExpanded : ''}`}>
-                {category && <span>{category.icon} {category.name}</span>}
-                {task.priority && <span>🎯 {priority.label}</span>}
-                {dueDate && (
-                  <span className={isOverdue ? styles.overdue : isDueToday ? styles.today : ''}>
-                    📅 {format(dueDate, 'MMM d, yyyy')}
-                    {dueDate.getHours() !== 0 || dueDate.getMinutes() !== 0
-                      ? ` · ${format(dueDate, 'h:mm aa')}`
-                      : ''}
-                  </span>
-                )}
-                {task.description && <span>📝 {task.description}</span>}
-              </div>
+              {dueDate && (
+                <span className={`${styles.chip} ${isOverdue ? styles.chipOverdue : isDueToday ? styles.chipToday : ''}`}>
+                  📅 {format(dueDate, 'MMM d, yyyy')}
+                  {isTimed ? ` · ${format(dueDate, 'h:mm aa')}` : ''}
+                </span>
+              )}
             </div>
 
-            {expanded && (
-              <div className={styles.subtaskPanel} onClick={e => e.stopPropagation()}>
-                <div className={styles.subtaskPanelHeader}
-                  style={{ color: task.priority ? priority.color : 'inherit' }}>
-                    <GitBranch/>
-                </div>
-                <div className={styles.subtaskList}>
-                  {subtasks.map(subtask => (
-                    <div key={subtask.id} className={styles.subtaskItem}>
-                      <button
-                        className={`${styles.subtaskToggle} ${subtask.completed ? styles.subtaskDone : ''}`}
-                        onClick={() => toggleSubtaskMutation.mutate({
-                          subtaskId: subtask.id,
-                          completed: !subtask.completed,
-                        })}
-                      >
-                        {subtask.completed ? <Check size={10} /> : null}
-                      </button>
-                      <span className={`${styles.subtaskTitle} ${subtask.completed ? styles.strikethrough : ''}`}>
-                        {subtask.title}
-                      </span>
-                      <button
-                        className={styles.subtaskDelete}
-                        onClick={() => deleteSubtaskMutation.mutate(subtask.id)}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-
-                  {!atSubtaskLimit && (
-                    addingSubtask ? (
-                      <div className={styles.subtaskAddRow}>
-                        <input
-                          ref={subtaskInputRef}
-                          className={styles.subtaskInput}
-                          placeholder="Subtask title..."
-                          value={newSubtaskTitle}
-                          onChange={e => setNewSubtaskTitle(e.target.value)}
-                          onKeyDown={e => {
-                            if (e.key === 'Enter') handleAddSubtask();
-                            if (e.key === 'Escape') { setAddingSubtask(false); setNewSubtaskTitle(''); }
-                          }}
-                        />
-                        <button className={styles.subtaskConfirm} onClick={handleAddSubtask}>
-                          <Check size={12} />
-                        </button>
-                        <button className={styles.subtaskCancel} onClick={() => { setAddingSubtask(false); setNewSubtaskTitle(''); }}>
-                          ×
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        className={styles.subtaskAddBtn}
-                        onClick={() => setAddingSubtask(true)}
-                      >
-                        <Plus size={11} /> add subtask
-                      </button>
-                    )
-                  )}
-                  {atSubtaskLimit && (
-                    <p className={ styles.subtaskLimit}>Max subtasks limit reached</p>
-                  )}
-                </div>
-              </div>
+            {task.description && (
+              <p className={styles.description}>📝 {task.description}</p>
             )}
-          </>
+
+            {/* Subtasks */}
+            <div className={styles.subtaskSection}>
+              {subtasks.map(subtask => (
+                <div key={subtask.id} className={styles.subtaskRow}>
+                  <button
+                    className={`${styles.subtaskCheck} ${subtask.completed ? styles.subtaskChecked : ''}`}
+                    onClick={() => toggleSubtaskMutation.mutate({
+                      subtaskId: subtask.id,
+                      completed: !subtask.completed,
+                    })}
+                  >
+                    {subtask.completed && <Check size={9} strokeWidth={3} />}
+                  </button>
+                  <span className={`${styles.subtaskLabel} ${subtask.completed ? styles.strikethrough : ''}`}>
+                    {subtask.title}
+                  </span>
+                  <button
+                    className={styles.subtaskDel}
+                    onClick={() => deleteSubtaskMutation.mutate(subtask.id)}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+
+              {!atSubtaskLimit && (
+                addingSubtask ? (
+                  <div className={styles.subtaskAddRow}>
+                    <input
+                      ref={subtaskInputRef}
+                      className={styles.subtaskInput}
+                      placeholder="Add subtask..."
+                      value={newSubtaskTitle}
+                      onChange={e => setNewSubtaskTitle(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') handleAddSubtask();
+                        if (e.key === 'Escape') { setAddingSubtask(false); setNewSubtaskTitle(''); }
+                      }}
+                    />
+                    <button className={styles.subtaskConfirm} onClick={handleAddSubtask}>
+                      <Check size={11} strokeWidth={3} />
+                    </button>
+                    <button className={styles.subtaskCancelBtn} onClick={() => { setAddingSubtask(false); setNewSubtaskTitle(''); }}>
+                      ×
+                    </button>
+                  </div>
+                ) : (
+                  <button className={styles.addSubtaskBtn} onClick={() => setAddingSubtask(true)}>
+                    <Plus size={11} /> add subtask
+                  </button>
+                )
+              )}
+
+              {atSubtaskLimit && (
+                <p className={styles.subtaskLimit}>max {SUBTASK_LIMIT} subtasks</p>
+              )}
+            </div>
+          </div>
         )}
       </div>
 
+      {/* Action buttons */}
       <div className={`${styles.actions} ${expanded ? styles.actionsVisible : ''}`}>
-        <button
-          className={`${styles.actionBtn} ${task.pinned ? styles.pinned : ''}`}
-          onClick={handlePin}
-          title={task.pinned ? 'Unpin' : 'Pin'}
-        >
-          {task.pinned ? <PinOff size={14} /> : <Pin size={14} />}
+        <button className={`${styles.actionBtn} ${task.pinned ? styles.pinned : ''}`} onClick={handlePin} title={task.pinned ? 'Unpin' : 'Pin'}>
+          {task.pinned ? <PinOff size={13} /> : <Pin size={13} />}
         </button>
         {isOverdue && (
-          <button className={`${styles.actionBtn} ${styles.nextDayBtn}`} onClick={handleMoveToNextDay} title="Move to tomorrow">
-            <CalendarPlus size={14} />
+          <button className={`${styles.actionBtn} ${styles.nextDay}`} onClick={handleMoveToNextDay} title="Move to tomorrow">
+            <CalendarPlus size={13} />
           </button>
         )}
         <button className={styles.actionBtn} onClick={editing ? handleSave : openEdit} title={editing ? 'Save' : 'Edit'}>
-          <SquarePen size={14} />
+          <SquarePen size={13} />
         </button>
-        <button
-          className={`${styles.actionBtn} ${styles.deleteBtn}`}
-          onClick={(e) => { e.stopPropagation(); setConfirmDelete(true); }}
-        >
-          <Trash size={14} />
+        <button className={`${styles.actionBtn} ${styles.deleteBtn}`} onClick={e => { e.stopPropagation(); setConfirmDelete(true); }}>
+          <Trash size={13} />
         </button>
       </div>
 
+      {/* Confirm delete */}
       {confirmDelete && (
-        <div className={styles.confirmOverlay}>
-          <p className={styles.confirmText}>Delete this task?</p>
-          <div className={styles.confirmActions}>
-            <button className={styles.confirmCancel} onClick={() => setConfirmDelete(false)}>Cancel</button>
-            <button className={styles.confirmDelete} onClick={() => { setConfirmDelete(false); handleDelete(); }}>Delete</button>
+        <div className={styles.overlay}>
+          <p className={styles.overlayText}>Delete this task?</p>
+          <div className={styles.overlayActions}>
+            <button className={styles.cancelBtn} onClick={() => setConfirmDelete(false)}>Cancel</button>
+            <button className={styles.deleteConfirmBtn} onClick={() => { setConfirmDelete(false); handleDelete(); }}>Delete</button>
           </div>
         </div>
       )}
+
+      {/* Confirm uncomplete */}
       {confirmUncomplete && (
-        <div className={styles.confirmOverlay}>
-          <p className={styles.confirmText}>Mark as incomplete? You'll lose 5 XP.</p>
-          <div className={styles.confirmActions}>
-            <button className={styles.confirmCancel} onClick={() => setConfirmUncomplete(false)}>Cancel</button>
-            <button className={styles.confirmDelete} onClick={handleConfirmUncomplete}>Confirm</button>
+        <div className={styles.overlay}>
+          <p className={styles.overlayText}>Mark incomplete? You'll lose 5 XP.</p>
+          <div className={styles.overlayActions}>
+            <button className={styles.cancelBtn} onClick={() => setConfirmUncomplete(false)}>Cancel</button>
+            <button className={styles.deleteConfirmBtn} onClick={handleConfirmUncomplete}>Confirm</button>
           </div>
         </div>
       )}

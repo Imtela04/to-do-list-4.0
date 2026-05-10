@@ -1,147 +1,248 @@
+/* ── Card ─────────────────────────────────────────────────── */
 .card {
+  position: relative;
   display: flex;
   align-items: flex-start;
-  gap: 16px;
-  padding: 18px 18px;
-  background: rgba(15, 23, 42, 0.76);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 24px;
-  box-shadow: 0 22px 55px rgba(0, 0, 0, 0.18);
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--bg-glass);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 18px;
   backdrop-filter: blur(18px);
-  overflow: hidden;
-  transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease,
-    background 220ms ease;
+  transition: border-color 200ms ease, background 200ms ease, transform 200ms ease;
   cursor: default;
 }
 
 .card:hover {
+  border-color: rgba(124, 106, 255, 0.2);
+  background: rgba(18, 28, 48, 0.84);
   transform: translateY(-1px);
-  border-color: rgba(124, 106, 255, 0.22);
-  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.22);
-  background: rgba(18, 28, 48, 0.86);
 }
 
+.expanded {
+  border-color: rgba(124, 106, 255, 0.25);
+  background: rgba(18, 28, 48, 0.9);
+}
+
+.completed { opacity: 0.55; }
+
+.deleting {
+  opacity: 0;
+  transform: translateX(16px);
+  transition: opacity 280ms ease, transform 280ms ease;
+}
+
+/* ── Toggle ───────────────────────────────────────────────── */
+.toggle {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  border-radius: 50%;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-top: 2px;
+  transition: border-color 160ms ease, background 160ms ease;
+  color: var(--accent-primary);
+}
+
+.toggle:hover { border-color: var(--accent-primary); }
+
+.activeDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  display: block;
+}
+
+/* ── Pinned badge ─────────────────────────────────────────── */
+.pinnedBadge {
+  position: absolute;
+  top: 8px;
+  right: 46px;
+  color: var(--accent-primary);
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+/* ── Body ─────────────────────────────────────────────────── */
 .body {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 8px;
 }
 
-.bodyExpanded {
-  flex-direction: row;
-  align-items: flex-start;
-  gap: 18px;
-}
-
-.mainContent {
-  flex: 1;
-  min-width: 0;
+/* ── Collapsed ────────────────────────────────────────────── */
+.collapsed {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 5px;
 }
 
-.subtaskPanel {
-  width: 300px;
-  min-width: 260px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 16px;
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 22px;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
-}
-
-.subtaskPanelHeader {
-  font-size: 0.82rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+.title {
+  font-size: 0.875rem;
+  font-weight: 500;
   color: var(--text-primary);
-}
-
-.subtaskList {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.subtaskItem {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 16px;
-  transition: transform 180ms ease, background 180ms ease,
-    border-color 180ms ease;
-}
-
-.subtaskItem:hover {
-  transform: translateY(-1px);
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(124, 106, 255, 0.16);
-}
-
-.subtaskToggle {
-  width: 20px;
-  height: 20px;
-  border: 2px solid rgba(255, 255, 255, 0.22);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.06);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 180ms ease;
-}
-
-.subtaskToggle:hover {
-  border-color: rgba(124, 106, 255, 0.42);
-}
-
-.subtaskDone {
-  background: var(--accent-primary);
-  border-color: var(--accent-primary);
-  color: white;
-}
-
-.subtaskDone svg {
-  width: 12px;
-  height: 12px;
-}
-
-.subtaskTitle {
-  flex: 1;
-  font-size: 0.84rem;
-  color: var(--text-primary);
-  line-height: 1.5;
+  line-height: 1.4;
+  word-break: break-word;
 }
 
 .strikethrough {
   text-decoration: line-through;
+  opacity: 0.5;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.countdown {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.7rem;
   color: var(--text-muted);
-  opacity: 0.68;
-  
+  font-family: var(--font-mono);
 }
 
-.completed{
-  opacity: 0.60;
+.overdue { color: var(--danger, #ff6a6a); }
+
+.subtaskBadge {
+  font-size: 0.68rem;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 1px 7px;
 }
 
-.subtaskAddRow,
-.subtaskAddBtn {
+/* ── Progress bar ─────────────────────────────────────────── */
+.progressBar {
+  height: 3px;
+  background: rgba(255, 255, 255, 0.07);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--accent-primary);
+  border-radius: 2px;
+  transition: width 0.35s cubic-bezier(.4, 0, .2, 1);
+}
+
+.progressDone { background: var(--accent-tertiary, #6affdc); }
+
+/* ── Expanded details ─────────────────────────────────────── */
+.expandedDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.detailChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chip {
+  font-size: 0.72rem;
+  color: var(--text-muted);
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 18px;
+  border-radius: 10px;
+  padding: 2px 9px;
 }
 
+.chipOverdue { color: var(--danger, #ff6a6a); border-color: rgba(255, 106, 106, 0.2); }
+.chipToday   { color: var(--accent-tertiary, #6affdc); border-color: rgba(106, 255, 220, 0.2); }
+
+.description {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* ── Subtasks ─────────────────────────────────────────────── */
+.subtaskSection {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.subtaskRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background 150ms ease;
+}
+
+.subtaskRow:hover { background: rgba(255, 255, 255, 0.06); }
+
+.subtaskCheck {
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  border-radius: 4px;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 150ms ease;
+  color: white;
+}
+
+.subtaskCheck:hover  { border-color: var(--accent-primary); }
+.subtaskChecked      { background: var(--accent-primary); border-color: var(--accent-primary); }
+
+.subtaskLabel {
+  flex: 1;
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.subtaskDel {
+  opacity: 0;
+  font-size: 15px;
+  line-height: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0 2px;
+  transition: opacity 120ms ease, color 120ms ease;
+}
+
+.subtaskRow:hover .subtaskDel { opacity: 1; }
+.subtaskDel:hover { color: var(--danger, #ff6a6a); }
+
 .subtaskAddRow {
-  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(124, 106, 255, 0.2);
+  background: rgba(124, 106, 255, 0.04);
 }
 
 .subtaskInput {
@@ -149,27 +250,223 @@
   background: transparent;
   border: none;
   outline: none;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   color: var(--text-primary);
 }
 
-.subtaskLimit{
-  color: var(--danger);
-  font-size: small;
+.subtaskInput::placeholder { color: var(--text-muted); }
+
+.subtaskConfirm {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--accent-tertiary, #6affdc);
+  display: flex;
+  align-items: center;
+  padding: 0 2px;
 }
 
-.taskProgressBar {
+.subtaskCancelBtn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 15px;
+  line-height: 1;
+  padding: 0 2px;
+  transition: color 120ms ease;
+}
+
+.subtaskCancelBtn:hover { color: var(--danger, #ff6a6a); }
+
+.addSubtaskBtn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 5px 10px;
+  cursor: pointer;
   width: 100%;
-  height: 6px;
-  background: rgba(255,255,255,0.08);
-  border-radius: 4px;
-  margin: 8px 0 0 0;
-  overflow: hidden;
-  position: relative;
+  transition: all 150ms ease;
 }
-.taskProgressBarFill {
-  height: 100%;
+
+.addSubtaskBtn:hover {
+  color: var(--accent-primary);
+  border-color: rgba(124, 106, 255, 0.3);
+  background: rgba(124, 106, 255, 0.05);
+}
+
+.subtaskLimit {
+  font-size: 0.72rem;
+  color: var(--danger, #ff6a6a);
+  text-align: center;
+  padding: 2px 0;
+}
+
+/* ── Actions ──────────────────────────────────────────────── */
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 160ms ease;
+  flex-shrink: 0;
+}
+
+.card:hover .actions,
+.actionsVisible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.actionBtn {
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 140ms ease;
+}
+
+.actionBtn:hover {
+  background: rgba(124, 106, 255, 0.1);
+  border-color: rgba(124, 106, 255, 0.25);
+  color: var(--accent-primary);
+}
+
+.pinned { color: var(--accent-primary); }
+
+.nextDay:hover {
+  background: rgba(106, 180, 255, 0.1);
+  border-color: rgba(106, 180, 255, 0.25);
+  color: #6ab4ff;
+}
+
+.deleteBtn:hover {
+  background: rgba(255, 106, 106, 0.1);
+  border-color: rgba(255, 106, 106, 0.25);
+  color: var(--danger, #ff6a6a);
+}
+
+/* ── Edit form ────────────────────────────────────────────── */
+.editForm {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.editInput {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 10px;
+  padding: 7px 10px;
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 140ms ease;
+}
+
+.editInput:focus { border-color: rgba(124, 106, 255, 0.35); }
+
+.priorities {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.prioBtn {
+  padding: 3px 10px;
+  border-radius: 8px;
+  border: 1.5px solid transparent;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  text-transform: capitalize;
+  transition: all 130ms ease;
+}
+
+.prioBtn:hover { background: rgba(255, 255, 255, 0.08); }
+.prioActive { color: var(--text-primary); background: rgba(255, 255, 255, 0.07); }
+
+.dateTimeRow { display: flex; gap: 8px; flex-wrap: wrap; }
+
+.editActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.cancelBtn {
+  padding: 5px 13px;
+  border-radius: 9px;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: transparent;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 130ms ease;
+}
+
+.cancelBtn:hover { background: rgba(255, 255, 255, 0.05); color: var(--text-primary); }
+
+.saveBtn {
+  padding: 5px 13px;
+  border-radius: 9px;
+  border: none;
   background: var(--accent-primary);
-  border-radius: 4px;
-  transition: width 0.3s cubic-bezier(.4,0,.2,1);
+  font-size: 0.78rem;
+  color: white;
+  cursor: pointer;
+  transition: opacity 130ms ease;
 }
+
+.saveBtn:hover { opacity: 0.85; }
+
+/* ── Confirm overlay ──────────────────────────────────────── */
+.overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(8, 12, 24, 0.9);
+  backdrop-filter: blur(6px);
+  border-radius: 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  z-index: 10;
+}
+
+.overlayText {
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.overlayActions { display: flex; gap: 10px; }
+
+.deleteConfirmBtn {
+  padding: 5px 14px;
+  border-radius: 9px;
+  border: none;
+  background: var(--danger, #ff6a6a);
+  font-size: 0.78rem;
+  color: white;
+  cursor: pointer;
+  transition: opacity 130ms ease;
+}
+
+.deleteConfirmBtn:hover { opacity: 0.85; }
