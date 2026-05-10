@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Sun, Moon, Pipette, User, Power, Flame, Star } from 'lucide-react';
+import { Sun, Moon, Pipette, User, Power, Flame, Star, Trash } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { useTheme } from '@/context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import { HexColorPicker } from 'react-colorful';
+import DeleteAccountModal from './deleteaccountModal';
 import styles from './usernav.module.css';
 
 const COLOR_PICKERS = [
@@ -33,7 +34,7 @@ export default function UserNav() {
   const streak     = useAppStore(s => s.streak);
   const nextLevelXp = useAppStore(s => s.nextLevelXp);
   const resetState = useAppStore(s => s.resetState);
-
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const { theme, custom, applyTheme, updateCustomColor } = useTheme();
   const drawerRef = useRef<HTMLDivElement | null>(null);
   const btnRef    = useRef<HTMLButtonElement | null>(null);
@@ -72,6 +73,15 @@ export default function UserNav() {
     window.dispatchEvent(new Event('auth-change'));
     navigate('/login');
   };
+
+  const handleDeleted = () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('refreshToken');
+    resetState();
+    window.dispatchEvent(new Event('auth-change'));
+    navigate('/login');
+  };
+
 
   const initials = getInitials(username);
   if (!username) return null;
@@ -166,6 +176,14 @@ export default function UserNav() {
                 <Pipette size={14} />
               </button>
             </div>
+              <button
+                className={styles.dangerBtn}
+                onClick={() => { setOpen(false); setShowDeleteModal(true); }}
+              >
+                <Trash size={13} />
+                Delete account
+              </button>
+
           </div>
 
           {theme === 'custom' && (
@@ -199,6 +217,14 @@ export default function UserNav() {
         </div>,
         document.body
       )}
+      {showDeleteModal && (
+        <DeleteAccountModal
+          username={username}
+          onClose={() => setShowDeleteModal(false)}
+          onDeleted={handleDeleted}
+        />
+      )}
+
     </div>
   );
 }

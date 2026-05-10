@@ -20,7 +20,8 @@ export const login = async (credentials: LoginCredentials): Promise<AxiosRespons
 
 export const logout     = ():                   Promise<AxiosResponse> => client.post('/auth/logout/');
 export const getProfile = (): Promise<AxiosResponse<Profile>>          => client.get('/me/');
-
+export const deleteAccount = (password: string): Promise<AxiosResponse> =>
+  client.delete('/auth/account/', { data: { password } });
 // ── Tasks ─────────────────────────────────────────────────────
 export const getTasks    = (params: Record<string, unknown> = {}): Promise<AxiosResponse<Task[] | { results: Task[] }>> =>
   client.get('/tasks/', { params });

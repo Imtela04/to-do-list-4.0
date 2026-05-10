@@ -202,3 +202,19 @@ def record_successful_login(user):
     profile.failed_login_attempts = 0
     profile.lockout_until = None
     profile.save()
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def delete_account(request):
+    password = request.data.get('password', '')
+    if not password:
+        return Response({'detail': 'Password is required.'}, status=status.HTTP_400_BAD_REQUEST)
+    
+    if not request.user.check_password(password):
+        return Response({'detail': 'Incorrect password.'}, status=status.HTTP_403_FORBIDDEN)
+    
+    from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
+    OutstandingToken.objects.filter(user=request.user).delete()
+    request.user.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)

@@ -27,8 +27,7 @@
   box-shadow: 0 0 0 3px rgba(124, 106, 255, 0.2);
 }
 
-/* Separate logout button */
-.logoutBtn {
+.logoutBtn{
   width: 36px;
   height: 36px;
   display: flex;
@@ -38,9 +37,11 @@
   cursor: pointer;
   transition: all var(--transition-fast);
 }
-.logoutBtn:hover {
+.logoutBtn:hover{
   color: var(--danger);
 }
+
+
 
 /* Drawer */
 .drawer {
