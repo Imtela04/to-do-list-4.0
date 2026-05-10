@@ -7,3 +7,10 @@ interface ImportMetaEnv {
 interface ImportMeta {
   readonly env: ImportMetaEnv;
 }
+
+import 'axios';
+declare module 'axios' {
+  interface AxiosRequestConfig {
+    _silent?: boolean;
+  }
+}

@@ -3,6 +3,9 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import type { ReactNode } from 'react';
+import { ToastProvider, useToast   } from './context/ToastContext';
+import { registerErrorHandler } from '@/api/client';
+
 //lazy load all pages
 const Dashboard = lazy(() => import('@/pages/home'));
 const Login     = lazy(() => import('@/pages/login'));
@@ -41,6 +44,14 @@ function AppLoader({ children }: { children: ReactNode }) {
   return children;
 }
 
+function ErrorHandlerRegistrar() {
+  const { showToast } = useToast();
+  useEffect(() => {
+    registerErrorHandler((msg) => showToast(msg, 'error'));
+  }, [showToast]);
+  return null;
+}
+
 export default function App() {
   const [authKey, setAuthKey] = useState(0);
   const resetState = useAppStore(s => s.resetState);
@@ -60,7 +71,9 @@ export default function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
+    <ThemeProvider>
+      <ToastProvider>
+        <ErrorHandlerRegistrar />
         <Suspense fallback={<div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>}>
           <Routes key={authKey}>
             <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
@@ -69,9 +82,10 @@ export default function App() {
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>
-      </ThemeProvider>
-      <ReactQueryDevtools initialIsOpen={false} />
-    </QueryClientProvider>
+      </ToastProvider>         {/* ← add */}
+    </ThemeProvider>
+    <ReactQueryDevtools initialIsOpen={false} />
+  </QueryClientProvider>
   );
 
 }

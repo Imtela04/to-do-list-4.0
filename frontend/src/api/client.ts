@@ -30,6 +30,10 @@ interface QueueEntry {
 
 let isRefreshing = false;
 let failedQueue: QueueEntry[] = [];
+let globalErrorHandler: ((msg: string) => void) | null = null;
+export function registerErrorHandler(fn: (msg: string) => void) {
+  globalErrorHandler = fn;
+}
 
 const processQueue = (error: unknown, token: string | null = null): void => {
   failedQueue.forEach(p => error ? p.reject(error) : p.resolve(token!));
@@ -85,7 +89,7 @@ client.interceptors.request.use(async (config) => {
 // ── Response interceptor — 401 fallback ───────────────────────
 client.interceptors.response.use(
   (res) => res,
-  async (err: { response?: { status: number }; config: AxiosRequestConfig & { _retry?: boolean } }) => {
+  async (err: { response?: { status: number; data?: { detail?: string } }; config: AxiosRequestConfig & { _retry?: boolean; _silent?: boolean } }) => {
     if (err.response?.status === 401 && !err.config._retry) {
       err.config._retry = true;
       try {
@@ -100,6 +104,11 @@ client.interceptors.response.use(
         window.location.href = '/login';
       }
     }
+    if (err.response?.status !== 401 && !err.config._silent && globalErrorHandler) {
+      const message = err.response?.data?.detail ?? 'Something went wrong.';
+      globalErrorHandler(message);
+    }
+
     return Promise.reject(err);
   }
 );
