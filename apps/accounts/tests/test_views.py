@@ -89,7 +89,7 @@ class LockoutTests(APITestCase):
     def test_lockout_after_max_attempts(self):
         """Account locked after max failed attempts."""
         for _ in range(10):
-            self.client.post(self.url, {'username': 'testuser', 'password': 'wrong'})
+            self.client.post(self.url, {'username': 'testuser', 'password': 'wrong'}, format='json')
         response = self.client.post(self.url, {'username': 'testuser', 'password': 'pass'})
         self.assertEqual(response.status_code, status.HTTP_429_TOO_MANY_REQUESTS)
 
@@ -97,7 +97,9 @@ class LockoutTests(APITestCase):
         """Successful login resets failed attempts."""
         profile = UserProfile.objects.get(user=self.user)
         profile.failed_login_attempts = 5
+        profile.lockout_until = None  # Reset lockout time
         profile.save()
-        self.client.post(self.url, {'username': 'testuser', 'password': 'pass'})
+        response = self.client.post(self.url, {'username': 'testuser', 'password': 'pass'}, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
         profile.refresh_from_db()
         self.assertEqual(profile.failed_login_attempts, 0)

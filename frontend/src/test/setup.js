@@ -42,7 +42,7 @@ vi.mock('@/api/services', () => ({
   updateStickyNote: vi.fn(),
   deleteStickyNote: vi.fn(),
   getProfile:       vi.fn(),
-  getTheme:         vi.fn(),
+  getTheme:         vi.fn(() => Promise.resolve({ data: { mode: 'dark', custom_colors: null } })),  // Return a resolved promise
   saveTheme:        vi.fn(),
   completePomodoro: vi.fn(),
   login:            vi.fn(),

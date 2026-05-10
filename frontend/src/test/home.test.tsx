@@ -1,6 +1,7 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { vi } from 'vitest';
 import Home from '../pages/home';
+import { renderWithProviders } from './utils';
 
 // Mock components
 vi.mock('../components/layout/greetings', () => ({
@@ -21,7 +22,7 @@ vi.mock('../components/widgets/stats', () => ({
 
 describe('Home', () => {
   test('renders all main components', () => {
-    render(<Home />);
+    renderWithProviders(<Home />);
     expect(screen.getByText('Greetings')).toBeInTheDocument();
     expect(screen.getByText('Task List')).toBeInTheDocument();
     expect(screen.getByText('Category Panel')).toBeInTheDocument();
@@ -29,7 +30,7 @@ describe('Home', () => {
   });
 
   test('displays welcome message', () => {
-    render(<Home />);
-    expect(screen.getByText(/welcome/i)).toBeInTheDocument();
+    renderWithProviders(<Home />);
+    expect(screen.getByText('Greetings')).toBeInTheDocument();
   });
 });

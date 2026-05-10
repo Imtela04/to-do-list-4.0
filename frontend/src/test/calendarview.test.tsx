@@ -1,20 +1,22 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import CalendarView from '../components/layout/calendarview';
+import { renderWithProviders } from './utils';
 
 describe('CalendarView', () => {
   test('renders calendar', () => {
-    render(<CalendarView />);
+    renderWithProviders(<CalendarView />);
     expect(screen.getByRole('grid', { name: /calendar/i })).toBeInTheDocument();
   });
 
   test('shows current month', () => {
-    render(<CalendarView />);
+    renderWithProviders(<CalendarView />);
     const currentMonth = new Date().toLocaleString('default', { month: 'long' });
-    expect(screen.getByText(currentMonth)).toBeInTheDocument();
+    const currentYear = new Date().getFullYear();
+    expect(screen.getByText(`${currentMonth} ${currentYear}`)).toBeInTheDocument();
   });
-
+  
   test('displays tasks on correct dates', () => {
-    render(<CalendarView />);
+    renderWithProviders(<CalendarView />);
     // Mock tasks would be needed, but for now assume no tasks
     // expect(screen.getByText('Task 1')).toBeInTheDocument();
   });

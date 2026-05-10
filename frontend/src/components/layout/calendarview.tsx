@@ -134,7 +134,7 @@ export default function CalendarView() {
 
   return (
     <div className={styles.wrapper}>
-      <div className={`${styles.grid} ${selectedDay ? styles.gridNarrow : ''}`}>
+      <div className={`${styles.grid} ${selectedDay ? styles.gridNarrow : ''}`} role='grid' aria-label='calendar'>
         <div className={styles.header}>
           <button className={styles.navBtn} onClick={prevMonth}><ChevronLeft size={16} /></button>
           <button className={styles.monthLabel} onClick={goToday}>{MONTHS[month]} {year}</button>
