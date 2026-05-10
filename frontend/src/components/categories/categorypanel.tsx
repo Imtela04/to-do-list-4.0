@@ -5,7 +5,7 @@ import { createCategory, deleteCategory, updateCategory } from '@/api/services';
 import type { Task, Category } from '@/types';
 import type { AxiosResponse } from 'axios';
 import styles from './categorypanel.module.css';
-import { Lock, PenBox, Trash, Ban } from 'lucide-react';
+import { Lock, PenBox, Trash, Ban, Check } from 'lucide-react';
 import { useTasksQuery } from '../../hooks/useTasksQuery';
 import { useCategoriesQuery } from '../../hooks/useCategoriesQuery';
 
@@ -152,6 +152,7 @@ export default function Categories() {
             setAdding(v => !v);
             setLimitError(null);
           }}
+          title = 'Add Category'
         >
           {categoriesLocked ? <Lock size={14} /> : '+'}
         </button>
@@ -180,7 +181,7 @@ export default function Categories() {
           </div>
           <div className={styles.formActions}>
             <button className={styles.cancelFormBtn} onClick={() => { setAdding(false); setName(''); setLimitError(null); }}>Cancel</button>
-            <button className={styles.saveBtn} onClick={handleAdd}>Add</button>
+            <button className={styles.saveBtn} onClick={handleAdd} >Add</button>
           </div>
         </div>
       )}
@@ -254,10 +255,11 @@ export default function Categories() {
                     setEditingId(cat.id);
                   }
                 }}
+                title='Edit'
               >
-                {editingId === cat.id ? '✓' : <PenBox size={12} />}
+                {editingId === cat.id ? <Check size={12}/> : <PenBox size={12} />}
               </button>
-              <button className={styles.delBtn} onClick={e => { e.stopPropagation(); setConfirmDeleteId(cat.id); }}><Trash size={12}/></button>
+              <button className={styles.delBtn} onClick={e => { e.stopPropagation(); setConfirmDeleteId(cat.id); }} title='Delete'><Trash size={12}/></button>
 
               {confirmDeleteId === cat.id && (
                 <div className={styles.confirmOverlay}>

@@ -69,14 +69,14 @@ export default function Dashboard() {
                 >
                   <CalendarDays size={16} />
                 </button>
-                <button
-                  className={`${styles.viewBtn} ${pomodoroOpen ? styles.viewBtnActive : ''}`}
-                  onClick={() => setPomodoroOpen(o => !o)}
-                  title="Pomodoro timer"
-                >
-                  <Timer size={16} />
-                </button>
               </div>
+              <button
+                className={`${styles.pomToggle} ${pomodoroOpen ? styles.viewBtnActive : ''}`}
+                onClick={() => setPomodoroOpen(o => !o)}
+                title="Pomodoro timer"
+              >
+                  🍅︎
+              </button>
 
               <button className={styles.notesToggle} onClick={() => setNotesOpen(o => !o)} title='Sticky Notes'>
                 <NotebookPen size={18} />

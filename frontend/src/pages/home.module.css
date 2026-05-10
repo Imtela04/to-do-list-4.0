@@ -194,7 +194,7 @@
   scrollbar-color: var(--border-medium) transparent;
 }
 
-.notesToggle {
+.notesToggle, .pomToggle {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -208,7 +208,7 @@
   flex-shrink: 0;
   transition: all var(--transition-fast);
 }
-.notesToggle:hover { color: var(--accent-primary); border-color: var(--accent-primary); }
+.pomToggle:hover, .notesToggle:hover { color: var(--accent-primary); border-color: var(--accent-primary); }
 
 /* ── Burger & panel toggle ── */
 .burger {
