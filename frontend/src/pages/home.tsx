@@ -78,7 +78,7 @@ export default function Dashboard() {
                 </button>
               </div>
 
-              <button className={styles.notesToggle} onClick={() => setNotesOpen(o => !o)}>
+              <button className={styles.notesToggle} onClick={() => setNotesOpen(o => !o)} title='Sticky Notes'>
                 <NotebookPen size={18} />
               </button>
 

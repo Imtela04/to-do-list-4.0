@@ -1,4 +1,3 @@
-// taskcard.tsx — full replacement
 import { useState, useEffect, useRef } from 'react';
 import { format, isPast, isToday, addDays } from 'date-fns';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -346,9 +345,9 @@ export default function TaskCard({ task }: { task: Task; index: number }) {
       {task.pinned && <span className={styles.pinnedBadge}><Pin size={11} /></span>}
 
       {/* Toggle */}
-      <button className={styles.toggle} onClick={handleToggle}>
+      <button className={styles.toggle} onClick={handleToggle} title = {task.completed ? 'Mark incomplete' : 'Mark complete'}>
         {task.completed
-          ? <Check size={12} strokeWidth={3} />
+          ? <Check size={12} strokeWidth={3} /> 
           : <span className={styles.activeDot} />}
       </button>
 
@@ -566,7 +565,7 @@ export default function TaskCard({ task }: { task: Task; index: number }) {
         <button className={styles.actionBtn} onClick={editing ? handleSave : openEdit} title={editing ? 'Save' : 'Edit'}>
           <SquarePen size={13} />
         </button>
-        <button className={`${styles.actionBtn} ${styles.deleteBtn}`} onClick={e => { e.stopPropagation(); setConfirmDelete(true); }}>
+        <button className={`${styles.actionBtn} ${styles.deleteBtn}`} onClick={e => { e.stopPropagation(); setConfirmDelete(true); }} title = "Delete">
           <Trash size={13} />
         </button>
       </div>

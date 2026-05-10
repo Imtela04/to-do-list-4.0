@@ -2,7 +2,7 @@
 .card {
   position: relative;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
   padding: 14px 16px;
   background: var(--bg-glass);
@@ -12,7 +12,6 @@
   transition: border-color 200ms ease, background 200ms ease, transform 200ms ease;
   cursor: default;
 }
-
 .card:hover {
   border-color: rgba(124, 106, 255, 0.2);
   background: rgba(18, 28, 48, 0.84);
@@ -74,7 +73,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 4px;
 }
 
 /* ── Collapsed ────────────────────────────────────────────── */
@@ -82,6 +81,7 @@
   display: flex;
   flex-direction: column;
   gap: 5px;
+
 }
 
 .title {
@@ -315,7 +315,6 @@
   opacity: 0;
   pointer-events: none;
   transition: opacity 160ms ease;
-  flex-shrink: 0;
 }
 
 .card:hover .actions,

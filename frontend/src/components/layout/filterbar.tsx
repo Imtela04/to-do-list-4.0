@@ -104,7 +104,7 @@ export default function FilterBar() {
         <div className={styles.sortWrap} ref={sortRef}>
           <button
             className={`${styles.sortTrigger} ${sortOpen ? styles.sortTriggerOpen : ''}`}
-            onClick={() => setSortOpen(o => !o)}
+            onClick={() => setSortOpen(o => !o)} title='Sort'
           >
             {currentSort && <currentSort.icon size={13} />}
             <ArrowUpDown size={12} className={styles.sortChevron} />
@@ -129,7 +129,7 @@ export default function FilterBar() {
           <button
             ref={filtersBtnRef}
             className={`${styles.filtersTrigger} ${filtersOpen ? styles.filtersTriggerOpen : ''} ${activeFilterCount > 0 ? styles.filtersActive : ''}`}
-            onClick={() => setFiltersOpen(o => !o)}
+            onClick={() => setFiltersOpen(o => !o)} title='Filters'
           >
             <SlidersHorizontal size={13} />
             {activeFilterCount > 0 && (
