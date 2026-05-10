@@ -218,3 +218,8 @@ def delete_account(request):
     OutstandingToken.objects.filter(user=request.user).delete()
     request.user.delete()
     return Response(status=status.HTTP_204_NO_CONTENT)
+
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def health(request):
+    return Response({'status': 'ok'})
