@@ -1,0 +1,23 @@
+.banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 99998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--bg-card);
+  border-bottom: 1px solid rgba(255, 170, 106, 0.4);
+  color: var(--accent-warm);
+  font-size: 0.78rem;
+  font-weight: 500;
+  animation: slideDown 200ms ease both;
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-100%); opacity: 0; }
+  to   { transform: translateY(0);     opacity: 1; }
+}

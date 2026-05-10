@@ -55,41 +55,52 @@ const doRefresh = async (): Promise<string> => {
 
 // ── Request interceptor — proactive refresh ───────────────────
 client.interceptors.request.use(async (config) => {
-  const token = localStorage.getItem('authToken');
-  if (!token) return config;
+    if (!navigator.onLine) {
+      const err = Object.assign(new Error('No internet connection.'), { _silent: true });
+      return Promise.reject(err);
+    }
 
-  if (isExpiringSoon(token)) {
-    if (!isRefreshing) {
-      isRefreshing = true;
-      try {
-        const newToken = await doRefresh();
-        processQueue(null, newToken);
+    const token = localStorage.getItem('authToken');
+    if (!token) return config;
+
+    if (isExpiringSoon(token)) {
+      if (!isRefreshing) {
+        isRefreshing = true;
+        try {
+          const newToken = await doRefresh();
+          processQueue(null, newToken);
+          config.headers.Authorization = `Bearer ${newToken}`;
+        } catch (err) {
+          processQueue(err, null);
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('refreshToken');
+          window.location.href = '/login';
+        } finally {
+          isRefreshing = false;
+        }
+      } else {
+        const newToken = await new Promise<string>((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        });
         config.headers.Authorization = `Bearer ${newToken}`;
-      } catch (err) {
-        processQueue(err, null);
-        localStorage.removeItem('authToken');
-        localStorage.removeItem('refreshToken');
-        window.location.href = '/login';
-      } finally {
-        isRefreshing = false;
       }
     } else {
-      const newToken = await new Promise<string>((resolve, reject) => {
-        failedQueue.push({ resolve, reject });
-      });
-      config.headers.Authorization = `Bearer ${newToken}`;
+      config.headers.Authorization = `Bearer ${token}`;
     }
-  } else {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
 
-  return config;
-});
+    return config;
+  },
+  (err) => Promise.reject(err)
+
+);
 
 // ── Response interceptor — 401 fallback ───────────────────────
 client.interceptors.response.use(
   (res) => res,
-  async (err: { response?: { status: number; data?: { detail?: string } }; config: AxiosRequestConfig & { _retry?: boolean; _silent?: boolean } }) => {
+  async (err: { _offlineRejection?: boolean; response?: { status: number; data?: { detail?: string } }; config: AxiosRequestConfig & { _retry?: boolean; _silent?: boolean } }) => {
+    // Offline rejections have no config — let them pass through silently
+    if (err._offlineRejection) return Promise.reject(err);
+
     if (err.response?.status === 401 && !err.config._retry) {
       err.config._retry = true;
       try {
@@ -104,6 +115,7 @@ client.interceptors.response.use(
         window.location.href = '/login';
       }
     }
+
     if (err.response?.status !== 401 && !err.config._silent && globalErrorHandler) {
       const message = err.response?.data?.detail ?? 'Something went wrong.';
       globalErrorHandler(message);
@@ -112,5 +124,4 @@ client.interceptors.response.use(
     return Promise.reject(err);
   }
 );
-
 export default client;

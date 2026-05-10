@@ -5,6 +5,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import type { ReactNode } from 'react';
 import { ToastProvider, useToast   } from './context/ToastContext';
 import { registerErrorHandler } from '@/api/client';
+import OfflineBanner from '@/components/layout/offlinebanner';
 
 //lazy load all pages
 const Dashboard = lazy(() => import('@/pages/home'));
@@ -20,6 +21,7 @@ const queryClient = new QueryClient({
       staleTime:           1000 * 60 * 5,
       retry:               1,
       refetchOnWindowFocus: false,
+      refetchOnReconnect:     true,
     },
   },
 });
@@ -73,6 +75,7 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <ToastProvider>
+        <OfflineBanner />
         <ErrorHandlerRegistrar />
         <Suspense fallback={<div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>}>
           <Routes key={authKey}>
