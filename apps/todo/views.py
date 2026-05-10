@@ -2,6 +2,7 @@ from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.pagination import PageNumberPagination
 import re
 from django.shortcuts import get_object_or_404
 from datetime import datetime, timezone as dt_timezone
@@ -28,10 +29,11 @@ def resolve_category(value, user):
     if not value:
         return None
     try:
-        return int(value)
+        lookup = {'id': int(value), 'owner': user}
     except (ValueError, TypeError):
-        cat = Category.objects.filter(name=value, owner=user).first()
-        return cat.id if cat else None
+        lookup = {'name': value, 'owner': user}
+    cat = Category.objects.filter(**lookup).first()
+    return cat.id if cat else None
 
 def parse_deadline(value):
     if not value:
@@ -138,6 +140,11 @@ def tasks(request):
             sort = '-created_at'
         todos = todos.order_by(sort)
 
+        paginator = PageNumberPagination()
+        paginator.page_size = 50
+        page = paginator.paginate_queryset(todos, request)
+        if page is not None:
+            return paginator.get_paginated_response(TodoSerializer(page, many=True).data)
         return Response(TodoSerializer(todos, many=True).data)
 
     # POST

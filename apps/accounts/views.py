@@ -1,5 +1,5 @@
 from rest_framework import status
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, throttle_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -9,7 +9,10 @@ from django.utils import timezone
 from datetime import timedelta
 from apps.todo.models import Category, Todo, StickyNotes
 from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework_simplejwt.exceptions import AuthenticationFailed
+from rest_framework.throttling import AnonRateThrottle
+
+class RegistrationRateThrottle(AnonRateThrottle):
+    scope = 'registration'
 
 class LockableTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
@@ -150,6 +153,8 @@ def create_onboarding_data(user):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
+@throttle_classes([RegistrationRateThrottle])
+
 def register(request):
     serializer = UserCreateSerializer(data=request.data)
     if serializer.is_valid():

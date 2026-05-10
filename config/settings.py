@@ -63,12 +63,6 @@ INSTALLED_APPS = [
 ]
 
 
-
-CORS_ALLOWED_ORIGINS = [
-    # "https://imtela04.github.io",
-    "http://localhost:5173",
-    "http://localhost:3000",
-]
 CORS_ALLOWED_ORIGINS = os.environ.get('CORS_ALLOWED_ORIGINS', 'http://localhost:5173').split(',')
 
 CORS_ALLOW_METHODS = [
@@ -185,10 +179,14 @@ REST_FRAMEWORK={
         'rest_framework.throttling.UserRateThrottle',
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'anon': '20/hour',   # limits login attempts
+        'anon': '20/hour',
         'user': '1000/hour',
         'login': '10/hour',
-    }
+        'registration': '5/hour',
+    },
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 50,
+
 
 }
 # Internationalization
