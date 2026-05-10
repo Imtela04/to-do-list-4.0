@@ -60,7 +60,7 @@ function ToastContainer({ toasts }: { toasts: Toast[] }) {
     <div style={{
       position:      'fixed',
       bottom:        '24px',
-      left:          '50%',
+      left:          '88%',
       transform:     'translateX(-50%)',
       display:       'flex',
       flexDirection: 'column',
