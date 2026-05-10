@@ -27,7 +27,7 @@
   box-shadow: 0 0 0 3px rgba(124, 106, 255, 0.2);
 }
 
-.logoutBtn{
+.logoutBtn, .dangerBtn{
   width: 36px;
   height: 36px;
   display: flex;
@@ -37,11 +37,13 @@
   cursor: pointer;
   transition: all var(--transition-fast);
 }
-.logoutBtn:hover{
+.logoutBtn:hover, .dangerBtn{
   color: var(--danger);
 }
 
-
+.dangerBtn:hover{
+  transform: scale(1.2);
+}
 
 /* Drawer */
 .drawer {

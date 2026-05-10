@@ -179,9 +179,9 @@ export default function UserNav() {
               <button
                 className={styles.dangerBtn}
                 onClick={() => { setOpen(false); setShowDeleteModal(true); }}
+                title='Delete Account'
               >
                 <Trash size={13} />
-                Delete account
               </button>
 
           </div>
