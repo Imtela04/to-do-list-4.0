@@ -29,6 +29,9 @@ interface QueueEntry {
 }
 
 let isRefreshing = false;
+let refreshPromise: Promise<string> | null = null;
+const doRefreshOnce = () => refreshPromise ??= doRefresh().finally(() => refreshPromise = null);
+
 let failedQueue: QueueEntry[] = [];
 let globalErrorHandler: ((msg: string) => void) | null = null;
 export function registerErrorHandler(fn: (msg: string) => void) {

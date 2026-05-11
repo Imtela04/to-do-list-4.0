@@ -4,7 +4,7 @@ import type {
   Task, Category, StickyNote, Profile,
   Theme, PomodoroResult, AuthTokens,
   LoginCredentials, RegisterData,
-  TaskPayload, CategoryPayload, NotePayload, ThemePayload,
+  TaskPayload, CategoryPayload, NotePayload, ThemePayload, Subtask
 } from '@/types';
 
 // ── Auth ──────────────────────────────────────────────────────
