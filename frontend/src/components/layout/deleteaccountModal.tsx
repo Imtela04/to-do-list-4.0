@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Trash, X, AlertTriangle } from 'lucide-react';
 import { deleteAccount } from '@/api/services';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 import styles from './deleteaccountModal.module.css';
 
 interface Props {
@@ -11,6 +12,7 @@ interface Props {
 }
 
 export default function DeleteAccountModal({ username, onClose, onDeleted }: Props) {
+  const trapRef = useFocusTrap(true);
   const [password, setPassword]   = useState('');
   const [error, setError]         = useState('');
   const [loading, setLoading]     = useState(false);
@@ -35,7 +37,12 @@ export default function DeleteAccountModal({ username, onClose, onDeleted }: Pro
 
   return createPortal(
     <div className={styles.backdrop} onClick={onClose}>
-      <div className={styles.modal} onClick={e => e.stopPropagation()}>
+      <div 
+        className={styles.modal} 
+        ref={trapRef} 
+        onClick={e => e.stopPropagation()} 
+        onKeyDown={e => e.key === 'Escape' && onClose()}
+      >
         <button className={styles.closeBtn} onClick={onClose}>
           <X size={15} />
         </button>
@@ -57,7 +64,7 @@ export default function DeleteAccountModal({ username, onClose, onDeleted }: Pro
           value={password}
           autoFocus
           onChange={e => { setPassword(e.target.value); setError(''); }}
-          onKeyDown={e => { if (e.key === 'Enter') handleDelete(); if (e.key === 'Escape') onClose(); }}
+          onKeyDown={e => { if (e.key === 'Enter') handleDelete();}}
         />
 
         {error && <p className={styles.error}>{error}</p>}

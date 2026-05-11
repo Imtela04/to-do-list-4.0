@@ -1,6 +1,7 @@
 import { useState, useCallback, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSessionTimer } from '@/hooks/useSessionTimer';
+import { useFocusTrap } from '@/hooks/useFocusTrap';
 import styles from './sessionguard.module.css';
 
 interface Props {
@@ -10,6 +11,7 @@ interface Props {
 export default function SessionGuard({ children }: Props) {
   const [warning, setWarning] = useState(false);
   const navigate = useNavigate();
+  const trapRef = useFocusTrap(warning);
 
   const handleExpire = useCallback((): void => {
     setWarning(false);
@@ -43,7 +45,10 @@ export default function SessionGuard({ children }: Props) {
     <>
       {children}
       <div className={styles.backdrop}>
-        <div className={styles.modal}>
+        <div className={styles.modal}
+              ref={trapRef}
+              onKeyDown={e => e.key === 'Escape' && handleContinue()}
+        >
           <div className={styles.icon}>👋</div>
           <h2 className={styles.title}>Still there?</h2>
           <p className={styles.message}>
