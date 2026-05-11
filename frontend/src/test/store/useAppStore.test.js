@@ -94,7 +94,7 @@ describe('useAppStore - filters', () => {
   });
 });
 
-describe('getFilteredTasks utility', () => {  // ← renamed
+describe('getFilteredTasks utility', () => {
   const tasks = [
     mockTask({ id: 1, title: 'Buy groceries', priority: 'low',      completed: false }),
     mockTask({ id: 2, title: 'Write report',  priority: 'high',     completed: false }),

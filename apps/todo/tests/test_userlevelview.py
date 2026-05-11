@@ -83,7 +83,6 @@ class TasksViewTest(TestCase):
         res = self.client.patch(f'/api/tasks/{task.id}/', {'completed': False})
         self.assertEqual(res.status_code, 200)
         self.profile.refresh_from_db()
-        self.profile.refresh_from_db()
         self.assertEqual(self.profile.xp, 45)
 
     def test_update_task_priority(self):
@@ -104,16 +103,6 @@ class TasksViewTest(TestCase):
         task = Todo.objects.create(owner=other, title='Other task', priority='low')
         res = self.client.patch(f'/api/tasks/{task.id}/', {'priority': 'high'})
         self.assertEqual(res.status_code, 404)
-    def test_uncomplete_task_deducts_xp(self):
-        task = Todo.objects.create(owner=self.user, title='XP task', priority='low', completed=True)
-        #printtask.completed)  # should print True
-        self.profile.xp = 50
-        self.profile.save()
-        res = self.client.patch(f'/api/tasks/{task.id}/', {'completed': False})
-        #printres.data)  # check if xp_result is in response
-        self.profile.refresh_from_db()
-        #printself.profile.xp)  # what is it actually?
-        self.assertEqual(self.profile.xp, 45)
 
 
 class CategoriesViewTest(TestCase):

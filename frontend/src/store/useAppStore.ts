@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Task, Limits, Counts, Profile, XpResult, PomodoroResult } from '@/types';
+import type { Limits, Counts, Profile, XpResult, PomodoroResult } from '@/types';
 
 // ── Filter types ───────────────────────────────────────────────
 export interface DeadlineDay {
@@ -46,7 +46,6 @@ interface AppActions {
   clearLevelUp:     () => void;
   setGreeting:      (greeting: string) => void;
   resetState:       () => void;
-  getFilteredTasks: (tasks: Task[]) => Task[];
 }
 
 type AppStore = AppState & AppActions;
@@ -82,12 +81,8 @@ const DEFAULT_STATE: AppState = {
   filter:          DEFAULT_FILTER,
 };
 
-const PRIORITY_ORDER: Record<string, number> = {
-  critical: 0, high: 1, medium: 2, low: 3,
-};
-
 // ── Store ──────────────────────────────────────────────────────
-export const useAppStore = create<AppStore>((set, get) => ({
+export const useAppStore = create<AppStore>((set) => ({
   ...DEFAULT_STATE,
 
   setFilter: (payload) => set(s => {
@@ -140,44 +135,5 @@ export const useAppStore = create<AppStore>((set, get) => ({
         dateFrom: null, dateTo: null,
       },
     });
-  },
-
-  getFilteredTasks: (tasks) => {
-    const { filter } = get();
-    return tasks
-      .filter(task => {
-        const { search, category, priority, status, dateFrom, dateTo, deadlineDay } = filter;
-        if (search && !task.title.toLowerCase().includes(search.toLowerCase())) return false;
-        if (category === 'uncategorised') { if (task.category) return false; }
-        else if (category)               { if (task.category?.id !== category) return false; }
-        if (priority && task.priority !== priority) return false;
-        if (status === 'active'    && task.completed)  return false;
-        if (status === 'completed' && !task.completed) return false;
-        if (dateFrom && task.deadline && new Date(task.deadline) < new Date(dateFrom)) return false;
-        if (dateTo   && task.deadline && new Date(task.deadline) > new Date(dateTo))   return false;
-        if (deadlineDay) {
-          if (!task.deadline) return false;
-          const d = new Date(task.deadline);
-          if (d.getFullYear() !== deadlineDay.year ||
-              d.getMonth()    !== deadlineDay.month ||
-              d.getDate()     !== deadlineDay.day) return false;
-        }
-        return true;
-      })
-      .sort((a, b) => {
-        if (a.pinned && !b.pinned) return -1;
-        if (!a.pinned && b.pinned) return 1;
-        switch (filter.sort) {
-          case 'newest':   return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-          case 'oldest':   return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-          case 'priority': return (PRIORITY_ORDER[a.priority] ?? 4) - (PRIORITY_ORDER[b.priority] ?? 4);
-          case 'deadline':
-            if (!a.deadline) return 1;
-            if (!b.deadline) return -1;
-            return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
-          case 'alpha': return a.title.localeCompare(b.title);
-          default:      return 0;
-        }
-      });
   },
 }));

@@ -18,6 +18,13 @@ export function useSessionTimer({ onWarn, onExpire }: SessionTimerOptions): Sess
   const warnTimer   = useRef<ReturnType<typeof setTimeout> | null>(null);
   const expireTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Store callbacks in refs so the reset/clear functions never become stale
+  // and the effect doesn't need to re-run when the parent re-renders.
+  const onWarnRef   = useRef(onWarn);
+  const onExpireRef = useRef(onExpire);
+  useEffect(() => { onWarnRef.current   = onWarn;   }, [onWarn]);
+  useEffect(() => { onExpireRef.current = onExpire; }, [onExpire]);
+
   const clear = useCallback((): void => {
     if (warnTimer.current)   clearTimeout(warnTimer.current);
     if (expireTimer.current) clearTimeout(expireTimer.current);
@@ -25,9 +32,9 @@ export function useSessionTimer({ onWarn, onExpire }: SessionTimerOptions): Sess
 
   const reset = useCallback((): void => {
     clear();
-    warnTimer.current   = setTimeout(onWarn,   WARNING_AFTER);
-    expireTimer.current = setTimeout(onExpire, EXPIRE_AFTER);
-  }, [clear, onWarn, onExpire]);
+    warnTimer.current   = setTimeout(() => onWarnRef.current(),   WARNING_AFTER);
+    expireTimer.current = setTimeout(() => onExpireRef.current(), EXPIRE_AFTER);
+  }, [clear]);
 
   useEffect(() => {
     reset();

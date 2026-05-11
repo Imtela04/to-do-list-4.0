@@ -20,33 +20,39 @@ export function getFilteredTasks(tasks: Task[], filter: Filter): Task[] {
       if (deadlineDay) {
         if (!task.deadline) return false;
         const d = new Date(task.deadline);
-        if (d.getFullYear() !== deadlineDay.year ||
-            d.getMonth()    !== deadlineDay.month ||
-            d.getDate()     !== deadlineDay.day) return false;
+        if (
+          d.getFullYear() !== deadlineDay.year ||
+          d.getMonth()    !== deadlineDay.month ||
+          d.getDate()     !== deadlineDay.day
+        ) return false;
       }
       return true;
     })
     .sort((a, b) => {
-      // pinned always first
+      // 1. Completed tasks always last (applies even if pinned)
+      if (a.completed && !b.completed) return 1;
+      if (!a.completed && b.completed) return -1;
+
+      // 2. Within the same completion group: pinned active tasks first
       if (a.pinned && !b.pinned) return -1;
       if (!a.pinned && b.pinned) return 1;
 
-      // completed always last(even pinned)
-      if (a.completed && !b.completed) return 1;
-      if (!a.completed && b.completed) return -1;
-      
-
+      // 3. Sort within group by selected sort order
       switch (filter.sort) {
-        case 'newest':   return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-        case 'oldest':   return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
-        case 'priority': return (PRIORITY_ORDER[a.priority] ?? 4) - (PRIORITY_ORDER[b.priority] ?? 4);
+        case 'newest':
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case 'oldest':
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        case 'priority':
+          return (PRIORITY_ORDER[a.priority] ?? 4) - (PRIORITY_ORDER[b.priority] ?? 4);
         case 'deadline':
           if (!a.deadline) return 1;
           if (!b.deadline) return -1;
           return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
-        case 'alpha': return a.title.localeCompare(b.title);
-        default:      return 0;
+        case 'alpha':
+          return a.title.localeCompare(b.title);
+        default:
+          return 0;
       }
-      
     });
 }

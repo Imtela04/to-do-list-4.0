@@ -13,7 +13,7 @@ from django.utils import timezone
 import bleach
 
 ALLOWED_TAGS = ['p', 'br', 'strong', 'em', 'img', 'ul', 'ol', 'li']
-ALLOWED_ATTRS = {'img': ['src', 'alt']}
+ALLOWED_ATTRS = {'img': ['src', 'alt', 'style']}
 SUBTASK_LIMIT = 10
 
 
@@ -24,6 +24,15 @@ def normalize_note_html(html: str) -> str:
     return html
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
+
+def get_resource_count(user, resource: str) -> int:
+    if resource == 'tasks':
+        return Todo.objects.filter(owner=user, is_onboarding=False).count()
+    if resource == 'categories':
+        return Category.objects.filter(owner=user, is_onboarding=False).count()
+    if resource == 'notes':
+        return StickyNotes.objects.filter(owner=user, is_onboarding=False).count()
+    return 0
 
 def resolve_category(value, user):
     if not value:
@@ -55,15 +64,7 @@ def check_limit(profile, resource):
         return True, None  # unlimited
 
     user = profile.user
-    if resource == 'tasks':
-        count = Todo.objects.filter(owner=user, is_onboarding=False).count()
-    elif resource == 'categories':
-        count = Category.objects.filter(owner=user, is_onboarding=False).count()
-    elif resource == 'notes':
-        count = StickyNotes.objects.filter(owner=user, is_onboarding=False).count() 
-    else:       
-        return True, None
-
+    count = get_resource_count(user, resource);
     if count >= limit:
         next_level = profile.level + 1
         from apps.accounts.models import LEVEL_CONFIG, MAX_LEVEL

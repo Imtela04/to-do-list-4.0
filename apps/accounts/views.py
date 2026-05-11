@@ -16,7 +16,7 @@ from django.utils.encoding import force_bytes, force_str
 from django.contrib.auth.models import User
 from django.conf import settings
 import resend
-
+from apps.todo.views import get_resource_count
 
 class RegistrationRateThrottle(AnonRateThrottle):
     scope = 'registration'
@@ -97,9 +97,9 @@ def me(request):
             'notes':      limits['notes'],
         },
         'counts': {
-            'tasks':      Todo.objects.filter(owner=request.user, is_onboarding=False).count(),
-            'categories': Category.objects.filter(owner=request.user, is_onboarding=False).count(),
-            'notes':      StickyNotes.objects.filter(owner=request.user, is_onboarding=False).count(),
+                    'tasks':      get_resource_count(request.user, 'tasks'),
+                    'categories': get_resource_count(request.user, 'categories'),
+                    'notes':      get_resource_count(request.user, 'notes'),
         },
     })
 
