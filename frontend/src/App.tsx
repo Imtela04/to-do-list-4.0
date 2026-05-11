@@ -13,6 +13,7 @@ const Login     = lazy(() => import('@/pages/login'));
 const Register  = lazy(() => import('@/pages/register'));
 const ResetRequest = lazy(() => import('@/pages/resetrequest'));
 const ResetConfirm = lazy(() => import('@/pages/resetconfirm'));
+const AdminDashboard = lazy(() => import('@/pages/admin'));
 
 import { ThemeProvider } from './context/ThemeContext';
 import { useDataLoader } from '@/hooks/useDataLoader';
@@ -83,6 +84,7 @@ export default function App() {
         <Suspense fallback={<div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>}>
           <Routes key={authKey}>
             <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+            <Route path="/admin" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/reset-password"               element={<ResetRequest />} />

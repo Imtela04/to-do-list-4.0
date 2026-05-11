@@ -17,6 +17,9 @@ from django.contrib.auth.models import User
 from django.conf import settings
 import resend
 from apps.todo.views import get_resource_count
+from django.contrib.admin.views.decorators import staff_member_required
+from django.db.models import Count, Avg, Q
+
 
 class RegistrationRateThrottle(AnonRateThrottle):
     scope = 'registration'
@@ -309,3 +312,82 @@ def build_reset_email(username: str, link: str) -> str:
       </p>
     </div>
     """
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def admin_stats(request):
+    if not request.user.is_staff:
+        return Response(status=403)
+
+    now = timezone.now()
+    week_ago = now - timedelta(days=7)
+    month_ago = now - timedelta(days=30)
+
+    users = User.objects.select_related('profile').all()
+    total_users = users.count()
+    active_7d   = users.filter(last_login__gte=week_ago).count()
+    active_30d  = users.filter(last_login__gte=month_ago).count()
+    new_7d      = users.filter(date_joined__gte=week_ago).count()
+    locked      = UserProfile.objects.filter(lockout_until__gt=now).count()
+
+    level_dist = list(
+        UserProfile.objects.values('level')
+        .annotate(count=Count('id'))
+        .order_by('level')
+    )
+    xp_leaderboard = list(
+        UserProfile.objects.select_related('user')
+        .order_by('-xp')[:10]
+        .values('user__username', 'xp', 'level', 'streak')
+    )
+    streak_leaderboard = list(
+        UserProfile.objects.select_related('user')
+        .order_by('-streak')[:10]
+        .values('user__username', 'streak', 'level')
+    )
+
+    total_tasks     = Todo.objects.count()
+    completed_tasks = Todo.objects.filter(completed=True).count()
+    avg_per_user    = round(total_tasks / total_users, 1) if total_users else 0
+    pomodoros_today = UserProfile.objects.filter(
+        last_pomodoro_date=now.date()
+    ).aggregate(total=Count('id'))['total']
+
+    # signups per day last 7 days
+    from django.db.models.functions import TruncDate
+    signups_by_day = list(
+        User.objects.filter(date_joined__gte=week_ago)
+        .annotate(day=TruncDate('date_joined'))
+        .values('day').annotate(count=Count('id'))
+        .order_by('day')
+    )
+
+    return Response({
+        'users': {
+            'total': total_users, 'active_7d': active_7d,
+            'active_30d': active_30d, 'new_7d': new_7d, 'locked': locked,
+        },
+        'tasks': {
+            'total': total_tasks, 'completed': completed_tasks,
+            'avg_per_user': avg_per_user, 'completion_rate': round(completed_tasks / total_tasks * 100) if total_tasks else 0,
+        },
+        'pomodoros_today': pomodoros_today,
+        'level_distribution': level_dist,
+        'xp_leaderboard': xp_leaderboard,
+        'streak_leaderboard': streak_leaderboard,
+        'signups_by_day': [{'day': str(r['day']), 'count': r['count']} for r in signups_by_day],
+    })
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def admin_unlock_user(request, user_id):
+    if not request.user.is_staff:
+        return Response(status=403)
+    profile = UserProfile.objects.filter(user_id=user_id).first()
+    if not profile:
+        return Response({'detail': 'Not found'}, status=404)
+    profile.failed_login_attempts = 0
+    profile.lockout_until = None
+    profile.save()
+    return Response({'detail': 'Unlocked'})

@@ -36,6 +36,10 @@ export const confirmPasswordReset = (
 ): Promise<AxiosResponse> =>
   client.post('/auth/password-reset/confirm/', { uid, token, password }, silent);
 
+export const getAdminStats = (): Promise<AxiosResponse> => client.get('/admin/stats/');
+export const adminUnlockUser = (userId: number): Promise<AxiosResponse> =>
+  client.post(`/admin/unlock/${userId}/`);
+
 // ── Tasks ─────────────────────────────────────────────────────
 export const getTasks = (
   params: Record<string, unknown> = {},
