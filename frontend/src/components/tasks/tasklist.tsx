@@ -9,7 +9,7 @@ import { format } from 'date-fns';
 import { Calendar, Lock } from 'lucide-react';
 import { getFilteredTasks } from '@/utils/filterTasks';
 
-const PAGE_SIZE = 8;
+const PAGE_SIZE = 5;
 
 export default function TaskList() {
   const filter    = useAppStore(s => s.filter);
