@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import Greeting from '@/components/layout/greetings';
 import ClockWidget from '@/components/widgets/clock';
 import TaskList from '@/components/tasks/tasklist';
@@ -8,7 +9,7 @@ import StickyNotes from '@/components/widgets/stickynote';
 import Categories from '@/components/categories/categorypanel';
 import UserNav from '@/components/layout/usernav';
 import styles from './home.module.css';
-import { ClockAlert, Menu, X, NotebookPen, LayoutList, CalendarDays, Timer } from 'lucide-react';
+import { ClockAlert, Menu, X, NotebookPen, LayoutList, CalendarDays } from 'lucide-react';
 import SessionGuard from '@/components/layout/sessionguard';
 import LevelUpToast from '@/components/layout/leveluptoast';
 import Pomodoro from '../components/widgets/pomodoro';
@@ -20,6 +21,13 @@ export default function Dashboard() {
   const [notesOpen, setNotesOpen]       = useState(false);
   const [view, setView]                 = useState<View>('list');
   const [pomodoroOpen, setPomodoroOpen] = useState(false);
+
+  const location = useLocation();
+
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
   return (
     <SessionGuard>
       <LevelUpToast />
@@ -37,7 +45,7 @@ export default function Dashboard() {
           <div className={styles.sideSection}><ClockWidget /></div>
           <div className={styles.sideSection}><StatsWidget /></div>
           <div className={`${styles.sideSection} ${styles.sideSectionGrow}`}>
-            <Categories />
+            <Categories onNavigate={() => setSidebarOpen(false)} />
           </div>
           <div className={styles.sidebarFooter}>
             <UserNav />

@@ -24,7 +24,12 @@ interface ApiError {
 type UpdateVars = { id: number; content: string; icon: string };
 type MutateCtx   = { previous?: Category[] };
 
-export default function Categories() {
+interface CategoriesProps {
+  onNavigate?: () => void;
+}
+
+
+export default function Categories({ onNavigate }: CategoriesProps) {
   const queryClient    = useQueryClient();
   const limits         = useAppStore(s => s.limits);
   const level          = useAppStore(s => s.level);
@@ -46,8 +51,10 @@ export default function Categories() {
   const categoriesLocked = limits.categories !== null && counts.categories >= limits.categories;
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
-  const toggleFilter = (val: number | 'uncategorised'): void =>
+  const toggleFilter = (val: number | 'uncategorised'): void => {
     setFilter({ category: activeCategory === val ? null : val });
+    onNavigate?.();
+  };
 
   const addMutation = useMutation({
     mutationFn: (payload: { name: string; icon: string }) => createCategory(payload),
@@ -189,7 +196,7 @@ export default function Categories() {
       <div className={styles.list}>
         <div
           className={`${styles.item} ${activeCategory === null ? styles.itemActive : ''}`}
-          onClick={() => setFilter({ category: null })}
+          onClick={() => { setFilter({ category: null }); onNavigate?.(); }}
         >
           <span className={styles.itemIcon}>🗂️</span>
           <span className={styles.catName}>All tasks</span>
