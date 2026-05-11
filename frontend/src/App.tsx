@@ -11,6 +11,9 @@ import OfflineBanner from '@/components/layout/offlinebanner';
 const Dashboard = lazy(() => import('@/pages/home'));
 const Login     = lazy(() => import('@/pages/login'));
 const Register  = lazy(() => import('@/pages/register'));
+const ResetRequest = lazy(() => import('@/pages/resetrequest'));
+const ResetConfirm = lazy(() => import('@/pages/resetconfirm'));
+
 import { ThemeProvider } from './context/ThemeContext';
 import { useDataLoader } from '@/hooks/useDataLoader';
 import { useAppStore } from '@/store/useAppStore';
@@ -82,6 +85,8 @@ export default function App() {
             <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/reset-password"               element={<ResetRequest />} />
+            <Route path="/reset-password/:uid/:token"   element={<ResetConfirm />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Suspense>

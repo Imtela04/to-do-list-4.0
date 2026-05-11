@@ -6,12 +6,13 @@ import styles from './register.module.css';
 
 interface RegisterForm {
   username: string;
+  email: string;
   password: string;
   confirm:  string;
 }
 
 export default function Register() {
-  const [form, setForm]       = useState<RegisterForm>({ username: '', password: '', confirm: '' });
+  const [form, setForm] = useState<RegisterForm>({ username: '', email: '', password: '', confirm: '' });
   const [error, setError]     = useState('');
   const [loading, setLoading] = useState(false);
   const navigate              = useNavigate();
@@ -33,7 +34,7 @@ export default function Register() {
     }
     setLoading(true);
     try {
-      await register({ username: form.username, password: form.password, confirm: form.confirm });
+      await register({ username: form.username, email: form.email, password: form.password, confirm: form.confirm });
       navigate('/');
     } catch (err: unknown) {
       const e = err as { message?: string };
@@ -55,6 +56,14 @@ export default function Register() {
             value={form.username}
             onChange={e => setForm(p => ({ ...p, username: e.target.value }))}
             autoComplete="username"
+            className={styles.inputClass}
+          />
+          <input
+            type="email"
+            placeholder="Email address (for password reset)"
+            value={form.email}
+            onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
+            autoComplete="email"
             className={styles.inputClass}
           />
           <input

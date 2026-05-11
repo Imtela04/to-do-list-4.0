@@ -79,6 +79,11 @@ export default function Login() {
           Don't have an account?{' '}
           <Link to="/register" className={styles.registerLink}>Register here</Link>
         </p>
+        <p className={styles.registerText}>
+          <Link to="/reset-password" className={styles.registerLink}>
+            Forgot your password?
+          </Link>
+        </p>
       </div>
     </div>
   );

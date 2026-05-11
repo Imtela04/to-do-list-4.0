@@ -21,6 +21,14 @@ export const login = async (credentials: LoginCredentials): Promise<AxiosRespons
 export const logout     = ():                   Promise<AxiosResponse> => client.post('/auth/logout/');
 export const getProfile = (): Promise<AxiosResponse<Profile>>          => client.get('/me/');
 export const deleteAccount = (password: string): Promise<AxiosResponse> =>  client.delete('/auth/account/', { data: { password } });
+export const requestPasswordReset = (email: string): Promise<AxiosResponse> =>
+  client.post('/auth/password-reset/', { email }, { _silent: true } as never);
+
+export const confirmPasswordReset = (
+  uid: string, token: string, password: string
+): Promise<AxiosResponse> =>
+  client.post('/auth/password-reset/confirm/', { uid, token, password }, { _silent: true } as never);
+
 // ── Tasks ─────────────────────────────────────────────────────
 export const getTasks    = (params: Record<string, unknown> = {}): Promise<AxiosResponse<Task[] | { results: Task[] }>> =>  client.get('/tasks/', { params });
 
@@ -49,11 +57,11 @@ export const saveTheme = (payload: ThemePayload): Promise<AxiosResponse<Theme>> 
 export const completePomodoro = (): Promise<AxiosResponse<PomodoroResult>> => client.post('/auth/pomodoro/complete/');
 
 // ── Subtasks ──────────────────────────────────────────────────────────────────
-export const getSubtasks    = (taskId: number):                           Promise<AxiosResponse<Subtask[]>> =>
+export const getSubtasks    = (taskId: number): Promise<AxiosResponse<Subtask[]>> =>
   client.get(`/tasks/${taskId}/subtasks/`);
 export const createSubtask  = (taskId: number, data: { title: string }): Promise<AxiosResponse<Subtask>> =>
   client.post(`/tasks/${taskId}/subtasks/`, data);
 export const updateSubtask  = (taskId: number, subtaskId: number, data: Partial<{ title: string; completed: boolean }>): Promise<AxiosResponse<Task>> =>
   client.patch(`/tasks/${taskId}/subtasks/${subtaskId}/`, data);
-export const deleteSubtask  = (taskId: number, subtaskId: number):        Promise<AxiosResponse<Task>> =>
+export const deleteSubtask  = (taskId: number, subtaskId: number): Promise<AxiosResponse<Task>> =>
   client.delete(`/tasks/${taskId}/subtasks/${subtaskId}/`);
