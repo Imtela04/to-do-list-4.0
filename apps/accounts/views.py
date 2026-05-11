@@ -391,3 +391,19 @@ def admin_unlock_user(request, user_id):
     profile.lockout_until = None
     profile.save()
     return Response({'detail': 'Unlocked'})
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def admin_users(request):
+    if not request.user.is_staff:
+        return Response(status=403)
+    profiles = UserProfile.objects.select_related('user').order_by('-user__date_joined')[:50]
+    now = timezone.now()
+    return Response([{
+        'id': p.user.id, 'username': p.user.username,
+        'email': p.user.email, 'joined': str(p.user.date_joined.date()),
+        'last_login': str(p.user.last_login.date()) if p.user.last_login else None,
+        'level': p.level, 'xp': p.xp, 'streak': p.streak,
+        'locked': bool(p.lockout_until and p.lockout_until > now),
+        'failed_attempts': p.failed_login_attempts,
+    } for p in profiles])
