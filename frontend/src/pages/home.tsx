@@ -16,6 +16,14 @@ import Pomodoro from '../components/widgets/pomodoro';
 
 type View = 'list' | 'calendar';
 
+export function Logo(){
+  return(
+    <div>
+        <div className={styles.logo}><span className={styles.logoText}>what-d<ClockAlert className={styles.logoIcon} /></span></div>
+    </div>
+  
+  )
+}
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen]   = useState(false);
   const [notesOpen, setNotesOpen]       = useState(false);
@@ -38,7 +46,7 @@ export default function Dashboard() {
         )}
 
         <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ''}`}>
-          <div className={styles.logo}><span className={styles.logoText}>what-d<ClockAlert className={styles.logoIcon} /></span></div>
+          <Logo/>
           <button className={styles.sidebarClose} onClick={() => setSidebarOpen(false)}>
             <X size={16} />
           </button>

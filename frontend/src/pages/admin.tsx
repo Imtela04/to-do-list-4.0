@@ -5,6 +5,9 @@ import {
   ResponsiveContainer, LineChart, Line,
 } from 'recharts';
 import { getAdminUsers, adminUnlockUser } from '@/api/services';
+import { Copy, UserStar } from 'lucide-react';
+import { Logo } from './home';
+
 // ─── Shared stat card ────────────────────────────────────────────────────────
 
 function StatCard({
@@ -35,7 +38,7 @@ function StatCard({
 // ─── Tab: Overview ───────────────────────────────────────────────────────────
 
 function OverviewTab({ stats }: { stats: any }) {
-  const { users, tasks, pomodoros_today, signups_by_day } = stats;
+  const { users, pomodoros_today, signups_by_day } = stats;
 
   return (
     <>
@@ -43,12 +46,13 @@ function OverviewTab({ stats }: { stats: any }) {
       <section style={{ marginBottom: 32 }}>
         <h2>Overview</h2>
         <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 12 }}>
-          <StatCard label="Total Users"     value={users.total} />
-          <StatCard label="Active (7d)"     value={users.active_7d}     color="var(--accent-tertiary)" />
-          <StatCard label="Total Tasks"     value={tasks.total}          color="var(--accent-secondary)" />
-          <StatCard label="Completion %"    value={tasks.completion_rate + '%'} color="var(--accent-secondary)" />
-          <StatCard label="🍅 Pomodoros Today" value={pomodoros_today} />
-        </div>
+          <StatCard label="Total Users"        value={users.total} />
+          <StatCard label="Active (7d)"        value={users.active_7d}  color="var(--accent-tertiary)"
+            sub={`${Math.round(users.active_7d / Math.max(users.total,1) * 100)}% of total`} />
+          <StatCard label="Active (30d)"       value={users.active_30d} color="var(--accent-secondary)"
+            sub={`${Math.round(users.active_30d / Math.max(users.total,1) * 100)}% of total`} />
+          <StatCard label="New (7d)"           value={users.new_7d}     color="var(--accent-primary)" />
+          <StatCard label="🍅 Pomodoros Today" value={pomodoros_today} />        </div>
       </section>
 
       {/* Signups chart */}
@@ -58,7 +62,11 @@ function OverviewTab({ stats }: { stats: any }) {
           <LineChart data={signups_by_day}>
             <XAxis dataKey="day" tick={{ fontSize: 11, fill: 'var(--text-muted)' }} tickFormatter={d => d.slice(5)} />
             <YAxis  tick={{ fontSize: 11, fill: 'var(--text-muted)' }} allowDecimals={false} />
-            <Tooltip contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-accent)', borderRadius: 8, fontSize: 12 }} />
+            <Tooltip
+              contentStyle={{ background: 'var(--bg-card)', border: '1px solid var(--border-accent)', borderRadius: 8, fontSize: 12 }}
+              formatter={(value: number) => [value, 'Signups']}
+              labelFormatter={(label: string) => `Date: ${label}`}
+            />
             <Line type="monotone" dataKey="count" stroke="var(--accent-primary)" strokeWidth={2} dot={{ fill: 'var(--accent-primary)' }} />
           </LineChart>
         </ResponsiveContainer>
@@ -127,7 +135,14 @@ function UsersTab({ stats }: { stats: any }) {
               <tr key={u.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                 <td style={{ padding: '10px 12px' }}>
                   <div style={{ fontWeight: 600 }}>{u.username}</div>
-                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{u.email}</div>
+                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{u.email || '—'}</div>
+                  <div
+                    style={{ fontSize: '0.62rem', color: 'var(--text-muted)', cursor: 'pointer', opacity: 0.6 }}
+                    title="Click to copy ID"
+                    onClick={() => navigator.clipboard.writeText(String(u.id))}
+                  >
+                    <Copy size={10}/> #{u.id}
+                  </div>
                 </td>
                 <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{u.joined}</td>
                 <td style={{ padding: '10px 12px', color: 'var(--text-muted)' }}>{u.last_login ?? '—'}</td>
@@ -219,13 +234,40 @@ function LeaderboardTab({ stats }: { stats: any }) {
   );
 }
 
+function TasksTab({ stats }: { stats: any }) {
+  const { tasks } = stats;
+  return (
+    <section>
+      <h2>Tasks</h2>
+      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 12, marginBottom: 32 }}>
+        <StatCard label="Total" value={tasks.total} />
+        <StatCard label="Completed" value={tasks.completed} color="var(--accent-tertiary)" />
+        <StatCard label="Avg per User" value={tasks.avg_per_user} color="var(--accent-secondary)" />
+        <StatCard label="Completion %" value={tasks.completion_rate + '%'} color="var(--accent-secondary)" />
+      </div>
+      <div style={{ height: 8, background: 'var(--bg-glass)', borderRadius: 4, overflow: 'hidden', outline: '1px solid var(--border-accent)' }}>
+        <div style={{ height: '100%', width: `${tasks.completion_rate}%`, background: 'linear-gradient(90deg, var(--accent-primary), var(--accent-tertiary))', transition: 'width 600ms ease' }} />
+      </div>
+      <p style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 6 }}>
+        {tasks.completed} of {tasks.total} tasks completed
+      </p>
+    </section>
+  );
+}
 // ─── Root ─────────────────────────────────────────────────────────────────────
 
 export default function AdminDashboard() {
-  const [tab, setTab] = useState<'overview' | 'users' | 'leaderboard'>('overview');
+  const [tab, setTab] = useState<'overview' | 'users' | 'leaderboard' | 'tasks'>('overview');
   const [stats, setStats]           = useState<any>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [loading, setLoading]       = useState(false);
+  
+  const [autoRefresh, setAutoRefresh] = useState(false);
+  useEffect(() => {
+    if (!autoRefresh) return;
+    const id = setInterval(refresh, 30_000);
+    return () => clearInterval(id);
+  }, [autoRefresh]);
 
   const refresh = () => {
     setLoading(true);
@@ -251,11 +293,12 @@ export default function AdminDashboard() {
         display: 'flex', flexDirection: 'column', gap: 4,
         position: 'sticky', top: 0, height: '100vh',
       }}>
+        <Logo/>
         <div style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--accent-primary)', padding: '0 12px 20px' }}>
-          ⚙ Admin
+          <UserStar/> Admin
         </div>
 
-        {(['overview', 'users', 'leaderboard'] as const).map(t => (
+        {(['overview', 'users', 'leaderboard', 'tasks'] as const).map(t => (
           <button key={t} onClick={() => setTab(t)} style={{
             padding: '8px 12px', borderRadius: 8, textAlign: 'left',
             fontSize: '0.82rem', fontWeight: tab === t ? 600 : 400,
@@ -264,7 +307,7 @@ export default function AdminDashboard() {
             border:     tab === t ? '1px solid var(--border-accent)' : '1px solid transparent',
             cursor: 'pointer', transition: 'all 150ms',
           }}>
-            {{ overview: '📊 Overview', users: '👥 Users', leaderboard: '🏆 Leaderboard' }[t]}
+          {{ overview: '📊 Overview', users: '👥 Users', leaderboard: '🏆 Leaderboard', tasks: '✅ Tasks' }[t]}
           </button>
         ))}
       </nav>
@@ -287,11 +330,23 @@ export default function AdminDashboard() {
             </span>
           )}
         </div>
+        <button
+          onClick={() => setAutoRefresh(r => !r)}
+          style={{
+            padding: '6px 14px', borderRadius: 8, fontSize: '0.78rem',
+            background: autoRefresh ? 'rgba(124,106,255,0.15)' : 'var(--bg-glass)',
+            border: `1px solid ${autoRefresh ? 'var(--accent-primary)' : 'var(--border-subtle)'}`,
+            color: autoRefresh ? 'var(--accent-primary)' : 'var(--text-muted)', cursor: 'pointer',
+          }}
+        >
+          {autoRefresh ? '⏸ Auto' : '▶ Auto'} 30s
+        </button>
 
         {/* Tab content */}
         {tab === 'overview'    && <OverviewTab    stats={stats} />}
         {tab === 'users'       && <UsersTab       stats={stats} />}
         {tab === 'leaderboard' && <LeaderboardTab stats={stats} />}
+        {tab === 'tasks'       && <TasksTab       stats={stats} />}
       </main>
     </div>
   );
