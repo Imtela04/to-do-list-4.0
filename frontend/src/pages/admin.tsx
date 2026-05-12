@@ -5,7 +5,7 @@ import {
   ResponsiveContainer, LineChart, Line,
 } from 'recharts';
 import { getAdminUsers, adminUnlockUser } from '@/api/services';
-import { Copy, UserStar } from 'lucide-react';
+import { Copy, RefreshCcw, RotateCcw, UserStar } from 'lucide-react';
 import { Logo } from './home';
 
 // ─── Shared stat card ────────────────────────────────────────────────────────
@@ -317,30 +317,24 @@ export default function AdminDashboard() {
         {/* Header */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
           <h1 style={{ color: 'var(--accent-primary)', margin: 0 }}>Admin Dashboard</h1>
-          <button onClick={refresh} disabled={loading} style={{
-            padding: '6px 14px', borderRadius: 8, fontSize: '0.78rem',
-            background: 'var(--bg-glass)', border: '1px solid var(--border-subtle)',
-            color: 'var(--text-muted)', cursor: 'pointer',
-          }}>
-            {loading ? '…' : '↻ Refresh'}
+          <button
+            onClick={() => setAutoRefresh(r => !r)}
+            title='Auto sync'
+            style={{
+              padding: '6px 0px', fontSize: '0.78rem',
+              color: autoRefresh ? 'var(--accent-primary)' : 'var(--text-muted)', cursor: 'pointer',
+              animation:autoRefresh ? 'spin 2s linear infinite': 'none',
+            }}
+          >
+            <RefreshCcw size={16}/>
           </button>
+
           {lastUpdated && (
             <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
               Updated {lastUpdated.toLocaleTimeString()}
             </span>
           )}
         </div>
-        <button
-          onClick={() => setAutoRefresh(r => !r)}
-          style={{
-            padding: '6px 14px', borderRadius: 8, fontSize: '0.78rem',
-            background: autoRefresh ? 'rgba(124,106,255,0.15)' : 'var(--bg-glass)',
-            border: `1px solid ${autoRefresh ? 'var(--accent-primary)' : 'var(--border-subtle)'}`,
-            color: autoRefresh ? 'var(--accent-primary)' : 'var(--text-muted)', cursor: 'pointer',
-          }}
-        >
-          {autoRefresh ? '⏸ Auto' : '▶ Auto'} 30s
-        </button>
 
         {/* Tab content */}
         {tab === 'overview'    && <OverviewTab    stats={stats} />}
