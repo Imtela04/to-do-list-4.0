@@ -40,6 +40,9 @@ export const getAdminStats = (): Promise<AxiosResponse> => client.get('/dashboar
 export const getAdminUsers = (): Promise<AxiosResponse> => client.get('/dashboard/users/');
 export const adminUnlockUser = (id: number): Promise<AxiosResponse> =>
   client.post(`/dashboard/unlock/${id}/`);
+export const updateEmail = (email: string): Promise<AxiosResponse> =>
+  client.post('/auth/update-email/', { email });
+
 // ── Tasks ─────────────────────────────────────────────────────
 export const getTasks = (
   params: Record<string, unknown> = {},

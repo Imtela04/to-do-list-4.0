@@ -54,6 +54,7 @@ export interface Profile {
   counts:          Counts;
   pomodoros_today: number;
   is_staff?:        boolean;
+  email?: string;
 }
 
 export interface XpResult {

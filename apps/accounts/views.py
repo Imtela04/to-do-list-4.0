@@ -94,6 +94,7 @@ def me(request):
     return Response({
         'username':        request.user.username,
         'is_staff':         request.user.is_staff,
+        'email': request.user.email,
         'xp':              profile.xp,
         'level':           profile.level,
         'streak':          profile.streak,
@@ -265,6 +266,17 @@ def request_password_reset(request):
 
     return Response({'detail': 'If that email exists, a reset link has been sent.'})
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def update_email(request):
+    email = request.data.get('email', '').strip()
+    if not email:
+        return Response({'detail': 'Email is required.'}, status=400)
+    if User.objects.filter(email=email).exclude(pk=request.user.pk).exists():
+        return Response({'detail': 'Email already in use.'}, status=400)
+    request.user.email = email
+    request.user.save()
+    return Response({'detail': 'Email updated.'})
 
 @api_view(['POST'])
 @permission_classes([AllowAny])

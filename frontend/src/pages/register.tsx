@@ -20,7 +20,7 @@ export default function Register() {
   const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     setError('');
-    if (!form.username.trim() || !form.password.trim() || !form.confirm.trim()) {
+    if (!form.username.trim() || !form.password.trim() || !form.confirm.trim() || !form.email.trim()) {
       setError('All fields required');
       return;
     }
@@ -60,7 +60,7 @@ export default function Register() {
           />
           <input
             type="email"
-            placeholder="Email address (for password reset)"
+            placeholder="Email"
             value={form.email}
             onChange={e => setForm(p => ({ ...p, email: e.target.value }))}
             autoComplete="email"

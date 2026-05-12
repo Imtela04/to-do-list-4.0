@@ -1,13 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Sun, Moon, Pipette, User, Power, Flame, Star, Trash, ShieldCogCorner } from 'lucide-react';
+import { Sun, Moon, Pipette, User, Power, Flame, Star, Trash, ShieldCogCorner, TriangleAlert } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { useTheme } from '@/context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import { HexColorPicker } from 'react-colorful';
 import DeleteAccountModal from './deleteaccountModal';
 import styles from './usernav.module.css';
-
+import { updateEmail } from '@/api/services';
+import { useQueryClient } from '@tanstack/react-query';
 
 const COLOR_PICKERS = [
   { variable: '--accent-primary',   label: 'Primary Accent' },
@@ -47,7 +48,25 @@ export default function UserNav() {
   const xpNeeded                                           = nextLevelXp ? nextLevelXp - prevLevelXp : xpInLevel;
   const xpPct                                              = xpNeeded > 0 ? Math.min((xpInLevel / xpNeeded) * 100, 100) : 100;
   const isStaff                                            = useAppStore(s=>s.isStaff);
-  
+  const email                                              = useAppStore(s => s.email);
+  const [showEmailForm, setShowEmailForm]                  = useState(false);
+  const [emailInput, setEmailInput]                        = useState('');
+  const [emailMsg, setEmailMsg]                            = useState('');
+
+  const queryClient = useQueryClient();
+
+  const handleEmailSave = async () => {
+    try {
+      await updateEmail(emailInput);
+      setEmailMsg('Saved!');
+      setShowEmailForm(false);
+      // refresh profile
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+    } catch {
+      setEmailMsg('Failed.');
+    }
+  };
+
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent): void => {
@@ -119,14 +138,14 @@ export default function UserNav() {
           className={styles.drawer}
           style={{ position: 'fixed', left: pos.left, bottom: pos.bottom }}
         >
-          <div className={styles.drawerHeader}>
-            <div className={styles.drawerAvatar}><User /></div>
-            <div className={styles.drawerUser}>
-              <span className={styles.drawerUsername}>{username ?? 'User'}</span>
-              <span className={styles.drawerRole}>
-                <Star size={10} /> {LEVEL_LABELS[level]} · Level {level}
-              </span>
-            </div>
+        <div className={styles.drawerHeader}>
+          <div className={styles.drawerAvatar}><User /></div>
+          <div className={styles.drawerUser}>
+            <span className={styles.drawerUsername}>{username ?? 'User'}</span>
+            <span className={styles.drawerRole}>
+              <Star size={10} /> {LEVEL_LABELS[level]} · Lv{level}
+            </span>
+          </div>
             {isStaff && (
               <>
                 <div className={styles.divider} />
@@ -164,6 +183,29 @@ export default function UserNav() {
               </span>
             )}
           </div>
+
+          {!email && (
+            <div className={styles.emailWarning}>
+              <p className={styles.emailWarningText}><TriangleAlert size={15}/> No email set — password reset won't work.</p>
+              {showEmailForm ? (
+                <div className={styles.emailForm}>
+                  <input
+                    className={styles.emailInput}
+                    value={emailInput}
+                    onChange={e => setEmailInput(e.target.value)}
+                    placeholder="your@email.com"
+                  />
+                  <button className={styles.emailSaveBtn} onClick={handleEmailSave}>Save</button>
+                </div>
+              ) : (
+                <button className={styles.emailAddBtn} onClick={() => setShowEmailForm(true)}>
+                  + Add email
+                </button>
+              )}
+              {emailMsg && <p className={styles.emailMsg}>{emailMsg}</p>}
+            </div>
+          )}
+
 
 
           <div className={styles.divider} />

@@ -52,7 +52,7 @@
   background: var(--bg-card);
   border: 1px solid var(--border-accent);
   border-radius: var(--radius-lg);
-  padding: 8px;
+  padding: 10px;
   box-shadow: var(--shadow-md);
   z-index: 9999;
   display: flex;
@@ -107,6 +107,7 @@
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  white-space: nowrap;  /* ← prevents wrapping */
 }
 
 .drawerClose {
@@ -400,3 +401,70 @@
   gap: 3px;
 }
 
+.emailForm {
+  display: flex;
+  gap: 6px;
+  width: 100%;
+}
+
+.emailInput {
+  flex: 1;
+  min-width: 0;
+  font-size: 0.75rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-medium);
+  color: var(--text-primary);
+  outline: none;
+  font-family: var(--font-body);
+}
+
+.emailInput:focus {
+  border-color: var(--accent-primary);
+}
+
+.emailSaveBtn {
+  font-size: 0.72rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
+  transition: background var(--transition-fast);
+}
+
+.emailSaveBtn:hover {
+  background: #8f7fff;
+}
+
+.emailWarning {
+  padding: 8px 14px;
+  background: rgba(255, 170, 106, 0.08);
+  border-radius: 8px;
+  margin: 4px 0;
+}
+
+.emailWarningText {
+  font-size: 0.72rem;
+  color: #ffaa6a;
+  margin-bottom: 6px;
+}
+
+.emailAddBtn {
+  font-size: 0.72rem;
+  color: var(--accent-primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.emailMsg {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}

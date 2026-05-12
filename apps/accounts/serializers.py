@@ -9,7 +9,7 @@ class ThemeSerializer(serializers.ModelSerializer):
         
 class UserCreateSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
-    email    = serializers.EmailField(required=False, allow_blank=True)
+    email    = serializers.EmailField(required=True, allow_blank=False)
 
     class Meta:
         model  = User

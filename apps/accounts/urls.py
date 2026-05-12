@@ -15,4 +15,5 @@ urlpatterns = [
     path('auth/password-reset/',         views.request_password_reset, name='password-reset'),
     path('auth/password-reset/confirm/', views.confirm_password_reset,  name='password-reset-confirm'),
     path('auth/pomodoro/complete/',      views.complete_pomodoro, name='pomodoro-complete'),
+    path('auth/update-email/', views.update_email, name='update-email'),
 ]

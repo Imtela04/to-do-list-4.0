@@ -37,6 +37,7 @@ interface AppState {
   levelUpEvent:    LevelUpEvent | null;
   filter:          Filter;
   isStaff:         boolean;
+  email:           string;
 }
 
 interface AppActions {
@@ -66,6 +67,7 @@ const DEFAULT_FILTER: Filter = {
   dateTo:      savedFilter.dateTo      ?? null,
   search:      '',
   deadlineDay: null,
+  email: '',
 };
 
 const DEFAULT_STATE: AppState = {
@@ -104,6 +106,7 @@ export const useAppStore = create<AppStore>((set) => ({
     counts:          data.counts,
     pomodoros_today: data.pomodoros_today ?? 0,
     isStaff:         data.is_staff ?? false,
+    email: data.email ?? '',
   }),
 
   updateXp: (payload) => set(s => ({
