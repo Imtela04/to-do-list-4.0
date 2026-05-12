@@ -89,6 +89,7 @@ def me(request):
     pomodoros_today = profile.pomodoros_today if profile.last_pomodoro_date == today else 0
     return Response({
         'username':        request.user.username,
+        'is_staff':         request.user.is_staff,
         'xp':              profile.xp,
         'level':           profile.level,
         'streak':          profile.streak,

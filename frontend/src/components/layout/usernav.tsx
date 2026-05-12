@@ -1,12 +1,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Sun, Moon, Pipette, User, Power, Flame, Star, Trash } from 'lucide-react';
+import { Sun, Moon, Pipette, User, Power, Flame, Star, Trash, ShieldCogCorner } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { useTheme } from '@/context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
 import { HexColorPicker } from 'react-colorful';
 import DeleteAccountModal from './deleteaccountModal';
 import styles from './usernav.module.css';
+
 
 const COLOR_PICKERS = [
   { variable: '--accent-primary',   label: 'Primary Accent' },
@@ -26,26 +27,27 @@ function getInitials(username: string): string {
 }
 
 export default function UserNav() {
-  const [open, setOpen]             = useState(false);
-  const [openPicker, setOpenPicker] = useState<string | null>(null);
-  const username   = useAppStore(s => s.username);
-  const xp         = useAppStore(s => s.xp);
-  const level      = useAppStore(s => s.level);
-  const streak     = useAppStore(s => s.streak);
-  const nextLevelXp = useAppStore(s => s.nextLevelXp);
-  const resetState = useAppStore(s => s.resetState);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const { theme, custom, applyTheme, updateCustomColor } = useTheme();
-  const drawerRef = useRef<HTMLDivElement | null>(null);
-  const btnRef    = useRef<HTMLButtonElement | null>(null);
-  const navigate  = useNavigate();
-  const [pos, setPos] = useState<{ left: number; bottom: number }>({ left: 0, bottom: 0 });
-  const LEVEL_XP: Record<number, number> = { 1: 0, 2: 50, 3: 150, 4: 350, 5: 700 };
-  const prevLevelXp = LEVEL_XP[level] ?? 0;
-  const xpInLevel   = xp - prevLevelXp;
-  const xpNeeded    = nextLevelXp ? nextLevelXp - prevLevelXp : xpInLevel;
-  const xpPct       = xpNeeded > 0 ? Math.min((xpInLevel / xpNeeded) * 100, 100) : 100;
-
+  const [open, setOpen]                                    = useState(false);
+  const [openPicker, setOpenPicker]                        = useState<string | null>(null);
+  const username                                           = useAppStore(s => s.username);
+  const xp                                                 = useAppStore(s => s.xp);
+  const level                                              = useAppStore(s => s.level);
+  const streak                                             = useAppStore(s => s.streak);
+  const nextLevelXp                                        = useAppStore(s => s.nextLevelXp);
+  const resetState                                         = useAppStore(s => s.resetState);
+  const [showDeleteModal, setShowDeleteModal]              = useState(false);
+  const { theme, custom, applyTheme, updateCustomColor }   = useTheme();
+  const drawerRef                                          = useRef<HTMLDivElement | null>(null);
+  const btnRef                                             = useRef<HTMLButtonElement | null>(null);
+  const navigate                                           = useNavigate();
+  const [pos, setPos]                                      = useState<{ left: number; bottom: number }>({ left: 0, bottom: 0 });
+  const LEVEL_XP: Record<number, number>                   = { 1: 0, 2: 50, 3: 150, 4: 350, 5: 700 };
+  const prevLevelXp                                        = LEVEL_XP[level] ?? 0;
+  const xpInLevel                                          = xp - prevLevelXp;
+  const xpNeeded                                           = nextLevelXp ? nextLevelXp - prevLevelXp : xpInLevel;
+  const xpPct                                              = xpNeeded > 0 ? Math.min((xpInLevel / xpNeeded) * 100, 100) : 100;
+  const isStaff                                            = useAppStore(s=>s.isStaff);
+  
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent): void => {
@@ -125,9 +127,23 @@ export default function UserNav() {
                 <Star size={10} /> {LEVEL_LABELS[level]} · Level {level}
               </span>
             </div>
+            {isStaff && (
+              <>
+                <div className={styles.divider} />
+                <button
+                  className={styles.adminBtn}
+                  onClick={() => { setOpen(false); navigate('/admin'); }}
+                  title='Admin Mode'
+                >
+                  <ShieldCogCorner size={15}/>
+                </button>
+              </>
+            )}
+
             <button className={styles.logoutBtn} onClick={handleLogout} title="Logout">
               <Power size={15} />
             </button>
+
           </div>
 
           <div className={styles.drawerXp}>
@@ -148,6 +164,7 @@ export default function UserNav() {
               </span>
             )}
           </div>
+
 
           <div className={styles.divider} />
 

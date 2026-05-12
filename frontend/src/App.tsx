@@ -58,6 +58,16 @@ function ErrorHandlerRegistrar() {
   return null;
 }
 
+function AdminRoute({ children }: { children: ReactNode }) {
+  const token = localStorage.getItem('authToken');
+  if (!token) return <Navigate to="/login" />;
+  // isStaff is checked server-side on every API call,
+  // this just prevents non-staff from seeing the UI
+  const isStaff = useAppStore.getState().isStaff;
+  if (!isStaff) return <Navigate to="/" />;
+  return <AppLoader>{children}</AppLoader>;
+}
+
 export default function App() {
   const [authKey, setAuthKey] = useState(0);
   const resetState = useAppStore(s => s.resetState);
@@ -84,7 +94,7 @@ export default function App() {
         <Suspense fallback={<div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>}>
           <Routes key={authKey}>
             <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-            <Route path="/admin" element={<PrivateRoute><AdminDashboard /></PrivateRoute>} />
+            <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/reset-password"               element={<ResetRequest />} />

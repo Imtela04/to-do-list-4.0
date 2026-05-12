@@ -53,6 +53,7 @@ export interface Profile {
   limits:          Limits;
   counts:          Counts;
   pomodoros_today: number;
+  is_staff?:        boolean;
 }
 
 export interface XpResult {

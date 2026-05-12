@@ -69,7 +69,7 @@
 .drawerHeader {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 5px;
   padding: 8px 10px;
 }
 
@@ -179,7 +179,7 @@
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
-.customBtn {
+.customBtn, .adminBtn {
   width: 32px;
   height: 32px;
   border-radius: var(--radius-full);
@@ -191,7 +191,7 @@
   cursor: pointer;
   flex-shrink: 0;
 }
-.customBtn:hover { color: var(--accent-primary); }
+.customBtn:hover, .adminBtn:hover { color: var(--accent-primary); }
 .themeActive {
   background: rgba(124, 106, 255, 0.1);
   color: var(--accent-primary) !important;
@@ -399,3 +399,4 @@
   align-items: center;
   gap: 3px;
 }
+

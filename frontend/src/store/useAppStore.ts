@@ -36,6 +36,7 @@ interface AppState {
   pomodoros_today: number;
   levelUpEvent:    LevelUpEvent | null;
   filter:          Filter;
+  isStaff:         boolean;
 }
 
 interface AppActions {
@@ -79,6 +80,7 @@ const DEFAULT_STATE: AppState = {
   pomodoros_today: 0,
   levelUpEvent:    null,
   filter:          DEFAULT_FILTER,
+  isStaff:         false,
 };
 
 // ── Store ──────────────────────────────────────────────────────
@@ -101,6 +103,7 @@ export const useAppStore = create<AppStore>((set) => ({
     limits:          data.limits,
     counts:          data.counts,
     pomodoros_today: data.pomodoros_today ?? 0,
+    isStaff:         data.is_staff ?? false,
   }),
 
   updateXp: (payload) => set(s => ({
