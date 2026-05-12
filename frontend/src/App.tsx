@@ -33,6 +33,16 @@ const queryClient = new QueryClient({
 function PrivateRoute({ children }: { children: ReactNode }) {
   const token = localStorage.getItem('authToken');
   if (!token) return <Navigate to="/login" />;
+
+  // Session flag — cleared when tab closes
+  const sessionActive = sessionStorage.getItem('sessionActive');
+  if (!sessionActive) {
+    // New tab/session — clear auth and force re-login
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('refreshToken');
+    return <Navigate to="/login" />;
+  }
+
   try {
     const payload = JSON.parse(atob(token.split('.')[1])) as { exp: number };
     if (payload.exp * 1000 < Date.now()) {

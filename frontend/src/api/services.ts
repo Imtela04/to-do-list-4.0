@@ -36,11 +36,10 @@ export const confirmPasswordReset = (
 ): Promise<AxiosResponse> =>
   client.post('/auth/password-reset/confirm/', { uid, token, password }, silent);
 
-export const getAdminUsers = (): Promise<AxiosResponse> => client.get('/admin/users/');
-export const getAdminStats = (): Promise<AxiosResponse> => client.get('/admin/stats/');
-export const adminUnlockUser = (userId: number): Promise<AxiosResponse> =>
-  client.post(`/admin/unlock/${userId}/`);
-
+export const getAdminStats = (): Promise<AxiosResponse> => client.get('/dashboard/stats/');
+export const getAdminUsers = (): Promise<AxiosResponse> => client.get('/dashboard/users/');
+export const adminUnlockUser = (id: number): Promise<AxiosResponse> =>
+  client.post(`/dashboard/unlock/${id}/`);
 // ── Tasks ─────────────────────────────────────────────────────
 export const getTasks = (
   params: Record<string, unknown> = {},

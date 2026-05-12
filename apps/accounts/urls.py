@@ -3,9 +3,9 @@ from . import views
 from .views import ThemeView
 
 urlpatterns = [
-    path('admin/stats/',              views.admin_stats,        name='admin-stats'),
-    path('admin/unlock/<int:user_id>/', views.admin_unlock_user, name='admin-unlock'),
-    path('admin/users/', views.admin_users, name='admin-users'),
+    path('dashboard/stats/',               views.admin_stats,       name='admin-stats'),
+    path('dashboard/users/',               views.admin_users,       name='admin-users'),
+    path('dashboard/unlock/<int:user_id>/', views.admin_unlock_user, name='admin-unlock'),
     path('register/',                    views.register),
     path('user/theme/',                  ThemeView.as_view(), name='user-theme'),
     path('me/',                          views.me,            name='me'),

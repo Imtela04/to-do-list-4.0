@@ -29,6 +29,8 @@ export default function Login() {
       const res = await login({ username: form.username, password: form.password });
       localStorage.setItem('authToken', res.data.access);
       localStorage.setItem('refreshToken', res.data.refresh);
+      sessionStorage.setItem('sessionActive', '1');
+
       resetState();
       window.dispatchEvent(new Event('auth-change'));
       navigate('/');

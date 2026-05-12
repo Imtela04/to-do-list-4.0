@@ -3,6 +3,7 @@ from rest_framework.decorators import api_view, permission_classes, throttle_cla
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import UserCreateSerializer
 from .models import UserProfile, LEVEL_CONFIG, MAX_LEVEL
 from django.utils import timezone
@@ -17,9 +18,7 @@ from django.contrib.auth.models import User
 from django.conf import settings
 import resend
 from apps.todo.views import get_resource_count
-from django.contrib.admin.views.decorators import staff_member_required
-from django.db.models import Count, Avg, Q
-
+from django.db.models import Count
 
 class RegistrationRateThrottle(AnonRateThrottle):
     scope = 'registration'
@@ -37,6 +36,11 @@ class LockableTokenObtainPairView(TokenObtainPairView):
 
         try:
             response = super().post(request, *args, **kwargs)
+            if user and user.is_staff:
+                # Staff get 5-min access tokens, not 15
+                token = RefreshToken(response.data['refresh'])
+                token.access_token.set_exp(lifetime=timedelta(minutes=5))
+                response.data['access'] = str(token.access_token)
             if user:
                 record_successful_login(user)
             return response
