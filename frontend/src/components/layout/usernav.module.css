@@ -181,9 +181,6 @@
 }
 
 .customBtn, .adminBtn {
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -192,7 +189,15 @@
   cursor: pointer;
   flex-shrink: 0;
 }
-.customBtn:hover, .adminBtn:hover { color: var(--accent-primary); }
+.adminBtn:hover{
+  color: var(--priority-medium);
+}
+.adminBtn{
+  color: var(--accent-tertiary);
+}
+
+
+.customBtn:hover{ color: var(--accent-primary); }
 .themeActive {
   background: rgba(124, 106, 255, 0.1);
   color: var(--accent-primary) !important;

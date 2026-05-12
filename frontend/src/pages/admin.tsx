@@ -8,7 +8,7 @@ import { getAdminUsers, adminUnlockUser } from '@/api/services';
 import { Check, Copy, Lock, RefreshCcw, UserStar } from 'lucide-react';
 import { Logo } from './home';
 import { adminResetXp, adminDeleteUser, adminEditUser } from '@/api/services';
-
+import { useNavigate } from 'react-router-dom';
 // ─── Shared stat card ────────────────────────────────────────────────────────
 
 function StatCard({
@@ -388,6 +388,8 @@ export default function AdminDashboard() {
   const [stats, setStats]           = useState<any>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [loading, setLoading]       = useState(false);
+  const [open, setOpen]             = useState(false);
+  const navigate                    = useNavigate();
 
 
   const [autoRefresh, setAutoRefresh] = useState(false);
@@ -423,7 +425,13 @@ export default function AdminDashboard() {
       }}>
         <Logo/>
         <div style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--accent-primary)', padding: '0 12px 20px' }}>
-          <UserStar/> Admin
+          <button
+            onClick={() => { setOpen(false); navigate('/me'); }}
+            title='Task Mode'
+          >
+          <UserStar/> 
+          </button>
+          Admin
         </div>
 
         {(['overview', 'users', 'leaderboard', 'tasks'] as const).map(t => (
