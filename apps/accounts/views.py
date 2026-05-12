@@ -257,7 +257,7 @@ def request_password_reset(request):
 
         resend.api_key = settings.RESEND_API_KEY
         resend.Emails.send({
-            'from':    'what-do <noreply@what-do.onrender.com>',
+            'from':    'what-do <onboarding@resend.dev>',
             'to':      [email],
             'subject': 'Reset your what-do password',
             'html':    build_reset_email(user.username, link),
