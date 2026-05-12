@@ -42,6 +42,12 @@ export const adminUnlockUser = (id: number): Promise<AxiosResponse> =>
   client.post(`/dashboard/unlock/${id}/`);
 export const updateEmail = (email: string): Promise<AxiosResponse> =>
   client.post('/auth/update-email/', { email });
+export const adminDeleteUser = (id: number): Promise<AxiosResponse> =>
+  client.delete(`/dashboard/users/${id}/delete/`);
+export const adminEditUser = (id: number, data: { xp?: number; streak?: number; email?: string }): Promise<AxiosResponse> =>
+  client.patch(`/dashboard/users/${id}/edit/`, data);
+export const adminResetXp = (id: number): Promise<AxiosResponse> =>
+  client.post(`/dashboard/users/${id}/reset-xp/`);
 
 // ── Tasks ─────────────────────────────────────────────────────
 export const getTasks = (

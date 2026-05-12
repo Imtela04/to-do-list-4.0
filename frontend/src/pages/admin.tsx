@@ -5,8 +5,9 @@ import {
   ResponsiveContainer, LineChart, Line,
 } from 'recharts';
 import { getAdminUsers, adminUnlockUser } from '@/api/services';
-import { Copy, RefreshCcw, RotateCcw, UserStar } from 'lucide-react';
+import { Check, Copy, Lock, RefreshCcw, UserStar } from 'lucide-react';
 import { Logo } from './home';
+import { adminResetXp, adminDeleteUser, adminEditUser } from '@/api/services';
 
 // ─── Shared stat card ────────────────────────────────────────────────────────
 
@@ -82,6 +83,17 @@ function UsersTab({ stats }: { stats: any }) {
 
   // New: live user table with unlock
   const [userList, setUserList] = useState<any[]>([]);
+  const [search, setSearch] = useState('');
+  const [filterLocked, setFilterLocked] = useState(false);
+  const [editingUser, setEditingUser] = useState<any | null>(null);
+  const [editForm, setEditForm] = useState({ xp: 0, streak: 0, email: '' });
+
+  const filtered = userList.filter(u => {
+    const matchSearch = u.username.toLowerCase().includes(search.toLowerCase()) ||
+      u.email?.toLowerCase().includes(search.toLowerCase());
+    const matchLocked = filterLocked ? u.locked : true;
+    return matchSearch && matchLocked;
+  });
   useEffect(() => { getAdminUsers().then(r => setUserList(r.data)); }, []);
 
   const unlock = (id: number) =>
@@ -119,6 +131,31 @@ function UsersTab({ stats }: { stats: any }) {
         </ResponsiveContainer>
       </section>
 
+      <div style={{ display: 'flex', gap: 10, marginBottom: 14, alignItems: 'center' }}>
+        <input
+          placeholder="Search by username or email"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          style={{
+            flex: 1, padding: '7px 12px', borderRadius: 8, fontSize: '0.82rem',
+            background: 'var(--bg-secondary)', border: '1px solid var(--border-medium)',
+            color: 'var(--text-primary)', outline: 'none',
+          }}
+        />
+        <button
+          onClick={() => setFilterLocked(f => !f)}
+          title='Locked users only'
+          style={{
+            padding: '6px 12px', borderRadius: 8, fontSize: '0.78rem', cursor: 'pointer',
+            color: filterLocked ? 'var(--priority-medium)' : 'var(--text-muted)',
+          }}
+        >
+          <Lock size={12}/>
+        </button>
+        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+          {filtered.length} / {userList.length}
+        </span>
+      </div>
       {/* ── Live user table (new) ── */}
       <section style={{ marginBottom: 32 }}>
         <h2 style={{ marginBottom: 16 }}>Recent Users</h2>
@@ -131,7 +168,7 @@ function UsersTab({ stats }: { stats: any }) {
             </tr>
           </thead>
           <tbody>
-            {userList.map(u => (
+            {filtered.map(u => (
               <tr key={u.id} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
                 <td style={{ padding: '10px 12px' }}>
                   <div style={{ fontWeight: 600 }}>{u.username}</div>
@@ -152,15 +189,43 @@ function UsersTab({ stats }: { stats: any }) {
                 <td style={{ padding: '10px 12px' }}>
                   {u.locked
                     ? <span style={{ color: 'var(--danger)', fontWeight: 600 }}>🔒 Locked</span>
-                    : <span style={{ color: 'var(--accent-tertiary)' }}>✓ OK</span>}
+                    : <span style={{ color: 'var(--accent-tertiary)'}} title='OK'><Check size={20}/></span>}
                 </td>
-                <td style={{ padding: '10px 12px' }}>
+                <td style={{ padding: '10px 12px', display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                   {u.locked && (
                     <button onClick={() => unlock(u.id)} style={{
-                      padding: '4px 10px', borderRadius: 6, fontSize: '0.72rem',
+                      padding: '4px 8px', borderRadius: 6, fontSize: '0.7rem',
                       background: 'rgba(255,68,68,0.1)', border: '1px solid var(--danger)',
                       color: 'var(--danger)', cursor: 'pointer',
                     }}>Unlock</button>
+                  )}
+                  <button onClick={() => {
+                    setEditingUser(u);
+                    setEditForm({ xp: u.xp, streak: u.streak, email: u.email || '' });
+                  }} style={{
+                    padding: '4px 8px', borderRadius: 6, fontSize: '0.7rem',
+                    background: 'rgba(124,106,255,0.1)', border: '1px solid var(--accent-primary)',
+                    color: 'var(--accent-primary)', cursor: 'pointer',
+                  }}>Edit</button>
+                  <button onClick={async () => {
+                    if (!confirm(`Reset XP for ${u.username}?`)) return;
+                    await adminResetXp(u.id);
+                    setUserList(list => list.map(x => x.id === u.id ? { ...x, xp: 0, level: 1, streak: 0 } : x));
+                  }} style={{
+                    padding: '4px 8px', borderRadius: 6, fontSize: '0.7rem',
+                    background: 'rgba(255,170,106,0.1)', border: '1px solid #ffaa6a',
+                    color: '#ffaa6a', cursor: 'pointer',
+                  }}>Reset XP</button>
+                  {!u.is_staff && (
+                    <button onClick={async () => {
+                      if (!confirm(`Permanently delete ${u.username}? This cannot be undone.`)) return;
+                      await adminDeleteUser(u.id);
+                      setUserList(list => list.filter(x => x.id !== u.id));
+                    }} style={{
+                      padding: '4px 8px', borderRadius: 6, fontSize: '0.7rem',
+                      background: 'rgba(255,68,68,0.08)', border: '1px solid var(--danger)',
+                      color: 'var(--danger)', cursor: 'pointer',
+                    }}>Delete</button>
                   )}
                 </td>
               </tr>
@@ -168,6 +233,63 @@ function UsersTab({ stats }: { stats: any }) {
           </tbody>
         </table>
       </section>
+      {editingUser && (
+        <div style={{
+          position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999,
+        }} onClick={() => setEditingUser(null)}>
+          <div style={{
+            background: 'var(--bg-card)', border: '1px solid var(--border-accent)',
+            borderRadius: 16, padding: 28, width: 340, display: 'flex', flexDirection: 'column', gap: 14,
+          }} onClick={e => e.stopPropagation()}>
+            <h3 style={{ margin: 0 }}>Edit: {editingUser.username}</h3>
+            {['xp', 'streak'].map(field => (
+              <label key={field} style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: '0.8rem' }}>
+                {field.toUpperCase()}
+                <input
+                  type="number" min={0}
+                  value={(editForm as any)[field]}
+                  onChange={e => setEditForm(f => ({ ...f, [field]: parseInt(e.target.value) || 0 }))}
+                  style={{
+                    padding: '6px 10px', borderRadius: 8, fontSize: '0.82rem',
+                    background: 'var(--bg-secondary)', border: '1px solid var(--border-medium)',
+                    color: 'var(--text-primary)',
+                  }}
+                />
+              </label>
+            ))}
+            <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: '0.8rem' }}>
+              EMAIL
+              <input
+                type="email" value={editForm.email}
+                onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))}
+                style={{
+                  padding: '6px 10px', borderRadius: 8, fontSize: '0.82rem',
+                  background: 'var(--bg-secondary)', border: '1px solid var(--border-medium)',
+                  color: 'var(--text-primary)',
+                }}
+              />
+            </label>
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+              <button onClick={() => setEditingUser(null)} style={{
+                padding: '7px 16px', borderRadius: 8, fontSize: '0.8rem', cursor: 'pointer',
+                background: 'var(--bg-glass)', border: '1px solid var(--border-subtle)', color: 'var(--text-muted)',
+              }}>Cancel</button>
+              <button onClick={async () => {
+                await adminEditUser(editingUser.id, editForm);
+                setUserList(list => list.map(x => x.id === editingUser.id
+                  ? { ...x, ...editForm, level: Math.floor(editForm.xp / 50) + 1 }
+                  : x
+                ));
+                setEditingUser(null);
+              }} style={{
+                padding: '7px 16px', borderRadius: 8, fontSize: '0.8rem', cursor: 'pointer',
+                background: 'var(--accent-primary)', border: 'none', color: 'white', fontWeight: 600,
+              }}>Save</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
@@ -261,7 +383,8 @@ export default function AdminDashboard() {
   const [stats, setStats]           = useState<any>(null);
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null);
   const [loading, setLoading]       = useState(false);
-  
+
+
   const [autoRefresh, setAutoRefresh] = useState(false);
   useEffect(() => {
     if (!autoRefresh) return;

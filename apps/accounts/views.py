@@ -424,3 +424,52 @@ def admin_users(request):
         'locked': bool(p.lockout_until and p.lockout_until > now),
         'failed_attempts': p.failed_login_attempts,
     } for p in profiles])
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def admin_delete_user(request, user_id):
+    if not request.user.is_staff:
+        return Response(status=403)
+    user = User.objects.filter(id=user_id).first()
+    if not user:
+        return Response({'detail': 'Not found'}, status=404)
+    if user.is_staff:
+        return Response({'detail': 'Cannot delete staff users.'}, status=400)
+    user.delete()
+    return Response(status=204)
+
+
+@api_view(['PATCH'])
+@permission_classes([IsAuthenticated])
+def admin_edit_user(request, user_id):
+    if not request.user.is_staff:
+        return Response(status=403)
+    profile = UserProfile.objects.filter(user_id=user_id).select_related('user').first()
+    if not profile:
+        return Response({'detail': 'Not found'}, status=404)
+    if 'xp' in request.data:
+        profile.xp = max(0, int(request.data['xp']))
+        from apps.accounts.models import calc_level
+        profile.level = calc_level(profile.xp)
+    if 'streak' in request.data:
+        profile.streak = max(0, int(request.data['streak']))
+    if 'email' in request.data:
+        profile.user.email = request.data['email']
+        profile.user.save()
+    profile.save()
+    return Response({'detail': 'Updated', 'xp': profile.xp, 'level': profile.level, 'streak': profile.streak})
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def admin_reset_xp(request, user_id):
+    if not request.user.is_staff:
+        return Response(status=403)
+    profile = UserProfile.objects.filter(user_id=user_id).first()
+    if not profile:
+        return Response({'detail': 'Not found'}, status=404)
+    profile.xp = 0
+    profile.level = 1
+    profile.streak = 0
+    profile.save()
+    return Response({'detail': 'Reset complete'})
