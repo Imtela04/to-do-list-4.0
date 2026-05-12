@@ -79,9 +79,9 @@ function OverviewTab({ stats }: { stats: any }) {
 // ─── Tab: Users ───────────────────────────────────────────────────────────────
 
 function UsersTab({ stats }: { stats: any }) {
-  const { users, level_distribution } = stats;          // ← kept from old version
+  const { users, level_distribution } = stats;
 
-  // New: live user table with unlock
+  // live user table with unlock
   const [userList, setUserList] = useState<any[]>([]);
   const [search, setSearch] = useState('');
   const [filterLocked, setFilterLocked] = useState(false);
@@ -242,7 +242,23 @@ function UsersTab({ stats }: { stats: any }) {
             background: 'var(--bg-card)', border: '1px solid var(--border-accent)',
             borderRadius: 16, padding: 28, width: 340, display: 'flex', flexDirection: 'column', gap: 14,
           }} onClick={e => e.stopPropagation()}>
-            <h3 style={{ margin: 0 }}>Edit: {editingUser.username}</h3>
+            <h3 style={{ margin: 0 }}>{editingUser.username}</h3>
+            {['username', 'email'].map(field => (
+            <label key={field} style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: '0.8rem' }}>
+              {field.toUpperCase()}
+              <input
+                placeholder={field == 'username' ? editingUser.username : editingUser.email}
+                type={field=='email' ? "email":"string"} 
+                value={(editForm as any)[field]}
+                onChange={e => setEditForm(f => ({ ...f, [field]: e.target.value }))}
+                style={{
+                  padding: '6px 10px', borderRadius: 8, fontSize: '0.82rem',
+                  background: 'var(--bg-secondary)', border: '1px solid var(--border-medium)',
+                  color: 'var(--text-primary)',
+                }}
+              />
+            </label>
+            ))}
             {['xp', 'streak'].map(field => (
               <label key={field} style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: '0.8rem' }}>
                 {field.toUpperCase()}
@@ -258,18 +274,7 @@ function UsersTab({ stats }: { stats: any }) {
                 />
               </label>
             ))}
-            <label style={{ display: 'flex', flexDirection: 'column', gap: 4, fontSize: '0.8rem' }}>
-              EMAIL
-              <input
-                type="email" value={editForm.email}
-                onChange={e => setEditForm(f => ({ ...f, email: e.target.value }))}
-                style={{
-                  padding: '6px 10px', borderRadius: 8, fontSize: '0.82rem',
-                  background: 'var(--bg-secondary)', border: '1px solid var(--border-medium)',
-                  color: 'var(--text-primary)',
-                }}
-              />
-            </label>
+           
             <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
               <button onClick={() => setEditingUser(null)} style={{
                 padding: '7px 16px', borderRadius: 8, fontSize: '0.8rem', cursor: 'pointer',
