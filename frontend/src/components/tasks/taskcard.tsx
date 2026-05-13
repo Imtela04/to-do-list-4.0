@@ -301,12 +301,14 @@ export default function TaskCard({ task }: { task: Task; index: number }) {
     const changes: Partial<TaskPayload> = {};
     if (editForm.title?.trim())       changes.title       = editForm.title.trim();
     if (editForm.description?.trim()) changes.description = editForm.description.trim();
-    if (editForm.priority)            changes.priority    = editForm.priority as TaskPayload['priority'];
+    changes.priority = editForm.priority as TaskPayload['priority'];
     if (editForm.category)            changes.category    = parseInt(editForm.category);
     if (editForm.deadline) {
       const d = new Date(editForm.deadline);
       if (!editForm.timed) d.setHours(23, 59, 0, 0);
       changes.deadline = d.toISOString();
+    } else {
+      changes.deadline = '';
     }
     if (Object.keys(changes).length > 0) {
       const updated: Task = {
@@ -413,7 +415,7 @@ export default function TaskCard({ task }: { task: Task; index: number }) {
                   key={p}
                   className={`${styles.prioBtn} ${editForm.priority === p ? styles.prioActive : ''}`}
                   style={{ borderColor: editForm.priority === p ? PRIORITY_MAP[p].color : 'transparent' }}
-                  onClick={() => set('priority', p)}
+                  onClick={() => set('priority', editForm.priority === p ? '' : p)}
                 >
                   {p}
                 </button>
