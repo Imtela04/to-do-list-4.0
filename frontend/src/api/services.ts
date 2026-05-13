@@ -6,6 +6,7 @@ import type {
   LoginCredentials, RegisterData,
   TaskPayload, CategoryPayload, NotePayload, ThemePayload,
   Subtask,
+  XpResult,
 } from '@/types';
 
 // ── Shared config helpers ─────────────────────────────────────
@@ -26,7 +27,8 @@ export const login = async (credentials: LoginCredentials): Promise<AxiosRespons
 
 export const logout            = ():                    Promise<AxiosResponse>         => client.post('/auth/logout/');
 export const getProfile        = ():                    Promise<AxiosResponse<Profile>> => client.get('/me/');
-export const deleteAccount     = (password: string):   Promise<AxiosResponse>         => client.delete('/auth/account/', { data: { password } });
+export const deleteAccount = (password: string): Promise<AxiosResponse> =>
+  client.post('/account/delete/', { password });
 
 export const requestPasswordReset = (email: string): Promise<AxiosResponse> =>
   client.post('/auth/password-reset/', { email }, silent);
@@ -62,21 +64,34 @@ export const adminResetXp = (id: number): Promise<AxiosResponse> =>
 export const adminViewNote = (note_id: number): Promise<AxiosResponse> =>
   client.get(`/admin/notes/${note_id}/view/`);
 // ── Tasks ─────────────────────────────────────────────────────
+interface PaginatedResponse<T> {
+  count:    number;
+  next:     string | null;
+  previous: string | null;
+  results:  T[];
+}
+
 export const getTasks = (
   params: Record<string, unknown> = {},
-): Promise<AxiosResponse<Task[] | { results: Task[] }>> =>
+): Promise<AxiosResponse<PaginatedResponse<Task>>> =>
   client.get('/tasks/', { params });
 
 export const createTask = (data: TaskPayload):                        Promise<AxiosResponse<Task>> => client.post('/tasks/', data, silent);
 export const updateTask = (id: number, data: Partial<TaskPayload>):  Promise<AxiosResponse<Task>> => client.patch(`/tasks/${id}/`, data);
 export const deleteTask = (id: number):                               Promise<AxiosResponse>       => client.delete(`/tasks/${id}/`);
 
+interface TaskResponse {
+  task:       Task;
+  xp_result:  XpResult | null;
+}
+
 export const toggleTask = (
   id: number,
   completed: boolean,
   pinned?: boolean,
-): Promise<AxiosResponse<Task>> =>
+): Promise<AxiosResponse<TaskResponse>> =>
   client.patch(`/tasks/${id}/`, { completed, ...(pinned !== undefined && { pinned }) });
+
 
 // ── Categories ────────────────────────────────────────────────
 export const getCategories  = ():                                        Promise<AxiosResponse<Category[]>> => client.get('/categories/');
@@ -111,7 +126,7 @@ export const updateSubtask = (
   taskId: number,
   subtaskId: number,
   data: Partial<{ title: string; completed: boolean }>,
-): Promise<AxiosResponse<Task>> =>
+): Promise<AxiosResponse<TaskResponse>> =>
   client.patch(`/tasks/${taskId}/subtasks/${subtaskId}/`, data);
 
 export const deleteSubtask = (

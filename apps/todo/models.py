@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils import timezone
 
 class Category(models.Model):
     name          = models.CharField(max_length=255)
@@ -38,6 +39,25 @@ class Todo(models.Model):
 
     def has_subtasks(self):
         return self.subtasks.exists()
+    
+
+    def sync_completion_from_subtasks(self):
+        """
+        Call after any subtask change.
+        Returns xp_result dict if completion changed, None otherwise.
+        Must be passed the user profile to award/deduct XP.
+        """
+        if not self.has_subtasks():
+            return None
+
+        should_complete = self.all_subtasks_complete()
+        if should_complete == self.completed:
+            return None  # no change needed
+
+        self.completed    = should_complete
+        self.completed_at = timezone.now() if should_complete else None
+        self.save(update_fields=['completed', 'completed_at'])
+        return should_complete  # caller handles XP
 
 
 class Subtask(models.Model):

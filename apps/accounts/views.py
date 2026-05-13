@@ -6,6 +6,7 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import UserCreateSerializer
 from apps.todo.serializers import TodoSerializer, CategorySerializer, StickyNoteSerializer
+from apps.accounts.permissions import IsStaff
 from .models import UserProfile, LEVEL_CONFIG, MAX_LEVEL
 from django.utils import timezone
 from datetime import timedelta
@@ -249,7 +250,7 @@ def record_successful_login(user):
     profile.save()
 
 
-@api_view(['DELETE'])
+@api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def delete_account(request):
     password = request.data.get('password', '')
@@ -361,10 +362,8 @@ def build_reset_email(username: str, link: str) -> str:
     """
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsStaff])
 def admin_stats(request):
-    if not request.user.is_staff:
-        return Response(status=403)
 
     now = timezone.now()
     week_ago = now - timedelta(days=7)

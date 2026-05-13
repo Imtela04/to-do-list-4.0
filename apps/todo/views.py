@@ -71,37 +71,6 @@ def check_limit(profile, resource):
 
     return True, None
 
-def sync_parent_completion(task, profile):
-    """
-    Called after a subtask is toggled.
-    If all subtasks complete → complete parent + award XP.
-    If any subtask incomplete → uncomplete parent + deduct XP.
-    Returns xp_result or None.
-    """
-    xp_result    = None
-    was_completed = task.completed
-
-    if task.all_subtasks_complete():
-        if not task.completed:
-            task.completed    = True
-            task.completed_at = timezone.now()
-            task.save()
-            xp_result = profile.award_xp(task)
-    else:
-        if task.completed:
-            task.completed    = False
-            task.completed_at = None
-            task.save()
-            profile.deduct_xp()
-            xp_result = {
-                'xp_gained':  -5,
-                'total_xp':   profile.xp,
-                'leveled_up': False,
-                'new_level':  profile.level,
-                'streak':     profile.streak,
-            }
-
-    return xp_result
 
 
 
@@ -136,9 +105,7 @@ def tasks(request):
         paginator = PageNumberPagination()
         paginator.page_size = 50
         page = paginator.paginate_queryset(todos, request)
-        if page is not None:
-            return paginator.get_paginated_response(TodoSerializer(page, many=True).data)
-        return Response(TodoSerializer(todos, many=True).data)
+        return paginator.get_paginated_response(TodoSerializer(page, many=True).data)
 
     # POST
     title = request.data.get('title', '').strip()
@@ -166,12 +133,15 @@ def tasks(request):
     return Response(TodoSerializer(task).data, status=status.HTTP_201_CREATED)
 
 
-@api_view(['PATCH', 'DELETE'])
+@api_view(['GET', 'PATCH', 'DELETE'])
 @permission_classes([IsAuthenticated])
 def task_detail(request, task_id):
     task = Todo.objects.filter(id=task_id, owner=request.user).first()
     if not task:
         return Response({'detail': 'Task not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        return Response({'task': TodoSerializer(task).data, 'xp_result': None})
 
     if request.method == 'DELETE':
         log(request, 'task_delete', detail=task.title)
@@ -233,13 +203,14 @@ def task_detail(request, task_id):
             }
 
     data = TodoSerializer(task).data
-    if xp_result:
-        data['xp_result'] = xp_result
     if 'completed' in request.data and task.completed and not was_completed:
         log(request, 'task_complete', detail=task.title)
         if xp_result and xp_result.get('leveled_up'):
             log(request, 'level_up', detail=f'Level {xp_result["new_level"]}')
-    return Response(data)
+    return Response({
+        'task':      data,
+        'xp_result': xp_result,  # None if no change
+    })
 
 # ── Categories ─────────────────────────────────────────────────────────────────
 
@@ -385,7 +356,20 @@ def subtask_detail(request, task_id, subtask_id):
         subtask.delete()
         # re-check parent after deletion
         profile   = get_profile(request.user)
-        xp_result = sync_parent_completion(task, profile)
+        changed = task.sync_completion_from_subtasks()
+        xp_result = None
+        if changed is True:
+            xp_result = profile.award_xp(task)
+        elif changed is False:
+            profile.deduct_xp()
+            xp_result = {
+                'xp_gained':  -5,
+                'total_xp':   profile.xp,
+                'leveled_up': False,
+                'new_level':  profile.level,
+                'streak':     profile.streak,
+            }
+
         data      = TodoSerializer(task).data
         if xp_result:
             data['xp_result'] = xp_result
@@ -408,9 +392,23 @@ def subtask_detail(request, task_id, subtask_id):
     subtask.save()
 
     profile   = get_profile(request.user)
-    xp_result = sync_parent_completion(task, profile)
+    changed = task.sync_completion_from_subtasks()
+    xp_result = None
+    if changed is True:
+        xp_result = profile.award_xp(task)
+    elif changed is False:
+        profile.deduct_xp()
+        xp_result = {
+            'xp_gained':  -5,
+            'total_xp':   profile.xp,
+            'leveled_up': False,
+            'new_level':  profile.level,
+            'streak':     profile.streak,
+        }
+
 
     data = TodoSerializer(task).data
-    if xp_result:
-        data['xp_result'] = xp_result
-    return Response(data)
+    return Response({
+        'task':      TodoSerializer(task).data,
+        'xp_result': xp_result,  # None if no change
+    })

@@ -5,11 +5,11 @@ import type { Task } from '@/types';
 export function useTasksQuery(enabled = !!localStorage.getItem('authToken')): UseQueryResult<Task[]> {
   return useQuery({
     queryKey: ['tasks'],
-    queryFn:  async () => {
+        queryFn: async () => {
       const res = await getTasks();
-      const data = res.data;
-      return 'results' in data ? data.results : data;
+      return res.data.results;
     },
+
     enabled,
     retry: false,
   });

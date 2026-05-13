@@ -127,9 +127,6 @@ export default function TaskCard({ task }: { task: Task; index: number }) {
   const rollback = (ctx: MutationContext) =>
     queryClient.setQueryData(['tasks'], ctx.previous);
 
-  const handleXpResult = (data: { xp_result?: XpResult }) => {
-    if (data.xp_result) updateXp(data.xp_result);
-  };
 
   // ── Mutations ──────────────────────────────────────────────
   const toggleMutation = useMutation({
@@ -145,7 +142,11 @@ export default function TaskCard({ task }: { task: Task; index: number }) {
       });
       return { previous };
     },
-    onSuccess: (res) => handleXpResult(res.data),
+    onSuccess: (res) => {
+      optimisticUpdate(res.data.task);
+      if (res.data.xp_result) updateXp(res.data.xp_result);
+    },
+
     onError:   (_e: Error, _v: ToggleMutationVars, ctx: MutationContext | undefined) => { if (ctx) rollback(ctx); },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
   });
@@ -202,9 +203,10 @@ export default function TaskCard({ task }: { task: Task; index: number }) {
       return { previous };
     },
     onSuccess: (res) => {
-      optimisticUpdate(res.data as unknown as Task);
-      handleXpResult(res.data as unknown as { xp_result?: XpResult });
+      optimisticUpdate(res.data.task);
+      if (res.data.xp_result) updateXp(res.data.xp_result);
     },
+
     onError:   (_e: Error, _v: unknown, ctx: MutationContext | undefined) => { if (ctx) rollback(ctx); },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
   });
@@ -222,9 +224,10 @@ export default function TaskCard({ task }: { task: Task; index: number }) {
       return { previous };
     },
     onSuccess: (res) => {
-      optimisticUpdate(res.data as unknown as Task);
-      handleXpResult(res.data as unknown as { xp_result?: XpResult });
+      optimisticUpdate(res.data.task);
+      if (res.data.xp_result) updateXp(res.data.xp_result);
     },
+
     onError:   (_e: Error, _v: unknown, ctx: MutationContext | undefined) => { if (ctx) rollback(ctx); },
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
   });
