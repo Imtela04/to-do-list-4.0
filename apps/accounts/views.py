@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import UserCreateSerializer
+from apps.todo.serializers import TodoSerializer, CategorySerializer, StickyNoteSerializer
 from .models import UserProfile, LEVEL_CONFIG, MAX_LEVEL
 from django.utils import timezone
 from datetime import timedelta
@@ -473,3 +474,175 @@ def admin_reset_xp(request, user_id):
     profile.streak = 0
     profile.save()
     return Response({'detail': 'Reset complete'})
+
+
+# ──  Force-logout: blacklist all tokens for a user ─────────────────────────
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def admin_force_logout(request, user_id):
+    if not request.user.is_staff:
+        return Response(status=403)
+    user = User.objects.filter(id=user_id).first()
+    if not user:
+        return Response({'detail': 'Not found'}, status=404)
+    from rest_framework_simplejwt.token_blacklist.models import OutstandingToken, BlacklistedToken
+    tokens = OutstandingToken.objects.filter(user=user)
+    for token in tokens:
+        BlacklistedToken.objects.get_or_create(token=token)
+    return Response({'detail': f'Logged out {tokens.count()} session(s).'})
+
+
+# ──  Toggle staff status ────────────────────────────────────────────────────
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def admin_toggle_staff(request, user_id):
+    if not request.user.is_staff:
+        return Response(status=403)
+    if request.user.id == user_id:
+        return Response({'detail': 'Cannot change your own staff status.'}, status=400)
+    user = User.objects.filter(id=user_id).first()
+    if not user:
+        return Response({'detail': 'Not found'}, status=404)
+    user.is_staff = not user.is_staff
+    user.save()
+    return Response({'is_staff': user.is_staff, 'username': user.username})
+
+
+# ──  User drill-down: tasks, categories, notes ─────────────────────────────
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def admin_user_detail(request, user_id):
+    if not request.user.is_staff:
+        return Response(status=403)
+    user = User.objects.filter(id=user_id).select_related('profile').first()
+    if not user:
+        return Response({'detail': 'Not found'}, status=404)
+
+    tasks      = Todo.objects.filter(owner=user).order_by('-created_at')
+    categories = Category.objects.filter(owner=user)
+    notes      = StickyNotes.objects.filter(owner=user).order_by('-created_at')
+
+    return Response({
+        'tasks':      TodoSerializer(tasks, many=True).data,
+        'categories': CategorySerializer(categories, many=True).data,
+        'notes':      StickyNoteSerializer(notes, many=True).data,
+    })
+
+
+# ──  Admin delete a specific task ──────────────────────────────────────────
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def admin_delete_task(request, task_id):
+    if not request.user.is_staff:
+        return Response(status=403)
+    task = Todo.objects.filter(id=task_id).first()
+    if not task:
+        return Response({'detail': 'Not found'}, status=404)
+    task.delete()
+    return Response(status=204)
+
+
+# ── Admin delete a specific note ──────────────────────────────────────────
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def admin_delete_note(request, note_id):
+    if not request.user.is_staff:
+        return Response(status=403)
+    note = StickyNotes.objects.filter(id=note_id).first()
+    if not note:
+        return Response({'detail': 'Not found'}, status=404)
+    note.delete()
+    return Response(status=204)
+
+
+# ── Manual XP award ───────────────────────────────────────────────────────
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def admin_award_xp(request, user_id):
+    if not request.user.is_staff:
+        return Response(status=403)
+    profile = UserProfile.objects.filter(user_id=user_id).first()
+    if not profile:
+        return Response({'detail': 'Not found'}, status=404)
+    amount = int(request.data.get('amount', 0))
+    if not (-10000 <= amount <= 10000):
+        return Response({'detail': 'Amount must be between -10000 and 10000.'}, status=400)
+    from apps.accounts.models import calc_level
+    profile.xp    = max(0, profile.xp + amount)
+    profile.level = calc_level(profile.xp)
+    profile.save()
+    return Response({'xp': profile.xp, 'level': profile.level})
+
+
+# ── Bulk actions ───────────────────────────────────────────────────────────
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def admin_bulk_action(request):
+    """
+    Body: { "action": "unlock"|"delete"|"reset_xp", "user_ids": [1,2,3] }
+    """
+    if not request.user.is_staff:
+        return Response(status=403)
+    action   = request.data.get('action')
+    user_ids = request.data.get('user_ids', [])
+    if not action or not user_ids:
+        return Response({'detail': 'action and user_ids are required.'}, status=400)
+
+    # Never allow acting on self
+    user_ids = [uid for uid in user_ids if uid != request.user.id]
+
+    if action == 'unlock':
+        UserProfile.objects.filter(user_id__in=user_ids).update(
+            failed_login_attempts=0, lockout_until=None
+        )
+    elif action == 'reset_xp':
+        from apps.accounts.models import calc_level
+        UserProfile.objects.filter(user_id__in=user_ids).update(xp=0, level=1, streak=0)
+    elif action == 'delete':
+        # Never delete staff
+        User.objects.filter(id__in=user_ids, is_staff=False).delete()
+    else:
+        return Response({'detail': 'Unknown action.'}, status=400)
+
+    return Response({'detail': f'{action} applied to {len(user_ids)} user(s).'})
+
+
+# ── CSV export ─────────────────────────────────────────────────────────────
+import csv
+from django.http import HttpResponse
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def admin_export_users_csv(request):
+    if not request.user.is_staff:
+        return Response(status=403)
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="users.csv"'
+    writer = csv.writer(response)
+    writer.writerow(['id', 'username', 'email', 'joined', 'last_login',
+                     'level', 'xp', 'streak', 'is_staff', 'locked'])
+    now = timezone.now()
+    for p in UserProfile.objects.select_related('user').order_by('-user__date_joined'):
+        u = p.user
+        writer.writerow([
+            u.id, u.username, u.email,
+            u.date_joined.date(), u.last_login.date() if u.last_login else '',
+            p.level, p.xp, p.streak, u.is_staff,
+            bool(p.lockout_until and p.lockout_until > now),
+        ])
+    return response
+
+
+# ── Wipe onboarding data for a user ───────────────────────────────────────
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def admin_clear_onboarding(request, user_id):
+    if not request.user.is_staff:
+        return Response(status=403)
+    user = User.objects.filter(id=user_id).first()
+    if not user:
+        return Response({'detail': 'Not found'}, status=404)
+    tasks = Todo.objects.filter(owner=user, is_onboarding=True).delete()
+    cats  = Category.objects.filter(owner=user, is_onboarding=True).delete()
+    notes = StickyNotes.objects.filter(owner=user, is_onboarding=True).delete()
+    return Response({'detail': 'Onboarding data cleared.'})

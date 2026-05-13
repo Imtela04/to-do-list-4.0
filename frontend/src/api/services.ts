@@ -36,18 +36,18 @@ export const confirmPasswordReset = (
 ): Promise<AxiosResponse> =>
   client.post('/auth/password-reset/confirm/', { uid, token, password }, silent);
 
-export const getAdminStats = (): Promise<AxiosResponse> => client.get('/dashboard/stats/');
-export const getAdminUsers = (): Promise<AxiosResponse> => client.get('/dashboard/users/');
+export const getAdminStats = (): Promise<AxiosResponse> => client.get('/admin/stats/');
+export const getAdminUsers = (): Promise<AxiosResponse> => client.get('/admin/users/');
 export const adminUnlockUser = (id: number): Promise<AxiosResponse> =>
-  client.post(`/dashboard/unlock/${id}/`);
+  client.post(`/admin/unlock/${id}/`);
 export const updateEmail = (email: string): Promise<AxiosResponse> =>
   client.post('/auth/update-email/', { email });
 export const adminDeleteUser = (id: number): Promise<AxiosResponse> =>
-  client.delete(`/dashboard/users/${id}/delete/`);
+  client.delete(`/admin/users/${id}/delete/`);
 export const adminEditUser = (id: number, data: { xp?: number; streak?: number; email?: string }): Promise<AxiosResponse> =>
-  client.patch(`/dashboard/users/${id}/edit/`, data);
+  client.patch(`/admin/users/${id}/edit/`, data);
 export const adminResetXp = (id: number): Promise<AxiosResponse> =>
-  client.post(`/dashboard/users/${id}/reset-xp/`);
+  client.post(`/admin/users/${id}/reset-xp/`);
 
 // ── Tasks ─────────────────────────────────────────────────────
 export const getTasks = (
