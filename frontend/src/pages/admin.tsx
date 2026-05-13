@@ -9,7 +9,7 @@ import {
   adminUserDetail, adminAwardXp, adminBulkAction, adminClearOnboarding,
   adminDeleteNote, adminExportCsv,
 } from '@/api/services';
-import { ArrowDown, Bolt, Check, Copy, Download, Edit, Eye, FileSpreadsheet, Lock, LogOut, RefreshCcw, RotateCcw, ShieldUser, Trash2, User, UserStar } from 'lucide-react';
+import { Ban, Bolt, ChartNoAxesCombined, Check, ClipboardClock, Copy, Download, Edit, Eye, Flame, ListTodo, Lock, LogOut, MonitorCog, RefreshCcw, RotateCcw, ShieldUser, SquareCheck, Trash2, TriangleAlert, Trophy, User, Users, UserStar } from 'lucide-react';
 import { Logo } from './home';
 import { adminResetXp, adminDeleteUser, adminEditUser, adminAuditLog, adminViewNote } from '@/api/services';
 import { useNavigate } from 'react-router-dom';
@@ -55,7 +55,7 @@ function OverviewTab({ stats }: { stats: any }) {
           <StatCard label="Active (30d)"       value={users.active_30d} color="var(--accent-secondary)"
             sub={`${Math.round(users.active_30d / Math.max(users.total, 1) * 100)}% of total`} />
           <StatCard label="New (7d)"           value={users.new_7d}     color="var(--accent-primary)" />
-          <StatCard label="🍅 Pomodoros Today" value={pomodoros_today} />
+          <StatCard label="Pomodoros Today" value={pomodoros_today} />
         </div>
       </section>
 
@@ -259,10 +259,10 @@ function UsersTab({ stats }: { stats: any }) {
                 <td className={styles.cellMuted}>{u.last_login ?? '—'}</td>
                 <td>{u.level}</td>
                 <td className={styles.cellAccent}>{u.xp}</td>
-                <td className={styles.cellStreak}>{u.streak > 0 ? `${u.streak}🔥` : '—'}</td>
+                <td className={styles.cellStreak}>{u.streak > 0 ? `${u.streak}` : <Ban size={15}/>}{u.streak > 0 ? <Flame size={15}/> : ''}</td>
                 <td>{u.locked
-                  ? <span className={styles.statusLocked}>🔒 Locked</span>
-                  : <span className={styles.statusOk}><Check size={20}/></span>}
+                  ? <span title='Locked' className={styles.statusLocked}><Lock size={20}/></span>
+                  : <span title='OK' className={styles.statusOk}><Check size={20}/></span>}
                 </td>
                 <td className={styles.actionCell}>
                   <button title='View' className={styles.btnEdit} onClick={() => openDrill(u)}><Eye size={15}/></button>
@@ -435,7 +435,7 @@ function LeaderboardTab({ stats }: { stats: any }) {
               <tr key={u.user__username} className={styles.lbRow}>
                 <td className={styles.lbCellRank}>{i + 1}</td>
                 <td className={styles.lbCellName}>{u.user__username}</td>
-                <td className={styles.lbCellStreak}>{u.streak}🔥</td>
+                <td className={styles.lbCellStreak}>{u.streak}<Flame size={15}/></td>
               </tr>
             ))}
           </tbody>
@@ -490,9 +490,9 @@ function SystemTab({ stats }: { stats: any }) {
         <table className={styles.table}>
           <tbody>
             {[
-              ['Locked accounts',         users.locked,                   users.locked > 0 ? '⚠️' : '✅'],
-              ['New users (7d)',           users.new_7d,                   '📈'],
-              ['Task completion rate',     `${tasks.completion_rate}%`,    tasks.completion_rate > 50 ? '✅' : '⚠️'],
+              ['Locked accounts',         users.locked,                   users.locked > 0 ? <TriangleAlert size={15}/> : <SquareCheck size={15} />],
+              ['New users (7d)',           users.new_7d,                   <ChartNoAxesCombined size={15} />],
+              ['Task completion rate',     `${tasks.completion_rate}%`,    tasks.completion_rate > 50 ?  <SquareCheck size={15}/> : <TriangleAlert size={15}/>],
             ].map(([label, value, icon]) => (
               <tr key={label as string} className={styles.tableRow}>
                 <td style={{ padding:'8px 12px', color:'var(--text-muted)', fontSize:'0.8rem' }}>{icon} {label}</td>
@@ -612,12 +612,12 @@ function AuditTab() {
 }
 
 const TABS = [
-  { id: 'overview',    label: '📊 Overview'   },
-  { id: 'users',       label: '👥 Users'       },
-  { id: 'leaderboard', label: '🏆 Leaderboard' },
-  { id: 'tasks',       label: '✅ Tasks'        },
-  { id: 'system',      label: '🛡️ System'      },
-  { id: 'audit',       label: '📋 Audit Log'   },
+  { id: 'overview',    icon: <ChartNoAxesCombined size={20}/>, label: ' Overview'   },
+  { id: 'users',       icon:<Users size={20}/>,                label: ' Users'},
+  { id: 'leaderboard', icon:<Trophy size={20}/>,                label: ' Leaderboard' },
+  { id: 'tasks',       icon:<ListTodo size={20}/>,                label: ' Tasks'        },
+  { id: 'system',      icon:<MonitorCog size={20}/>,                label: ' System'      },
+  { id: 'audit',       icon:<ClipboardClock size={20}/>,                label: ' Audit Log'   },
 ] as const;
 
 type Tab = typeof TABS[number]['id'];
@@ -661,7 +661,7 @@ export default function AdminDashboard() {
             onClick={() => setTab(t.id)}
             className={`${styles.navBtn} ${tab === t.id ? styles.navBtnActive : ''}`}
           >
-            {t.label}
+            {t.icon}{t.label}
           </button>
         ))}
       </nav>
