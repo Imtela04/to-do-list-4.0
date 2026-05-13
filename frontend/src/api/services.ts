@@ -46,9 +46,21 @@ export const adminDeleteUser = (id: number): Promise<AxiosResponse> =>
   client.delete(`/admin/users/${id}/delete/`);
 export const adminEditUser = (id: number, data: { xp?: number; streak?: number; email?: string }): Promise<AxiosResponse> =>
   client.patch(`/admin/users/${id}/edit/`, data);
+export const adminAuditLog = (params: { action?: string; user_id?: number; search?: string } = {}): Promise<AxiosResponse> =>
+  client.get('/admin/audit-log/', { params });
+export const adminForceLogout     = (id: number):                            Promise<AxiosResponse> => client.post(`/admin/users/${id}/force-logout/`);
+export const adminToggleStaff     = (id: number):                            Promise<AxiosResponse> => client.post(`/admin/users/${id}/toggle-staff/`);
+export const adminUserDetail      = (id: number):                            Promise<AxiosResponse> => client.get(`/admin/users/${id}/detail/`);
+export const adminAwardXp         = (id: number, amount: number):            Promise<AxiosResponse> => client.post(`/admin/users/${id}/award-xp/`, { amount });
+export const adminBulkAction      = (action: string, user_ids: number[]):    Promise<AxiosResponse> => client.post('/admin/bulk-action/', { action, user_ids });
+export const adminClearOnboarding = (id: number):                            Promise<AxiosResponse> => client.post(`/admin/users/${id}/clear-onboarding/`);
+export const adminDeleteNote      = (note_id: number):                       Promise<AxiosResponse> => client.delete(`/admin/notes/${note_id}/delete/`);
+export const adminExportCsv       = ():                                      Promise<AxiosResponse> =>
+  client.get('/admin/export/users.csv', { responseType: 'blob' } as Record<string, unknown>);
 export const adminResetXp = (id: number): Promise<AxiosResponse> =>
   client.post(`/admin/users/${id}/reset-xp/`);
-
+export const adminViewNote = (note_id: number): Promise<AxiosResponse> =>
+  client.get(`/admin/notes/${note_id}/view/`);
 // ── Tasks ─────────────────────────────────────────────────────
 export const getTasks = (
   params: Record<string, unknown> = {},

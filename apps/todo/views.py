@@ -11,6 +11,7 @@ from .models import Todo, Category, StickyNotes, Subtask
 from apps.accounts.models import UserProfile
 from django.utils import timezone
 import bleach
+from apps.accounts.views import log, get_resource_count
 
 ALLOWED_TAGS = ['p', 'br', 'strong', 'em', 'img', 'ul', 'ol', 'li']
 ALLOWED_ATTRS = {'img': ['src', 'alt', 'style']}
@@ -24,15 +25,6 @@ def normalize_note_html(html: str) -> str:
     return html
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
-
-def get_resource_count(user, resource: str) -> int:
-    if resource == 'tasks':
-        return Todo.objects.filter(owner=user, is_onboarding=False).count()
-    if resource == 'categories':
-        return Category.objects.filter(owner=user, is_onboarding=False).count()
-    if resource == 'notes':
-        return StickyNotes.objects.filter(owner=user, is_onboarding=False).count()
-    return 0
 
 def resolve_category(value, user):
     if not value:
@@ -170,6 +162,7 @@ def tasks(request):
         category_id=resolve_category(request.data.get('category'), request.user),
         priority=request.data.get('priority', 'low'),
     )
+    log(request, 'task_create', detail=task.title)
     return Response(TodoSerializer(task).data, status=status.HTTP_201_CREATED)
 
 
@@ -181,6 +174,7 @@ def task_detail(request, task_id):
         return Response({'detail': 'Task not found'}, status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'DELETE':
+        log(request, 'task_delete', detail=task.title)
         task.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -241,6 +235,10 @@ def task_detail(request, task_id):
     data = TodoSerializer(task).data
     if xp_result:
         data['xp_result'] = xp_result
+    if 'completed' in request.data and task.completed and not was_completed:
+        log(request, 'task_complete', detail=task.title)
+        if xp_result and xp_result.get('leveled_up'):
+            log(request, 'level_up', detail=f'Level {xp_result["new_level"]}')
     return Response(data)
 
 # ── Categories ─────────────────────────────────────────────────────────────────
@@ -267,6 +265,7 @@ def categories(request):
         return Response({'detail': message, 'limit_reached': True}, status=status.HTTP_403_FORBIDDEN)
 
     cat = Category.objects.create(name=name, icon=icon, owner=request.user)
+    log(request, 'cat_create', detail=cat.name)
     return Response(CategorySerializer(cat).data, status=status.HTTP_201_CREATED)
 
 
@@ -278,6 +277,7 @@ def category_detail(request, cat_id):
         return Response({'detail': 'Category not found'}, status=status.HTTP_404_NOT_FOUND)
 
     if request.method == 'DELETE':
+        log(request, 'cat_delete', detail=cat.name)
         cat.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -314,6 +314,7 @@ def notes(request):
         strip=True,
     )
     note = StickyNotes.objects.create(note=clean_content, owner=request.user)
+    log(request, 'note_create')
     return Response(StickyNoteSerializer(note).data, status=status.HTTP_201_CREATED)
 
 
@@ -323,6 +324,7 @@ def note_detail(request, pk):
     note = get_object_or_404(StickyNotes, pk=pk, owner=request.user)
 
     if request.method == 'DELETE':
+        log(request, 'note_delete')
         note.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 

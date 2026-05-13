@@ -15,10 +15,12 @@ urlpatterns = [
     path('admin/users/<int:user_id>/award-xp/',     views.admin_award_xp,        name='admin-award-xp'),
     path('admin/users/<int:user_id>/clear-onboarding/', views.admin_clear_onboarding, name='admin-clear-onboarding'),
     path('admin/tasks/<int:task_id>/delete/',        views.admin_delete_task,     name='admin-delete-task'),
+    path('admin/notes/<int:note_id>/view/', views.admin_view_note, name='admin-view-note'),
     path('admin/notes/<int:note_id>/delete/',        views.admin_delete_note,     name='admin-delete-note'),
     path('admin/bulk-action/',                       views.admin_bulk_action,     name='admin-bulk-action'),
     path('admin/export/users.csv',                   views.admin_export_users_csv, name='admin-export-csv'),
-
+    path('admin/audit-log/', views.admin_audit_log, name='admin-audit-log'),
+    
     path('register/',                    views.register),
     path('user/theme/',                  ThemeView.as_view(), name='user-theme'),
     path('me/',                          views.me,            name='me'),

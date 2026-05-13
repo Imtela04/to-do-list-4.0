@@ -18,8 +18,33 @@ from django.utils.encoding import force_bytes, force_str
 from django.contrib.auth.models import User
 from django.conf import settings
 import resend
-from apps.todo.views import get_resource_count
 from django.db.models import Count
+from django.db import models
+
+def get_resource_count(user, resource: str) -> int:
+    if resource == 'tasks':
+        return Todo.objects.filter(owner=user, is_onboarding=False).count()
+    if resource == 'categories':
+        return Category.objects.filter(owner=user, is_onboarding=False).count()
+    if resource == 'notes':
+        return StickyNotes.objects.filter(owner=user, is_onboarding=False).count()
+    return 0
+
+# ── Audit log helper ───────────────────────────────────────────────────────────
+def log(request_or_user, action, *, target=None, detail=''):
+    """
+    Call as:  log(request, 'task_create', detail='Buy milk')
+              log(user,    'login_ok')
+    """
+    from .models import AuditLog
+    actor = getattr(request_or_user, 'user', request_or_user)
+    if not actor or not actor.is_authenticated:
+        actor = None
+    ip = None
+    if hasattr(request_or_user, 'META'):
+        x_forward = request_or_user.META.get('HTTP_X_FORWARDED_FOR', '')
+        ip = x_forward.split(',')[0].strip() or request_or_user.META.get('REMOTE_ADDR')
+    AuditLog.objects.create(actor=actor, target_user=target, action=action, detail=detail[:500], ip=ip)
 
 class RegistrationRateThrottle(AnonRateThrottle):
     scope = 'registration'
@@ -44,9 +69,11 @@ class LockableTokenObtainPairView(TokenObtainPairView):
                 response.data['access'] = str(token.access_token)
             if user:
                 record_successful_login(user)
+                log(request, 'login_ok', target=user, detail=user.username)              
             return response
         except Exception:
             record_failed_login(username)
+            log(request, 'login_fail', detail=username)
             raise
         
 class ThemeView(APIView):
@@ -176,6 +203,7 @@ def register(request):
     serializer = UserCreateSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
+        log(request, 'register', target=user, detail=user.username)
         create_onboarding_data(user)
         return Response(
             {'message': 'User created successfully'},
@@ -234,6 +262,7 @@ def delete_account(request):
     from rest_framework_simplejwt.token_blacklist.models import OutstandingToken
     OutstandingToken.objects.filter(user=request.user).delete()
     request.user.delete()
+    log(request, 'delete_account', target=request.user, detail=request.user.username)    
     return Response(status=status.HTTP_204_NO_CONTENT)
 
 @api_view(['GET'])
@@ -408,6 +437,7 @@ def admin_unlock_user(request, user_id):
     profile.failed_login_attempts = 0
     profile.lockout_until = None
     profile.save()
+    log(request, 'admin_unlock', target=profile.user, detail=f'by {request.user.username}')
     return Response({'detail': 'Unlocked'})
 
 @api_view(['GET'])
@@ -436,6 +466,7 @@ def admin_delete_user(request, user_id):
         return Response({'detail': 'Not found'}, status=404)
     if user.is_staff:
         return Response({'detail': 'Cannot delete staff users.'}, status=400)
+    log(request, 'admin_delete', target=user, detail=f'{user.username} by {request.user.username}')
     user.delete()
     return Response(status=204)
 
@@ -489,6 +520,7 @@ def admin_force_logout(request, user_id):
     tokens = OutstandingToken.objects.filter(user=user)
     for token in tokens:
         BlacklistedToken.objects.get_or_create(token=token)
+    log(request, 'admin_kick', target=user, detail=f'by {request.user.username}')
     return Response({'detail': f'Logged out {tokens.count()} session(s).'})
 
 
@@ -505,6 +537,7 @@ def admin_toggle_staff(request, user_id):
         return Response({'detail': 'Not found'}, status=404)
     user.is_staff = not user.is_staff
     user.save()
+    log(request, 'admin_staff', target=user, detail=f'is_staff={user.is_staff} by {request.user.username}')
     return Response({'is_staff': user.is_staff, 'username': user.username})
 
 
@@ -518,16 +551,27 @@ def admin_user_detail(request, user_id):
     if not user:
         return Response({'detail': 'Not found'}, status=404)
 
+    # Log the access — every single view is now on record
+    log(request, 'admin_view_user', target=user,
+        detail=f'{request.user.username} viewed data for {user.username}')
+
     tasks      = Todo.objects.filter(owner=user).order_by('-created_at')
     categories = Category.objects.filter(owner=user)
     notes      = StickyNotes.objects.filter(owner=user).order_by('-created_at')
+    note_data = [{
+    'id':         n.id,
+    'color':      n.color,
+    'created_at': n.created_at,
+    'length':     len(n.note or ''),   # shows size, not content
+    'preview':    None,                # no content
+} for n in notes]
+
 
     return Response({
         'tasks':      TodoSerializer(tasks, many=True).data,
         'categories': CategorySerializer(categories, many=True).data,
-        'notes':      StickyNoteSerializer(notes, many=True).data,
+        'notes':      note_data
     })
-
 
 # ──  Admin delete a specific task ──────────────────────────────────────────
 @api_view(['DELETE'])
@@ -551,6 +595,7 @@ def admin_delete_note(request, note_id):
     note = StickyNotes.objects.filter(id=note_id).first()
     if not note:
         return Response({'detail': 'Not found'}, status=404)
+    log(request, 'admin_note_del', target=note.owner, detail=f'note#{note_id} by {request.user.username}')
     note.delete()
     return Response(status=204)
 
@@ -571,6 +616,7 @@ def admin_award_xp(request, user_id):
     profile.xp    = max(0, profile.xp + amount)
     profile.level = calc_level(profile.xp)
     profile.save()
+    log(request, 'admin_award_xp', target=profile.user, detail=f'{amount:+d} XP by {request.user.username}')
     return Response({'xp': profile.xp, 'level': profile.level})
 
 
@@ -603,9 +649,48 @@ def admin_bulk_action(request):
         User.objects.filter(id__in=user_ids, is_staff=False).delete()
     else:
         return Response({'detail': 'Unknown action.'}, status=400)
-
+    log(request, 'admin_bulk', detail=f'{action} on {len(user_ids)} users by {request.user.username}')
     return Response({'detail': f'{action} applied to {len(user_ids)} user(s).'})
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def admin_audit_log(request):
+    if not request.user.is_staff:
+        return Response(status=403)
+
+    from .models import AuditLog
+
+    qs = AuditLog.objects.select_related('actor', 'target_user').all()
+
+    # filters
+    action = request.query_params.get('action')
+    if action:
+        qs = qs.filter(action=action)
+
+    user_id = request.query_params.get('user_id')
+    if user_id:
+        qs = qs.filter(models.Q(actor_id=user_id) | models.Q(target_user_id=user_id))
+
+    search = request.query_params.get('search')
+    if search:
+        qs = qs.filter(
+            models.Q(actor__username__icontains=search)  |
+            models.Q(target_user__username__icontains=search) |
+            models.Q(detail__icontains=search)
+        )
+
+    qs = qs[:200]  # cap at 200 rows
+
+    return Response([{
+        'id':          e.id,
+        'action':      e.action,
+        'action_label': e.get_action_display(),
+        'actor':       e.actor.username  if e.actor       else None,
+        'target':      e.target_user.username if e.target_user else None,
+        'detail':      e.detail,
+        'ip':          e.ip,
+        'created_at':  e.created_at.strftime('%Y-%m-%d %H:%M:%S'),
+    } for e in qs])
 
 # ── CSV export ─────────────────────────────────────────────────────────────
 import csv
@@ -646,3 +731,18 @@ def admin_clear_onboarding(request, user_id):
     cats  = Category.objects.filter(owner=user, is_onboarding=True).delete()
     notes = StickyNotes.objects.filter(owner=user, is_onboarding=True).delete()
     return Response({'detail': 'Onboarding data cleared.'})
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def admin_view_note(request, note_id):
+    if not request.user.is_staff:
+        return Response(status=403)
+
+    note = StickyNotes.objects.filter(id=note_id).select_related('owner').first()
+    if not note:
+        return Response({'detail': 'Not found'}, status=404)
+
+    log(request, 'admin_view_note', target=note.owner,
+        detail=f'{request.user.username} read note#{note_id} belonging to {note.owner.username}')
+
+    return Response(StickyNoteSerializer(note).data)

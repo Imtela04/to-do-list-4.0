@@ -92,6 +92,10 @@ export default function Register() {
             {loading ? 'Registering...' : 'Register'}
           </button>
         </form>
+        <p style={{ fontSize:'0.72rem', color:'var(--text-muted)', marginTop:'1rem', lineHeight:1.6 }}>
+          By registering you agree that staff may access account data for moderation.
+          All staff access is logged and audited.
+        </p>
         <p className={styles.registerText}>
           Already have an account?{' '}
           <Link to="/login" className={styles.registerLink}>Login here</Link>

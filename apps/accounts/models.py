@@ -124,3 +124,44 @@ class UserProfile(models.Model):
             'streak':     self.streak,
             'pomodoros_today': self.pomodoros_today,
         }
+
+class AuditLog(models.Model):
+    ACTION_CHOICES = [
+        ('login_ok',        'Login success'),
+        ('login_fail',      'Login failed'),
+        ('register',        'Registered'),
+        ('task_create',     'Task created'),
+        ('task_complete',   'Task completed'),
+        ('task_delete',     'Task deleted'),
+        ('note_create',     'Note created'),
+        ('note_delete',     'Note deleted'),
+        ('cat_create',      'Category created'),
+        ('cat_delete',      'Category deleted'),
+        ('admin_unlock',    'Admin: unlocked'),
+        ('admin_delete',    'Admin: deleted user'),
+        ('admin_award_xp',  'Admin: awarded XP'),
+        ('admin_reset_xp',  'Admin: reset XP'),
+        ('admin_kick',      'Admin: force logout'),
+        ('admin_staff',     'Admin: toggled staff'),
+        ('admin_note_del',  'Admin: deleted note'),
+        ('admin_bulk',      'Admin: bulk action'),
+        ('delete_account',  'Account deleted'),
+        ('level_up',        'Level up'),
+        ('admin_view_user', 'Admin: viewed user data'),
+        ('admin_view_note', 'Admin: read note content'),
+    ]
+
+    actor       = models.ForeignKey(User, null=True, blank=True,
+                                    on_delete=models.SET_NULL, related_name='audit_actions')
+    target_user = models.ForeignKey(User, null=True, blank=True,
+                                    on_delete=models.SET_NULL, related_name='audit_events')
+    action      = models.CharField(max_length=40, choices=ACTION_CHOICES)
+    detail      = models.CharField(max_length=500, blank=True)
+    ip          = models.GenericIPAddressField(null=True, blank=True)
+    created_at  = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.action} by {self.actor} @ {self.created_at:%Y-%m-%d %H:%M}'

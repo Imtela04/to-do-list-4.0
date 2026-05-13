@@ -276,8 +276,6 @@
   border-radius: 6px;
   font-size: 0.7rem;
   font-family: var(--font-body);
-  background: rgba(124, 106, 255, 0.1);
-  border: 1px solid var(--accent-primary);
   color: var(--accent-primary);
   cursor: pointer;
   transition: opacity var(--transition-fast);
@@ -292,8 +290,6 @@
   border-radius: 6px;
   font-size: 0.7rem;
   font-family: var(--font-body);
-  background: rgba(255, 170, 106, 0.1);
-  border: 1px solid #ffaa6a;
   color: #ffaa6a;
   cursor: pointer;
   transition: opacity var(--transition-fast);
@@ -308,8 +304,6 @@
   border-radius: 6px;
   font-size: 0.7rem;
   font-family: var(--font-body);
-  background: rgba(255, 68, 68, 0.08);
-  border: 1px solid var(--danger);
   color: var(--danger);
   cursor: pointer;
   transition: opacity var(--transition-fast);
@@ -538,3 +532,7 @@
   grid-template-columns: 1fr 1fr;
   gap: 24px;
 }
+
+/* ── Drill modal scroll ── */
+.modal table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+.modal td    { padding: 4px 6px; border-bottom: 1px solid var(--border-subtle); }
