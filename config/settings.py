@@ -39,6 +39,7 @@ if not DEBUG:
     CSRF_COOKIE_SECURE               = True
     SECURE_BROWSER_XSS_FILTER        = True
     SECURE_CONTENT_TYPE_NOSNIFF      = True
+    CSRF_COOKIE_HTTPONLY = True
   
 # Application definition
 CSRF_TRUSTED_ORIGINS = [
@@ -218,3 +219,6 @@ STATICFILES_DIRS = [
 STATIC_ROOT = BASE_DIR / 'staticfiles'  # where collectstatic puts everything
 WHITENOISE_ROOT = BASE_DIR / 'staticfiles'
 WHITENOISE_INDEX_FILE = True
+
+SESSION_COOKIE_AGE = 3600          # 1 hour
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
