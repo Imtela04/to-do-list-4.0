@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Sun, Moon, Pipette, User, Power, Flame, Star, Trash, ShieldCogCorner, TriangleAlert } from 'lucide-react';
+import { Sun, Moon, Pipette, User, Power, Flame, Star, Trash, ShieldCogCorner, TriangleAlert, Bell, BellCheck, BellOff } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { useTheme } from '@/context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
@@ -54,6 +54,12 @@ export default function UserNav() {
   const [emailMsg, setEmailMsg]                            = useState('');
 
   const queryClient = useQueryClient();
+  const [notifStatus, setNotifStatus] = useState(Notification.permission);
+
+  const requestNotifs = async () => {
+    const result = await Notification.requestPermission();
+    setNotifStatus(result);
+  };
 
   const handleEmailSave = async () => {
     try {
@@ -142,10 +148,12 @@ export default function UserNav() {
           <div className={styles.drawerAvatar}><User /></div>
           <div className={styles.drawerUser}>
             <span className={styles.drawerUsername}>{username ?? 'User'}</span>
+
             <span className={styles.drawerRole}>
               <Star size={10} /> {LEVEL_LABELS[level]} · Lv{level}
             </span>
           </div>
+            
             {isStaff && (
               <>
                 <div className={styles.divider} />
@@ -235,6 +243,7 @@ export default function UserNav() {
                 <Pipette size={14} />
               </button>
             </div>
+            
               <button
                 className={styles.dangerBtn}
                 onClick={() => { setOpen(false); setShowDeleteModal(true); }}

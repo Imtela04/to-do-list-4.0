@@ -9,10 +9,12 @@ import StickyNotes from '@/components/widgets/stickynote';
 import Categories from '@/components/categories/categorypanel';
 import UserNav from '@/components/layout/usernav';
 import styles from './home.module.css';
-import { ClockAlert, Menu, X, NotebookPen, LayoutList, CalendarDays } from 'lucide-react';
+import { ClockAlert, Menu, X, NotebookPen, LayoutList, CalendarDays, BellCheck } from 'lucide-react';
 import SessionGuard from '@/components/layout/sessionguard';
 import LevelUpToast from '@/components/layout/leveluptoast';
 import Pomodoro from '../components/widgets/pomodoro';
+import { BellOff } from 'lucide-react';
+import AlarmModal from '@/components/layout/alarmmodal';
 
 type View = 'list' | 'calendar';
 
@@ -31,6 +33,12 @@ export default function Dashboard() {
   const [pomodoroOpen, setPomodoroOpen] = useState(false);
 
   const location = useLocation();
+  const [notifStatus, setNotifStatus] = useState(Notification.permission);
+
+  const requestNotifs = async () => {
+    const result = await Notification.requestPermission();
+    setNotifStatus(result);
+  };
 
   useEffect(() => {
     setSidebarOpen(false);
@@ -39,6 +47,8 @@ export default function Dashboard() {
   return (
     <SessionGuard>
       <LevelUpToast />
+      <AlarmModal />
+
       <div className={styles.layout}>
 
         {sidebarOpen && (
@@ -57,7 +67,21 @@ export default function Dashboard() {
           </div>
           <div className={styles.sidebarFooter}>
             <UserNav />
+            <button
+              className={styles.alarmBtn}
+              onClick={requestNotifs}
+              disabled={notifStatus === 'denied'}
+              title={
+                notifStatus === 'granted' ? 'Notifications Enabled'
+                : notifStatus === 'denied' ? 'Blocked — check browser settings'
+                : 'Enable deadline notifications'
+              }
+              style={{ opacity: notifStatus === 'denied' ? 0.4 : 1 }}
+            >
+              {notifStatus === 'denied' ? <BellOff size={18} /> : <BellCheck size={18} />}
+            </button>
           </div>
+
         </aside>
 
         <main className={styles.main}>

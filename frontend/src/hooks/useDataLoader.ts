@@ -3,19 +3,20 @@ import { useTasksQuery }      from '@/hooks/useTasksQuery';
 import { useCategoriesQuery } from '@/hooks/useCategoriesQuery';
 import { useNotesQuery }      from '@/hooks/useNotesQuery';
 import { useProfileQuery }    from '@/hooks/useProfileQuery';
-
-type QueryKey = 'tasks' | 'categories' | 'notes' | 'profile';
+import { useAlarms }          from '@/hooks/useAlarm';
 
 export function useDataLoader() {
   const queryClient = useQueryClient();
   const isAuthed    = !!localStorage.getItem('authToken');
 
-  useTasksQuery(isAuthed);
+  const tasksQuery = useTasksQuery(isAuthed);
   useCategoriesQuery(isAuthed);
   useNotesQuery(isAuthed);
   useProfileQuery(isAuthed);
 
-  const reload = (keys: QueryKey[] = ['tasks', 'categories', 'notes', 'profile']): Promise<void[]> =>
+  useAlarms(tasksQuery.data ?? []);
+
+  const reload = (keys: Array<'tasks' | 'categories' | 'notes' | 'profile'> = ['tasks', 'categories', 'notes', 'profile']) =>
     Promise.all(keys.map(key => queryClient.invalidateQueries({ queryKey: [key] })));
 
   return { reload };
