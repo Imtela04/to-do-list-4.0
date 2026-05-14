@@ -429,19 +429,20 @@ export default function TaskCard({ task }: { task: Task; index: number }) {
               {categories.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
             </select>
             <div className={styles.dateTimeRow}>
-              <DatePicker
-                selected={editForm.deadline}
-                onChange={(date: Date | null) => {
-                  if (!date) { set('deadline', null); set('timed', false); return; }
-                  date.setHours(23, 59, 0, 0);
-                  set('deadline', date);
-                  set('timed', false);
-                }}
-                placeholderText="Set date"
-                dateFormat="MMM d, yyyy"
-                className={styles.editInput}
-                popperPlacement="top-start"
-              />
+            <DatePicker
+              selected={editForm.deadline}
+              onChange={(date: Date | null) => {
+                if (!date) { set('deadline', null); set('timed', false); return; }
+                date.setHours(23, 59, 0, 0);
+                set('deadline', date);
+                set('timed', false);
+              }}
+              placeholderText="Set date"
+              dateFormat="MMM d, yyyy"
+              className={styles.editInput}
+              popperPlacement="top-start"
+              portalId="root"
+            />
               {editForm.deadline && (
                 <DatePicker
                   selected={editForm.timed ? editForm.deadline : null}
@@ -456,12 +457,13 @@ export default function TaskCard({ task }: { task: Task; index: number }) {
                     d.setHours(time.getHours(), time.getMinutes(), 0, 0);
                     setEditForm(f => ({ ...f, deadline: d, timed: true }));
                   }}
-                  placeholderText="+ time"
+                  placeholderText="Set Time"
                   showTimeSelect showTimeSelectOnly
                   timeFormat="HH:mm" timeIntervals={15}
                   dateFormat="h:mm aa"
                   className={styles.editInput}
                   isClearable
+                  portalId='root'
                 />
               )}
             </div>
