@@ -5,7 +5,7 @@ import { createCategory, deleteCategory, updateCategory } from '@/api/services';
 import type { Task, Category } from '@/types';
 import type { AxiosResponse } from 'axios';
 import styles from './categorypanel.module.css';
-import { Lock, PenBox, Trash, Ban, Check, File, Folder, FolderArchive, FolderOpen } from 'lucide-react';
+import { Lock, PenBox, Trash, Ban, Check, FolderOpen } from 'lucide-react';
 import { useTasksQuery } from '../../hooks/useTasksQuery';
 import { useCategoriesQuery } from '../../hooks/useCategoriesQuery';
 

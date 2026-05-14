@@ -671,7 +671,11 @@ export default function AdminDashboard() {
         <div className={styles.mainHeader}>
           <h1 className={styles.mainTitle}>Admin Dashboard</h1>
           <button
-            onClick={() => setAutoRefresh(r => !r)}
+            onClick={() => {
+              const next = !autoRefresh;
+              setAutoRefresh(r => !r);
+              if (next) refresh();
+            }}
             title="Auto sync"
             className={`${styles.refreshBtn} ${autoRefresh ? styles.refreshBtnActive : ''}`}
           >
@@ -680,7 +684,7 @@ export default function AdminDashboard() {
           {lastUpdated && (
 
             <span className={styles.updatedAt}>
-              {autoRefresh ? `Updated ${lastUpdated.toLocaleTimeString()}`:''}
+              {autoRefresh ? 'Auto-sync on · ' : ''}Last updated {lastUpdated.toLocaleTimeString()}
             </span>
           )}
         </div>
