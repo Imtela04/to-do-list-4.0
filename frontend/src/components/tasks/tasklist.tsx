@@ -9,7 +9,7 @@ import { format } from 'date-fns';
 import { Calendar, Lock } from 'lucide-react';
 import { getFilteredTasks } from '@/utils/filterTasks';
 import { reorderTasks } from '@/api/services';
-
+import { Download } from 'lucide-react';
 
 import {
   DndContext, closestCenter, PointerSensor,
@@ -28,7 +28,7 @@ export default function TaskList() {
   const level     = useAppStore(s => s.level);
   const setFilter = useAppStore(s => s.setFilter);
   const [localOrder, setLocalOrder] = useState<number[]>([]);
-  const { data: tasks = [], isLoading } = useTasksQuery();
+  const { data: tasks = [] } = useTasksQuery();
   const filteredTasks = getFilteredTasks(tasks, filter);
   const [addOpen, setAddOpen] = useState(false);
   const [page, setPage]       = useState(1);
@@ -75,6 +75,23 @@ export default function TaskList() {
       return acc;
     }, []);
 
+    const handleExportCsv = () => {
+    const headers = ['Title', 'Priority', 'Status', 'Category', 'Deadline', 'Created'];
+    const rows = filteredTasks.map(t => [
+      `"${t.title.replace(/"/g, '""')}"`,
+      t.priority,
+      t.completed ? 'completed' : 'active',
+      t.category ? t.category.name : '',
+      t.deadline ? new Date(t.deadline).toLocaleDateString() : '',
+      new Date(t.created_at).toLocaleDateString(),
+    ]);
+    const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+    const a = Object.assign(document.createElement('a'), { href: url, download: 'tasks.csv' });
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className={styles.container}>
       <FilterBar />
@@ -89,13 +106,24 @@ export default function TaskList() {
           </button>
         </div>
       )}
+
       {filteredTasks.length > 0 && (
-        <p className={styles.count}>
-          {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''}
-          {filter.status !== 'all' ? ` ${filter.status}` : ''}
-          {totalPages > 1 ? ` · page ${page} of ${totalPages}` : ''}
-        </p>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <p className={styles.count}>
+            {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''}
+            {filter.status !== 'all' ? ` ${filter.status}` : ''}
+            {totalPages > 1 ? ` · page ${page} of ${totalPages}` : ''}
+          </p>
+          <button
+            className={styles.exportBtn}
+            onClick={handleExportCsv}
+            title="Export Filtered Tasks As CSV"
+          >
+            <Download size={13} /> CSV
+          </button>
+        </div>
       )}
+
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
       <SortableContext items={localOrder} strategy={verticalListSortingStrategy}>
         <div className={styles.list}>
