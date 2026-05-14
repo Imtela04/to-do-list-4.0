@@ -29,6 +29,7 @@ class Todo(models.Model):
     created_at   = models.DateTimeField(auto_now_add=True)
     completed_at = models.DateTimeField(null=True, blank=True)
     is_onboarding = models.BooleanField(default=False)
+    recurrence = models.CharField(max_length=20, null=True, blank=True)
 
     def __str__(self):
         return self.title

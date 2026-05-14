@@ -3,8 +3,8 @@ import { format, isPast, isToday, addDays } from 'date-fns';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAppStore } from '../../store/useAppStore';
 import { useCategoriesQuery } from '@/hooks/useCategoriesQuery';
-import { toggleTask, deleteTask, updateTask as updateTaskApi, createSubtask, updateSubtask, deleteSubtask } from '@/api/services';
-import type { Task, TaskPayload, XpResult } from '@/types';
+import { toggleTask, deleteTask, updateTask as updateTaskApi } from '@/api/services';
+import type { Task, TaskPayload } from '@/types';
 import styles from './taskcard.module.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -18,7 +18,6 @@ const PRIORITY_MAP: Record<string, { color: string; label: string }> = {
 };
 
 const PRIORITIES = ['low', 'medium', 'high', 'critical'] as const;
-const SUBTASK_LIMIT = 10;
 
 interface ToggleMutationVars { completed: boolean; }
 interface UpdateMutationVars { changes: Partial<TaskPayload>; updated: Task; }
@@ -78,23 +77,15 @@ export default function TaskCard({ task }: { task: Task; index: number }) {
   const [expanded, setExpanded]                   = useState(false);
   const [confirmDelete, setConfirmDelete]         = useState(false);
   const [confirmUncomplete, setConfirmUncomplete] = useState(false);
-  const [newSubtaskTitle, setNewSubtaskTitle]     = useState('');
-  const [addingSubtask, setAddingSubtask]         = useState(false);
   const [editForm, setEditForm] = useState<EditForm>({
     title: '', description: '', priority: '', category: '', deadline: null, timed: false,
   });
 
   const cardRef        = useRef<HTMLDivElement>(null);
   const clickTimer     = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const subtaskInputRef = useRef<HTMLInputElement>(null);
-
-  const subtasks       = task.subtasks ?? [];
-  const completedCount = subtasks.filter(s => s.completed).length;
-  const hasSubtasks    = subtasks.length > 0;
-  const atSubtaskLimit = subtasks.length >= SUBTASK_LIMIT;
-  const allDone        = hasSubtasks && completedCount === subtasks.length;
 
   const category   = task.category;
+  const subtasks       = task.subtasks ?? [];
   const priority   = PRIORITY_MAP[task.priority] ?? PRIORITY_MAP.low;
   const dueDate    = task.deadline ? new Date(task.deadline) : null;
   const isDueToday = dueDate ? isToday(dueDate) : false;
@@ -103,10 +94,6 @@ export default function TaskCard({ task }: { task: Task; index: number }) {
     ? (isTimed ? isPast(dueDate) : isPast(dueDate) && !isToday(dueDate))
     : false;
   const countdown  = useCountdown(task.deadline, isTimed);
-
-  useEffect(() => {
-    if (addingSubtask) subtaskInputRef.current?.focus();
-  }, [addingSubtask]);
 
   // ── Outside click collapse ─────────────────────────────────
   useEffect(() => {
