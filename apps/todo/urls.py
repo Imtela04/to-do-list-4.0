@@ -4,7 +4,9 @@ from . import views
 urlpatterns = [
     # tasks
     path('tasks/', views.tasks),
+    path('tasks/reorder/', views.reorder_tasks),
     path('tasks/<int:task_id>/', views.task_detail),
+
 
     # subtasks
     path('tasks/<int:task_id>/subtasks/',             views.subtasks),

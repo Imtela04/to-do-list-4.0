@@ -10,6 +10,9 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { Pin, PinOff, Trash, SquarePen, CalendarPlus, Hourglass, Check } from 'lucide-react';
 import Subtask from './subtask';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { GripVertical } from 'lucide-react';
 
 const PRIORITY_MAP: Record<string, { color: string; label: string }> = {
   low:      { color: 'var(--priority-low)',      label: 'Low'      },
@@ -81,6 +84,15 @@ export default function TaskCard({ task }: { task: Task; index: number }) {
   const [editForm, setEditForm] = useState<EditForm>({
     title: '', description: '', priority: '', category: '', deadline: null, timed: false,
   });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =  useSortable({ id: task.id });
+  const dragStyle = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+    zIndex:  isDragging ? 50 : undefined,
+  };
+
+
 
   const cardRef        = useRef<HTMLDivElement>(null);
   const clickTimer     = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -267,7 +279,8 @@ export default function TaskCard({ task }: { task: Task; index: number }) {
   // ── Render ─────────────────────────────────────────────────
   return (
     <div
-      ref={cardRef}
+      ref={(node) => { setNodeRef(node); (cardRef as any).current = node; }}
+      style={dragStyle}
       className={[
         styles.card,
         task.completed ? styles.completed : '',
@@ -278,6 +291,14 @@ export default function TaskCard({ task }: { task: Task; index: number }) {
     >
       {/* Pin indicator */}
       {task.pinned && <span className={styles.pinnedBadge}><Pin size={11} /></span>}
+      <span
+        className={styles.dragHandle}
+        {...attributes}
+        {...listeners}
+        onClick={e => e.stopPropagation()}
+      >
+        <GripVertical size={13} />
+      </span>
 
       {/* Toggle */}
       <button className={styles.toggle} onClick={handleToggle} title = {task.completed ? 'Mark incomplete' : 'Mark complete'}>

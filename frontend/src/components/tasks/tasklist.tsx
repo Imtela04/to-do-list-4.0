@@ -8,6 +8,17 @@ import styles from './tasklist.module.css';
 import { format } from 'date-fns';
 import { Calendar, Lock } from 'lucide-react';
 import { getFilteredTasks } from '@/utils/filterTasks';
+import { reorderTasks } from '@/api/services';
+
+
+import {
+  DndContext, closestCenter, PointerSensor,
+  useSensor, useSensors, DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  SortableContext, verticalListSortingStrategy,
+  arrayMove, 
+} from '@dnd-kit/sortable';
 
 const PAGE_SIZE = 5;
 
@@ -16,17 +27,43 @@ export default function TaskList() {
   const limits    = useAppStore(s => s.limits);
   const level     = useAppStore(s => s.level);
   const setFilter = useAppStore(s => s.setFilter);
-
+  const [localOrder, setLocalOrder] = useState<number[]>([]);
   const { data: tasks = [], isLoading } = useTasksQuery();
   const filteredTasks = getFilteredTasks(tasks, filter);
-
   const [addOpen, setAddOpen] = useState(false);
   const [page, setPage]       = useState(1);
 
-  useEffect(() => { setPage(1); }, [filter]);
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
 
+    setLocalOrder(prev => {
+      const oldIdx = prev.indexOf(Number(active.id));
+      const newIdx = prev.indexOf(Number(over.id));
+      const newOrder = arrayMove(prev, oldIdx, newIdx);
+
+      // Persist — fire and forget, optimistic update already applied
+      reorderTasks(newOrder).catch(() => {
+        // Rollback on failure
+        setLocalOrder(prev);
+      });
+
+      return newOrder;
+    });
+  };
   const totalPages  = Math.ceil(filteredTasks.length / PAGE_SIZE);
   const paginated   = filteredTasks.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  useEffect(() => { setLocalOrder(filteredTasks.map(t => t.id)); }, [tasks]);
+
+  const sensors = useSensors(useSensor(PointerSensor, {
+    activationConstraint: { distance: 6 }, // prevents accidental drags
+  }));
+
+
+
+  useEffect(() => { setPage(1); }, [filter]);
+
 // correct — uses the server-side count which excludes onboarding
   const counts = useAppStore(s => s.counts);
   const tasksLocked = limits.tasks !== null && counts.tasks >= limits.tasks;
@@ -59,30 +96,19 @@ export default function TaskList() {
           {totalPages > 1 ? ` · page ${page} of ${totalPages}` : ''}
         </p>
       )}
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+      <SortableContext items={localOrder} strategy={verticalListSortingStrategy}>
+        <div className={styles.list}>
+          {paginated
+            .slice()
+            .sort((a, b) => localOrder.indexOf(a.id) - localOrder.indexOf(b.id))
+            .map((task, i) => (
+              <TaskCard key={task.id} task={task} index={i} />
+            ))}
+        </div>
+      </SortableContext>
+    </DndContext>
 
-      <div className={styles.list}>
-        {isLoading ? (
-          <div className={styles.loading}>
-            <div className={styles.spinner} />
-            <span>Loading tasks...</span>
-          </div>
-        ) : filteredTasks.length === 0 ? (
-          <div className={styles.empty}>
-            <span className={styles.emptyIcon}>✓</span>
-            <p className={styles.emptyTitle}>
-              {filter.search || filter.category || filter.priority
-                ? 'No tasks match your filters'
-                : filter.status === 'completed'
-                ? 'No completed tasks yet'
-                : 'All clear!'}
-            </p>
-          </div>
-        ) : (
-          paginated.map((task, i) => (
-            <TaskCard key={task.id} task={task} index={i} />
-          ))
-        )}
-      </div>
 
       {totalPages > 1 && (
         <div className={styles.pagination}>

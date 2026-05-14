@@ -24,10 +24,7 @@ export default function Subtask({ taskId, subtasks, optimisticUpdate, rollback }
   const [addingSubtask, setAddingSubtask]     = useState(false);
   const subtaskInputRef = useRef<HTMLInputElement>(null);
 
-  const completedCount = subtasks.filter(s => s.completed).length;
-  const hasSubtasks    = subtasks.length > 0;
   const atSubtaskLimit = subtasks.length >= SUBTASK_LIMIT;
-  const allDone        = hasSubtasks && completedCount === subtasks.length;
 
   useEffect(() => {
     if (addingSubtask) subtaskInputRef.current?.focus();

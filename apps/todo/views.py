@@ -100,7 +100,10 @@ def tasks(request):
         sort = request.query_params.get('sort', '-created_at')
         if sort not in ALLOWED_SORT:
             sort = '-created_at'
-        todos = todos.order_by(sort)
+        if sort == '-created_at':  # only override default sort
+            todos = todos.order_by('position', '-created_at')
+        else:
+            todos = todos.order_by(sort)
 
         paginator = PageNumberPagination()
         paginator.page_size = 50
@@ -341,6 +344,7 @@ def subtasks(request, task_id):
     return Response(SubtaskSerializer(subtask).data, status=status.HTTP_201_CREATED)
 
 
+
 @api_view(['PATCH', 'DELETE'])
 @permission_classes([IsAuthenticated])
 def subtask_detail(request, task_id, subtask_id):
@@ -412,3 +416,26 @@ def subtask_detail(request, task_id, subtask_id):
         'task':      TodoSerializer(task).data,
         'xp_result': xp_result,  # None if no change
     })
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def reorder_tasks(request):
+    """
+    Body: { "order": [id1, id2, id3, ...] }
+    Sets position of each task in the given order.
+    """
+    order = request.data.get('order', [])
+    if not isinstance(order, list):
+        return Response({'detail': 'order must be a list'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Verify all tasks belong to this user
+    tasks = Todo.objects.filter(owner=request.user, id__in=order)
+    if tasks.count() != len(order):
+        return Response({'detail': 'Invalid task ids'}, status=status.HTTP_400_BAD_REQUEST)
+
+    id_to_position = {id: idx for idx, id in enumerate(order)}
+    for task in tasks:
+        task.position = id_to_position[task.id]
+    Todo.objects.bulk_update(tasks, ['position'])
+
+    return Response({'detail': 'ok'})

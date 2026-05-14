@@ -92,7 +92,8 @@ export const toggleTask = (
 ): Promise<AxiosResponse<TaskResponse>> =>
   client.patch(`/tasks/${id}/`, { completed, ...(pinned !== undefined && { pinned }) });
 
-
+export const reorderTasks = (order: number[]): Promise<AxiosResponse> =>
+  client.post('/tasks/reorder/', { order });
 // ── Categories ────────────────────────────────────────────────
 export const getCategories  = ():                                        Promise<AxiosResponse<Category[]>> => client.get('/categories/');
 export const createCategory = (data: CategoryPayload):                  Promise<AxiosResponse<Category>>   => client.post('/categories/', data, silent);

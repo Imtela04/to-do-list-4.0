@@ -8,7 +8,6 @@ import styles from './addtask.module.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { Pickaxe, Trash, Lock } from 'lucide-react';
-import Subtask from './subtask';
 
 const PRIORITIES = ['low', 'medium', 'high', 'critical'] as const;
 const DRAFT_KEY  = 'draft_task';
