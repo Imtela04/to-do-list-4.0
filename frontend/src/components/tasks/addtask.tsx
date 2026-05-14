@@ -20,6 +20,7 @@ interface TaskForm {
   due_date:    Date | null;
   due_time:    Date | null;
   timed:       boolean;
+  recurrence: string;
 }
 
 interface AddTaskProps {
@@ -36,6 +37,7 @@ export default function AddTask({ open, setOpen }: AddTaskProps) {
   const [form, setForm] = useState<TaskForm>({
     title: '', description: '', priority: '', category: '',
     due_date: null, due_time: null, timed: false,
+    recurrence: '',
   });
   const [hasDraft, setHasDraft]     = useState(!!load());
   const [limitError, setLimitError] = useState<string | null>(null);
@@ -110,13 +112,14 @@ export default function AddTask({ open, setOpen }: AddTaskProps) {
       priority:    form.priority as TaskPayload['priority'],
       category:    form.category,
       deadline,
+      recurrence: (form.recurrence as TaskPayload['recurrence']) || null,
     });
   };
 
   const handleCancel  = (): void => setOpen(false);
   const handleDiscard = (): void => {
     clear(); setHasDraft(false);
-    setForm({ title: '', description: '', priority: '', category: '', due_date: null, due_time: null, timed: false });
+    setForm({ title: '', description: '', priority: '', category: '', due_date: null, due_time: null, timed: false, recurrence: '' });
     setOpen(false);
     setPendingSubtasks([]);
     setSubtaskInput('');
@@ -191,6 +194,20 @@ export default function AddTask({ open, setOpen }: AddTaskProps) {
             className={styles.datePicker}
             popperPlacement="top-start"
           />
+        </div>
+        <div className={styles.field}>
+          <label className={styles.label}>Repeat</label>
+          <div className={styles.priorities}>
+            {(['daily','weekly','monthly','yearly'] as const).map(r => (
+              <button
+                key={r}
+                className={`${styles.prioBtn} ${form.recurrence === r ? styles.prioActive : ''}`}
+                onClick={() => set('recurrence', form.recurrence === r ? '' : r)}
+              >
+                {r}
+              </button>
+            ))}
+          </div>
         </div>
         {form.due_date && (
           <div className={styles.field}>

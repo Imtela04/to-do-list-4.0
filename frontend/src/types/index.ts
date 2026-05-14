@@ -16,6 +16,7 @@ export interface Task {
   created_at:  string;
   completed_at: string | null;
   subtasks: Subtask[];
+  recurrence: 'daily' | 'weekly' | 'monthly' | 'yearly' | null;
 }
 
 export interface Subtask {
@@ -101,6 +102,7 @@ export interface TaskPayload {
   deadline?:   string;
   completed?:  boolean;
   pinned?:     boolean;
+  recurrence?: 'daily' | 'weekly' | 'monthly' | 'yearly' | null;
 }
 
 export interface CategoryPayload {

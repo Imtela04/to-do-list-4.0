@@ -131,6 +131,7 @@ def tasks(request):
         deadline=parse_deadline(request.data.get('deadline')),
         category_id=resolve_category(request.data.get('category'), request.user),
         priority=request.data.get('priority', 'low'),
+        recurrence=request.data.get('recurrence') or None,
     )
     log(request, 'task_create', detail=task.title)
     return Response(TodoSerializer(task).data, status=status.HTTP_201_CREATED)
@@ -188,6 +189,8 @@ def task_detail(request, task_id):
         task.priority = request.data['priority']
     if 'pinned' in request.data:
         task.pinned = request.data['pinned']
+    if 'recurrence' in request.data:
+        task.recurrence = request.data['recurrence']
 
     task.save()
 
@@ -210,6 +213,18 @@ def task_detail(request, task_id):
         log(request, 'task_complete', detail=task.title)
         if xp_result and xp_result.get('leveled_up'):
             log(request, 'level_up', detail=f'Level {xp_result["new_level"]}')
+    # Spawn next occurrence on completion
+    if 'completed' in request.data and task.completed and not was_completed and task.recurrence:
+        nd = next_recurrence_deadline(task.deadline, task.recurrence)
+        Todo.objects.create(
+            title=task.title,
+            owner=request.user,
+            description=task.description,
+            deadline=nd,
+            category_id=task.category_id,
+            priority=task.priority,
+            recurrence=task.recurrence,
+        )    
     return Response({
         'task':      data,
         'xp_result': xp_result,  # None if no change
@@ -439,3 +454,24 @@ def reorder_tasks(request):
     Todo.objects.bulk_update(tasks, ['position'])
 
     return Response({'detail': 'ok'})
+
+def next_recurrence_deadline(deadline, recurrence):
+    """Return the next deadline shifted by the recurrence interval."""
+    import calendar
+    from datetime import timedelta
+    if not deadline or not recurrence:
+        return None
+    if recurrence == 'daily':
+        return deadline + timedelta(days=1)
+    if recurrence == 'weekly':
+        return deadline + timedelta(weeks=1)
+    if recurrence == 'monthly':
+        month = deadline.month + 1
+        year  = deadline.year
+        if month > 12:
+            month, year = 1, year + 1
+        day = min(deadline.day, calendar.monthrange(year, month)[1])
+        return deadline.replace(year=year, month=month, day=day)
+    if recurrence == 'yearly':
+        return deadline.replace(year=deadline.year + 1)
+    return None

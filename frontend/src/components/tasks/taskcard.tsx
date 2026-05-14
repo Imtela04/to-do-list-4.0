@@ -8,7 +8,7 @@ import type { Task, TaskPayload } from '@/types';
 import styles from './taskcard.module.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { Pin, PinOff, Trash, SquarePen, CalendarPlus, Hourglass, Check } from 'lucide-react';
+import { Pin, PinOff, Trash, SquarePen, CalendarPlus, Hourglass, Check, RotateCcw } from 'lucide-react';
 import Subtask from './subtask';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -29,6 +29,7 @@ interface MutationContext    { previous: Task[] | undefined; }
 interface EditForm {
   title: string; description: string; priority: string;
   category: string; deadline: Date | null; timed: boolean;
+  recurrence: string;
 }
 
 function useCountdown(deadline: string | null, timed: boolean): string | null {
@@ -82,7 +83,7 @@ export default function TaskCard({ task }: { task: Task; index: number }) {
   const [confirmDelete, setConfirmDelete]         = useState(false);
   const [confirmUncomplete, setConfirmUncomplete] = useState(false);
   const [editForm, setEditForm] = useState<EditForm>({
-    title: '', description: '', priority: '', category: '', deadline: null, timed: false,
+    title: '', description: '', priority: '', category: '', deadline: null, timed: false, recurrence: '',
   });
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =  useSortable({ id: task.id });
   const dragStyle = {
@@ -241,6 +242,7 @@ export default function TaskCard({ task }: { task: Task; index: number }) {
       timed:       existingDeadline
         ? !(existingDeadline.getHours() === 23 && existingDeadline.getMinutes() === 59)
         : false,
+      recurrence: task.recurrence ?? '',
     });
     setExpanded(true);
     setEditing(true);
@@ -252,6 +254,7 @@ export default function TaskCard({ task }: { task: Task; index: number }) {
     if (editForm.title?.trim())       changes.title       = editForm.title.trim();
     if (editForm.description?.trim()) changes.description = editForm.description.trim();
     changes.priority = editForm.priority as TaskPayload['priority'];
+    changes.recurrence = (editForm.recurrence as TaskPayload['recurrence']) || null;
     if (editForm.category)            changes.category    = parseInt(editForm.category);
     if (editForm.deadline) {
       const d = new Date(editForm.deadline);
@@ -333,6 +336,9 @@ export default function TaskCard({ task }: { task: Task; index: number }) {
                 </span>
               )}
             </div>
+            {task.recurrence && !task.completed && (
+              <span className={styles.recurrenceBadge}><RotateCcw size={10}/> {task.recurrence}</span>
+            )}
 
             {hasSubtasks && (
               <div className={styles.progressBar}>
@@ -379,6 +385,17 @@ export default function TaskCard({ task }: { task: Task; index: number }) {
               <option value="">Category</option>
               {categories.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
             </select>
+            <div className={styles.priorities}>
+              {(['daily','weekly','monthly','yearly'] as const).map(r => (
+                <button
+                  key={r}
+                  className={`${styles.prioBtn} ${editForm.recurrence === r ? styles.prioActive : ''}`}
+                  onClick={() => set('recurrence', editForm.recurrence === r ? '' : r)}
+                >
+                  <RotateCcw size={10}/>{r}
+                </button>
+              ))}
+            </div>
             <div className={styles.dateTimeRow}>
             <DatePicker
               selected={editForm.deadline}

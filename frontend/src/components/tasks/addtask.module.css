@@ -1,3 +1,9 @@
+.prioActive {
+  background: rgba(124, 106, 255, 0.15);
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+  
 .form {
   background: var(--bg-card);
   border: 1px solid var(--border-accent);
