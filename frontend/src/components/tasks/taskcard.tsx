@@ -8,7 +8,8 @@ import type { Task, TaskPayload } from '@/types';
 import styles from './taskcard.module.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { Pin, PinOff, Trash, SquarePen, CalendarPlus, Hourglass, Plus, Check } from 'lucide-react';
+import { Pin, PinOff, Trash, SquarePen, CalendarPlus, Hourglass, Check } from 'lucide-react';
+import Subtask from './subtask';
 
 const PRIORITY_MAP: Record<string, { color: string; label: string }> = {
   low:      { color: 'var(--priority-low)',      label: 'Low'      },
@@ -86,6 +87,9 @@ export default function TaskCard({ task }: { task: Task; index: number }) {
 
   const category   = task.category;
   const subtasks       = task.subtasks ?? [];
+  const completedCount = subtasks.filter(s => s.completed).length;
+  const hasSubtasks    = subtasks.length > 0;
+  const allDone        = hasSubtasks && completedCount === subtasks.length;  
   const priority   = PRIORITY_MAP[task.priority] ?? PRIORITY_MAP.low;
   const dueDate    = task.deadline ? new Date(task.deadline) : null;
   const isDueToday = dueDate ? isToday(dueDate) : false;
@@ -162,63 +166,7 @@ export default function TaskCard({ task }: { task: Task; index: number }) {
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
   });
 
-  const addSubtaskMutation = useMutation({
-    mutationFn: (title: string) => createSubtask(task.id, { title }),
-    onSuccess: (res) => {
-      queryClient.setQueryData<Task[]>(['tasks'], old =>
-        old?.map(t => t.id === task.id
-          ? { ...t, subtasks: [...(t.subtasks ?? []), res.data] }
-          : t) ?? []
-      );
-      setNewSubtaskTitle('');
-      setAddingSubtask(false);
-    },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
-  });
-
-  const toggleSubtaskMutation = useMutation({
-    mutationFn: ({ subtaskId, completed }: { subtaskId: number; completed: boolean }) =>
-      updateSubtask(task.id, subtaskId, { completed }),
-    onMutate: async ({ subtaskId, completed }) => {
-      await queryClient.cancelQueries({ queryKey: ['tasks'] });
-      const previous = queryClient.getQueryData<Task[]>(['tasks']);
-      queryClient.setQueryData<Task[]>(['tasks'], old =>
-        old?.map(t => t.id === task.id
-          ? { ...t, subtasks: t.subtasks.map(s => s.id === subtaskId ? { ...s, completed } : s) }
-          : t) ?? []
-      );
-      return { previous };
-    },
-    onSuccess: (res) => {
-      optimisticUpdate(res.data.task);
-      if (res.data.xp_result) updateXp(res.data.xp_result);
-    },
-
-    onError:   (_e: Error, _v: unknown, ctx: MutationContext | undefined) => { if (ctx) rollback(ctx); },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
-  });
-
-  const deleteSubtaskMutation = useMutation({
-    mutationFn: (subtaskId: number) => deleteSubtask(task.id, subtaskId),
-    onMutate: async (subtaskId) => {
-      await queryClient.cancelQueries({ queryKey: ['tasks'] });
-      const previous = queryClient.getQueryData<Task[]>(['tasks']);
-      queryClient.setQueryData<Task[]>(['tasks'], old =>
-        old?.map(t => t.id === task.id
-          ? { ...t, subtasks: t.subtasks.filter(s => s.id !== subtaskId) }
-          : t) ?? []
-      );
-      return { previous };
-    },
-    onSuccess: (res) => {
-      optimisticUpdate(res.data.task);
-      if (res.data.xp_result) updateXp(res.data.xp_result);
-    },
-
-    onError:   (_e: Error, _v: unknown, ctx: MutationContext | undefined) => { if (ctx) rollback(ctx); },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
-  });
-
+  
   // ── Handlers ───────────────────────────────────────────────
   const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).closest('button, input, textarea, select')) return;
@@ -312,11 +260,6 @@ export default function TaskCard({ task }: { task: Task; index: number }) {
     setEditing(false);
   };
 
-  const handleAddSubtask = () => {
-    const title = newSubtaskTitle.trim();
-    if (!title || atSubtaskLimit) return;
-    addSubtaskMutation.mutate(title);
-  };
 
   const set = <K extends keyof EditForm>(key: K, val: EditForm[K]) =>
     setEditForm(f => ({ ...f, [key]: val }));
@@ -486,62 +429,12 @@ export default function TaskCard({ task }: { task: Task; index: number }) {
             )}
 
             {/* Subtasks */}
-            <div className={styles.subtaskSection}>
-              {subtasks.map(subtask => (
-                <div key={subtask.id} className={styles.subtaskRow}>
-                  <button
-                    className={`${styles.subtaskCheck} ${subtask.completed ? styles.subtaskChecked : ''}`}
-                    onClick={() => toggleSubtaskMutation.mutate({
-                      subtaskId: subtask.id,
-                      completed: !subtask.completed,
-                    })}
-                  >
-                    {subtask.completed && <Check size={9} strokeWidth={3} />}
-                  </button>
-                  <span className={`${styles.subtaskLabel} ${subtask.completed ? styles.strikethrough : ''}`}>
-                    {subtask.title}
-                  </span>
-                  <button
-                    className={styles.subtaskDel}
-                    onClick={() => deleteSubtaskMutation.mutate(subtask.id)}
-                  >
-                    ×
-                  </button>
-                </div>
-              ))}
-
-              {!atSubtaskLimit && (
-                addingSubtask ? (
-                  <div className={styles.subtaskAddRow}>
-                    <input
-                      ref={subtaskInputRef}
-                      className={styles.subtaskInput}
-                      placeholder="Add subtask..."
-                      value={newSubtaskTitle}
-                      onChange={e => setNewSubtaskTitle(e.target.value)}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') handleAddSubtask();
-                        if (e.key === 'Escape') { setAddingSubtask(false); setNewSubtaskTitle(''); }
-                      }}
-                    />
-                    <button className={styles.subtaskConfirm} onClick={handleAddSubtask}>
-                      <Check size={11} strokeWidth={3} />
-                    </button>
-                    <button className={styles.subtaskCancelBtn} onClick={() => { setAddingSubtask(false); setNewSubtaskTitle(''); }}>
-                      ×
-                    </button>
-                  </div>
-                ) : (
-                  <button className={styles.addSubtaskBtn} onClick={() => setAddingSubtask(true)}>
-                    <Plus size={11} /> add subtask
-                  </button>
-                )
-              )}
-
-              {atSubtaskLimit && (
-                <p className={styles.subtaskLimit}>max {SUBTASK_LIMIT} subtasks</p>
-              )}
-            </div>
+          <Subtask
+            taskId={task.id}
+            subtasks={subtasks}
+            optimisticUpdate={optimisticUpdate}
+            rollback={rollback}
+          />
           </div>
         )}
       </div>

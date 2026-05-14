@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCategoriesQuery } from '@/hooks/useCategoriesQuery';
-import { createTask } from '@/api/services';
+import { createTask,createSubtask } from '@/api/services';
 import { useDraft } from '@/hooks/useDraft';
 import type { TaskPayload } from '@/types';
 import styles from './addtask.module.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { Pickaxe, Trash, Lock } from 'lucide-react';
+import Subtask from './subtask';
 
 const PRIORITIES = ['low', 'medium', 'high', 'critical'] as const;
 const DRAFT_KEY  = 'draft_task';
@@ -40,6 +41,10 @@ export default function AddTask({ open, setOpen }: AddTaskProps) {
   const [hasDraft, setHasDraft]     = useState(!!load());
   const [limitError, setLimitError] = useState<string | null>(null);
 
+  const [pendingSubtasks, setPendingSubtasks] = useState<string[]>([]);
+  const [subtaskInput, setSubtaskInput]       = useState('');
+  const SUBTASK_LIMIT = 10;
+
   useEffect(() => {
     if (open) {
       setLimitError(null);
@@ -64,13 +69,20 @@ export default function AddTask({ open, setOpen }: AddTaskProps) {
 
   const addMutation = useMutation({
     mutationFn: (payload: TaskPayload) => createTask(payload),
-    onSuccess: (res) => {
+    onSuccess: async (res) => {
+      const newTaskId = res.data.id;
+      // fire-and-forget subtask creation
+      await Promise.all(
+        pendingSubtasks.map(title => createSubtask(newTaskId, { title }))
+      );
       queryClient.setQueryData(['tasks'], (old: unknown[]) => [res.data, ...(old ?? [])]);
       void queryClient.invalidateQueries({ queryKey: ['tasks'] });
       clear();
       setHasDraft(false);
+      setPendingSubtasks([]);
       setOpen(false);
     },
+
     onError: (err: { response?: { status: number; data?: { limit_reached?: boolean; detail?: string } } }) => {
       if (err.response?.status === 403 && err.response?.data?.limit_reached) {
         setLimitError(err.response.data.detail ?? 'Limit reached');
@@ -107,6 +119,8 @@ export default function AddTask({ open, setOpen }: AddTaskProps) {
     clear(); setHasDraft(false);
     setForm({ title: '', description: '', priority: '', category: '', due_date: null, due_time: null, timed: false });
     setOpen(false);
+    setPendingSubtasks([]);
+    setSubtaskInput('');
   };
 
   if (!open) return null;
@@ -199,6 +213,38 @@ export default function AddTask({ open, setOpen }: AddTaskProps) {
           </div>
         )}
       </div>
+      {/* Subtasks */}
+      <div className={styles.field}>
+        <label className={styles.label}>Subtasks <span className={styles.optional}>({pendingSubtasks.length}/{SUBTASK_LIMIT})</span></label>
+        <div className={styles.subtaskList}>
+          {pendingSubtasks.map((title, i) => (
+            <div key={i} className={styles.subtaskRow}>
+              <span className={styles.subtaskLabel}>{title}</span>
+              <button
+                className={styles.subtaskDel}
+                onClick={() => setPendingSubtasks(prev => prev.filter((_, j) => j !== i))}
+              >×</button>
+            </div>
+          ))}
+        </div>
+        {pendingSubtasks.length < SUBTASK_LIMIT && (
+          <div className={styles.subtaskAddRow}>
+            <input
+              className={styles.subtaskInput}
+              placeholder="Add subtask"
+              value={subtaskInput}
+              onChange={e => setSubtaskInput(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' && subtaskInput.trim()) {
+                  setPendingSubtasks(prev => [...prev, subtaskInput.trim()]);
+                  setSubtaskInput('');
+                }
+                if (e.key === 'Escape') setSubtaskInput('');
+              }}
+            />
+          </div>
+        )}
+      </div>
       <div className={styles.actions}>
         <button className={styles.cancelBtn} onClick={handleCancel}>Cancel</button>
         <button
@@ -208,6 +254,7 @@ export default function AddTask({ open, setOpen }: AddTaskProps) {
         >
           {addMutation.isPending ? '...' : 'Add Task'}
         </button>
+
       </div>
     </div>
   );
