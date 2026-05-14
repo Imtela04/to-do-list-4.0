@@ -678,8 +678,9 @@ export default function AdminDashboard() {
             <RefreshCcw size={16} />
           </button>
           {lastUpdated && (
+
             <span className={styles.updatedAt}>
-              Updated {lastUpdated.toLocaleTimeString()}
+              {autoRefresh ? `Updated ${lastUpdated.toLocaleTimeString()}`:''}
             </span>
           )}
         </div>

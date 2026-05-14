@@ -5,7 +5,7 @@ import { createCategory, deleteCategory, updateCategory } from '@/api/services';
 import type { Task, Category } from '@/types';
 import type { AxiosResponse } from 'axios';
 import styles from './categorypanel.module.css';
-import { Lock, PenBox, Trash, Ban, Check } from 'lucide-react';
+import { Lock, PenBox, Trash, Ban, Check, File, Folder, FolderArchive, FolderOpen } from 'lucide-react';
 import { useTasksQuery } from '../../hooks/useTasksQuery';
 import { useCategoriesQuery } from '../../hooks/useCategoriesQuery';
 
@@ -198,7 +198,7 @@ export default function Categories({ onNavigate }: CategoriesProps) {
           className={`${styles.item} ${activeCategory === null ? styles.itemActive : ''}`}
           onClick={() => { setFilter({ category: null }); onNavigate?.(); }}
         >
-          <span className={styles.itemIcon}>🗂️</span>
+          <span className={styles.itemIcon}><FolderOpen size={15}/></span>
           <span className={styles.catName}>All tasks</span>
           <span className={styles.count}>{tasks.length}</span>
         </div>
@@ -208,7 +208,7 @@ export default function Categories({ onNavigate }: CategoriesProps) {
             className={`${styles.item} ${activeCategory === 'uncategorised' ? styles.itemActive : ''}`}
             onClick={() => toggleFilter('uncategorised')}
           >
-            <span className={styles.itemIcon}>📂</span>
+            <span className={styles.itemIcon}><FolderOpen size={15}/></span>
             <span className={styles.catName}>Uncategorised</span>
             <span className={styles.count}>{uncategorisedCount}</span>
           </div>

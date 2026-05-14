@@ -145,6 +145,7 @@
   width: 18px;
   text-align: center;
   flex-shrink: 0;
+  color: var(--text-muted);
 }
 
 .formActions {
