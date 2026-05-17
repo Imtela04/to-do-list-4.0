@@ -15,6 +15,8 @@ import LevelUpToast from '@/components/layout/leveluptoast';
 import Pomodoro from '../components/widgets/pomodoro';
 import { BellOff } from 'lucide-react';
 import AlarmModal from '@/components/layout/alarmmodal';
+import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
+import ShortcutsModal from '@/components/layout/shortcutsmodal';
 
 type View = 'list' | 'calendar';
 
@@ -27,18 +29,32 @@ export function Logo(){
   )
 }
 export default function Dashboard() {
-  const [sidebarOpen, setSidebarOpen]   = useState(false);
-  const [notesOpen, setNotesOpen]       = useState(false);
-  const [view, setView]                 = useState<View>('list');
-  const [pomodoroOpen, setPomodoroOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen]      = useState(false);
+  const [notesOpen, setNotesOpen]          = useState(false);
+  const [view, setView]                    = useState<View>('list');
+  const [pomodoroOpen, setPomodoroOpen]    = useState(false);
+  const location                           = useLocation();
+  const [notifStatus, setNotifStatus]      = useState(Notification.permission);
+  const [shortcutsOpen, setShortcutsOpen]  = useState(false);
+  const [addOpen, setAddOpen] = useState(false);
 
-  const location = useLocation();
-  const [notifStatus, setNotifStatus] = useState(Notification.permission);
+  useKeyboardShortcuts({
+    onNewTask:       () => setAddOpen(true),
+    onToggleNotes:   () => setNotesOpen(o => !o),
+    onTogglePomodoro: () => setPomodoroOpen(o => !o),
+    onToggleView:    () => setView(v => v === 'list' ? 'calendar' : 'list'),
+  });
 
+  useEffect(() => {
+    const handler = () => setShortcutsOpen(true);
+    window.addEventListener('show-shortcuts', handler);
+    return () => window.removeEventListener('show-shortcuts', handler);
+  }, []);
   const requestNotifs = async () => {
     const result = await Notification.requestPermission();
     setNotifStatus(result);
   };
+
 
   useEffect(() => {
     setSidebarOpen(false);
@@ -126,7 +142,7 @@ export default function Dashboard() {
           </header>
 
           <section className={styles.tasksSection}>
-            {view === 'list' ? <TaskList /> : <CalendarView />}
+            {view === 'list' ? <TaskList addOpen={addOpen} setAddOpen={setAddOpen} /> : <CalendarView />}
           </section>
         </main>
 
@@ -153,8 +169,10 @@ export default function Dashboard() {
             </aside>
           </>
         )}
-
+        
+      {shortcutsOpen && <ShortcutsModal onClose={() => setShortcutsOpen(false)} />}
       </div>
+
     </SessionGuard>
   );
 }

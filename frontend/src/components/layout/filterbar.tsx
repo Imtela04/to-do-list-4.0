@@ -79,6 +79,12 @@ export default function FilterBar() {
             placeholder="Search..."
             value={filter.search}
             onChange={e => set('search', e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Escape') {
+                set('search', '');
+                (e.target as HTMLInputElement).blur();
+              }
+            }}
           />
           {filter.search && (
             <button className={styles.clearSearch} onClick={() => set('search', '')}>×</button>

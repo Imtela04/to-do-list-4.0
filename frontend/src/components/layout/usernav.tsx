@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Sun, Moon, Pipette, User, Power, Flame, Star, Trash, ShieldCogCorner, TriangleAlert, Bell, BellCheck, BellOff } from 'lucide-react';
+import { Sun, Moon, Pipette, User, Power, Flame, Star, Trash, ShieldCogCorner, TriangleAlert } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { useTheme } from '@/context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
@@ -52,15 +52,7 @@ export default function UserNav() {
   const [showEmailForm, setShowEmailForm]                  = useState(false);
   const [emailInput, setEmailInput]                        = useState('');
   const [emailMsg, setEmailMsg]                            = useState('');
-
   const queryClient = useQueryClient();
-  const [notifStatus, setNotifStatus] = useState(Notification.permission);
-
-  const requestNotifs = async () => {
-    const result = await Notification.requestPermission();
-    setNotifStatus(result);
-  };
-
   const handleEmailSave = async () => {
     try {
       await updateEmail(emailInput);

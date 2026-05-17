@@ -22,7 +22,12 @@ import {
 
 const PAGE_SIZE = 5;
 
-export default function TaskList() {
+interface TaskListProps {
+  addOpen: boolean;
+  setAddOpen: (open: boolean) => void;
+}
+
+export default function TaskList({ addOpen, setAddOpen }: TaskListProps) {
   const filter    = useAppStore(s => s.filter);
   const limits    = useAppStore(s => s.limits);
   const level     = useAppStore(s => s.level);
@@ -30,8 +35,8 @@ export default function TaskList() {
   const [localOrder, setLocalOrder] = useState<number[]>([]);
   const { data: tasks = [] } = useTasksQuery();
   const filteredTasks = getFilteredTasks(tasks, filter);
-  const [addOpen, setAddOpen] = useState(false);
   const [page, setPage]       = useState(1);
+  
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
