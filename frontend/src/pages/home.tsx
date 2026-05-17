@@ -17,6 +17,7 @@ import { BellOff } from 'lucide-react';
 import AlarmModal from '@/components/layout/alarmmodal';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import ShortcutsModal from '@/components/layout/shortcutsmodal';
+import Heatmap from '@/components/widgets/heatmap';
 
 type View = 'list' | 'calendar';
 
@@ -78,6 +79,7 @@ export default function Dashboard() {
           </button>
           <div className={styles.sideSection}><ClockWidget /></div>
           <div className={styles.sideSection}><StatsWidget /></div>
+          <div className={styles.sideSection}><Heatmap /></div>
           <div className={`${styles.sideSection} ${styles.sideSectionGrow}`}>
             <Categories onNavigate={() => setSidebarOpen(false)} />
           </div>

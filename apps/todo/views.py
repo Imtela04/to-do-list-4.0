@@ -3,6 +3,7 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.pagination import PageNumberPagination
+from django.db.models import Count
 import re
 from django.shortcuts import get_object_or_404
 from datetime import datetime, timezone as dt_timezone
@@ -475,3 +476,25 @@ def next_recurrence_deadline(deadline, recurrence):
     if recurrence == 'yearly':
         return deadline.replace(year=deadline.year + 1)
     return None
+
+from django.db.models.functions import TruncDate
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def task_heatmap(request):
+    """Returns completed task counts per day for the last 365 days."""
+    from datetime import date, timedelta
+    today     = date.today()
+    start     = today - timedelta(days=364)
+
+    rows = (
+        Todo.objects
+        .filter(owner=request.user, completed=True, completed_at__date__gte=start)
+        .annotate(day=TruncDate('completed_at'))
+        .values('day')
+        .annotate(count=Count('id'))
+        .order_by('day')
+    )
+
+    data = {str(r['day']): r['count'] for r in rows}
+    return Response({'start': str(start), 'end': str(today), 'data': data})

@@ -75,7 +75,8 @@ export const getTasks = (
   params: Record<string, unknown> = {},
 ): Promise<AxiosResponse<PaginatedResponse<Task>>> =>
   client.get('/tasks/', { params });
-
+export const getHeatmap = (): Promise<AxiosResponse<{ start: string; end: string; data: Record<string, number> }>> =>
+  client.get('/tasks/heatmap/');
 export const createTask = (data: TaskPayload):                        Promise<AxiosResponse<Task>> => client.post('/tasks/', data, silent);
 export const updateTask = (id: number, data: Partial<TaskPayload>):  Promise<AxiosResponse<Task>> => client.patch(`/tasks/${id}/`, data);
 export const deleteTask = (id: number):                               Promise<AxiosResponse>       => client.delete(`/tasks/${id}/`);

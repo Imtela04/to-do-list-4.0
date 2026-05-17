@@ -1,0 +1,142 @@
+.wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.total {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+.grid {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.grid::-webkit-scrollbar { display: none; }
+
+.dayLabels {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-top: 16px; /* align with cells below month row */
+  flex-shrink: 0;
+}
+
+.dayLabel {
+  font-size: 0.55rem;
+  color: var(--text-muted);
+  height: 10px;
+  line-height: 10px;
+  width: 12px;
+  text-align: right;
+}
+
+.right {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.monthRow {
+  display: flex;
+  gap: 2px;
+  height: 14px;
+  position: relative;
+}
+
+.monthLabel {
+  font-size: 0.55rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  position: absolute;
+}
+.monthLabel {
+  font-size: 0.55rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.cells {
+  display: flex;
+  gap: 2px;
+  flex-wrap: nowrap;
+}
+
+.week {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.cell {
+  width: 10px;
+  height: 10px;
+  min-width: 10px;
+  min-height: 10px;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: opacity 120ms;
+}
+
+
+.cell:hover { opacity: 0.75; }
+
+.future {
+  background: transparent !important;
+  cursor: default;
+}
+
+.legend {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  justify-content: flex-end;
+  margin-top: 2px;
+}
+
+.legendLabel {
+  font-size: 0.55rem;
+  color: var(--text-muted);
+}
+
+.legendCell {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+.tooltip {
+  position: fixed;
+  transform: translateX(-50%) translateY(-100%);
+  background: var(--bg-card);
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius-sm);
+  padding: 4px 8px;
+  font-size: 0.68rem;
+  color: var(--text-primary);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 99999;
+  box-shadow: var(--shadow-md);
+}
