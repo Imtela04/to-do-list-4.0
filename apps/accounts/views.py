@@ -21,6 +21,39 @@ from django.conf import settings
 import resend
 from django.db.models import Count
 from django.db import models
+import random
+
+RETRO_A = [
+    'floppy', 'pixel', 'neon', 'turbo', 'cyber', 'glitch', 'vector',
+    'binary', 'laser', 'analog', 'static', 'cursor', 'baud', 'syntax',
+    'hexal', 'raster', 'modem', 'parity', 'kernel', 'crt', 'dial',
+    'buzzer', 'ferro', 'punch', 'nibble', 'octal', 'cobol', 'pascal',
+    'forth', 'basic', 'dbase', 'token', 'voxel', 'codec', 'bios',
+    'cache', 'prom', 'eeprom', 'clock', 'sector', 'track', 'buffer',
+    'stack', 'queue', 'patch', 'cron', 'daemon', 'fork', 'socket',
+    'relay', 'signal', 'pulse', 'voltage', 'diode', 'logic', 'flicker',
+    'circuit', 'ohm', 'watt', 'solder', 'trace', 'gate', 'chip',
+    'micro', 'macro', 'mega', 'turbo', 'hyper', 'ultra', 'super',
+    'synth', 'servo', 'gimbal', 'gyro', 'lidar', 'sonar', 'radar',
+    'matrix', 'array', 'index', 'offset', 'float', 'scalar', 'vector',
+]
+
+RETRO_B = [
+    'oracle', 'cipher', 'index', 'protocol', 'module', 'register',
+    'reactor', 'terminal', 'mainframe', 'console', 'subroutine', 'databus',
+    'handshake', 'interrupt', 'overflow', 'underflow', 'bitshift', 'checksum',
+    'firmware', 'bootstrap', 'bytecode', 'pipeline', 'assembler', 'debugger',
+    'compiler', 'linker', 'loader', 'patcher', 'runtime', 'sandbox',
+    'emulator', 'renderer', 'scanner', 'parser', 'tokenizer', 'lexer',
+    'allocator', 'scheduler', 'dispatcher', 'resolver', 'encoder', 'decoder',
+    'transmitter', 'receiver', 'amplifier', 'oscillator', 'transistor',
+    'capacitor', 'resistor', 'inductor', 'rectifier', 'inverter', 'buffer',
+    'multiplexer', 'demux', 'latch', 'flipflop', 'counter', 'timer',
+    'watchdog', 'arbiter', 'broker', 'proxy', 'gateway', 'bridge',
+    'router', 'switch', 'hub', 'port', 'endpoint', 'interface',
+    'controller', 'driver', 'handler', 'listener', 'watcher', 'tracer',
+]
+
 
 def get_resource_count(user, resource: str) -> int:
     if resource == 'tasks':
@@ -205,7 +238,8 @@ import uuid
 @permission_classes([AllowAny])
 def guest_login(request):
     """Create a temporary guest user and return JWT tokens."""
-    username = f'guest_{uuid.uuid4().hex[:12]}'
+    slug = f'{random.choice(RETRO_A)}_{random.choice(RETRO_B)}_{random.randint(10, 99)}'
+    username = slug
     password = uuid.uuid4().hex
     user = User.objects.create_user(username=username, password=password)
     profile = UserProfile.objects.get(user=user)

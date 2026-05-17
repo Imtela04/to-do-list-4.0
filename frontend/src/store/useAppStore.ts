@@ -38,7 +38,7 @@ interface AppState {
   filter:          Filter;
   isStaff:         boolean;
   email:           string;
-  isGuest: boolean;
+  isGuest:         boolean;
 
 }
 
@@ -69,7 +69,6 @@ const DEFAULT_FILTER: Filter = {
   dateTo:      savedFilter.dateTo      ?? null,
   search:      '',
   deadlineDay: null,
-  email: '',
 };
 
 const DEFAULT_STATE: AppState = {
@@ -85,6 +84,8 @@ const DEFAULT_STATE: AppState = {
   levelUpEvent:    null,
   filter:          DEFAULT_FILTER,
   isStaff:         false,
+  email:           '',
+  isGuest:         false,
 };
 
 // ── Store ──────────────────────────────────────────────────────
@@ -99,7 +100,7 @@ export const useAppStore = create<AppStore>((set) => ({
   }),
 
   setProfile: (data) => set({
-    username:        data.username,
+    username:        data.is_guest ? data.username.replace(/_\d+$/, '').replace(/_/g, ' '): data.username,
     xp:              data.xp,
     level:           data.level,
     streak:          data.streak,
@@ -108,7 +109,7 @@ export const useAppStore = create<AppStore>((set) => ({
     counts:          data.counts,
     pomodoros_today: data.pomodoros_today ?? 0,
     isStaff:         data.is_staff ?? false,
-    email: data.email ?? '',
+    email:           data.email ?? '',
   }),
 
   updateXp: (payload) => set(s => ({
