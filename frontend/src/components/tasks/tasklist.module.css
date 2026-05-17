@@ -349,3 +349,71 @@
   border: 2px dotted var(--accent-primary);
   color: var(--accent-primary);
 }
+
+/* ── Bulk actions ─────────────────────────────────────────── */
+.bulkBar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  flex-wrap: wrap;
+}
+
+.bulkCount {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  flex: 1;
+  font-family: var(--font-mono);
+}
+
+.bulkBtn {
+  /* padding: 5px 12px; */
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.bulkBtn:hover {
+  color: var(--accent-primary);
+}
+
+.bulkBtnDanger:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.bulkBtnDone:hover {
+  border-color: var(--accent-tertiary);
+  color: var(--accent-tertiary);
+}
+
+.selectToggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 7px 10px;
+  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.selectToggle:hover,
+.selectToggleActive {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}
+

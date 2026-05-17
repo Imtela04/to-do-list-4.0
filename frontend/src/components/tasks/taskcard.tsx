@@ -72,7 +72,15 @@ function useCountdown(deadline: string | null, timed: boolean): string | null {
   return remaining;
 }
 
-export default function TaskCard({ task }: { task: Task; index: number }) {
+export default function TaskCard({
+  task, selectMode = false, isSelected = false, onToggleSelect,
+}: {
+  task: Task;
+  index: number;
+  selectMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: (id: number) => void;
+}) {  
   const queryClient = useQueryClient();
   const updateXp    = useAppStore(s => s.updateXp);
   const { data: categories = [] } = useCategoriesQuery();
@@ -183,6 +191,7 @@ export default function TaskCard({ task }: { task: Task; index: number }) {
   // ── Handlers ───────────────────────────────────────────────
   const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).closest('button, input, textarea, select')) return;
+    if (selectMode) { onToggleSelect?.(task.id); return; }
     if (editing) return;
     if (clickTimer.current) {
       clearTimeout(clickTimer.current);
@@ -195,7 +204,6 @@ export default function TaskCard({ task }: { task: Task; index: number }) {
       }, 220);
     }
   };
-
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (!task.completed) toggleMutation.mutate({ completed: true });
@@ -289,6 +297,7 @@ export default function TaskCard({ task }: { task: Task; index: number }) {
         task.completed ? styles.completed : '',
         deleting       ? styles.deleting  : '',
         expanded       ? styles.expanded  : '',
+        isSelected ? styles.cardSelected : '',
       ].join(' ')}
       onClick={handleCardClick}
     >
@@ -304,12 +313,20 @@ export default function TaskCard({ task }: { task: Task; index: number }) {
       </span>
 
       {/* Toggle */}
-      <button className={styles.toggle} onClick={handleToggle} title = {task.completed ? 'Mark incomplete' : 'Mark complete'}>
-        {task.completed
-          ? <Check size={12} strokeWidth={3} /> 
-          : <span className={styles.activeDot} />}
-      </button>
-
+        {selectMode ? (
+          <button
+            className={`${styles.selectCheck} ${isSelected ? styles.selectChecked : ''}`}
+            onClick={e => { e.stopPropagation(); onToggleSelect?.(task.id); }}
+          >
+            {isSelected && <Check size={10} strokeWidth={3} />}
+          </button>
+        ) : (
+          <button className={styles.toggle} onClick={handleToggle} title={task.completed ? 'Mark incomplete' : 'Mark complete'}>
+            {task.completed
+              ? <Check size={12} strokeWidth={3} />
+              : <span className={styles.activeDot} />}
+          </button>
+        )}
       {/* Main content */}
       <div className={styles.body}>
 

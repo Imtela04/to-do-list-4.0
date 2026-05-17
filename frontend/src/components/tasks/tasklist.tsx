@@ -6,10 +6,13 @@ import AddTask from './addtask';
 import FilterBar from '@/components/layout/filterbar';
 import styles from './tasklist.module.css';
 import { format } from 'date-fns';
-import { Calendar, Lock } from 'lucide-react';
+import { Calendar, List, ListCheck, Lock, PencilRuler, Trash, X } from 'lucide-react';
 import { getFilteredTasks } from '@/utils/filterTasks';
 import { reorderTasks } from '@/api/services';
 import { Download } from 'lucide-react';
+import { toggleTask, deleteTask } from '@/api/services';
+import { useQueryClient } from '@tanstack/react-query';
+import { CheckSquare } from 'lucide-react';
 
 import {
   DndContext, closestCenter, PointerSensor,
@@ -36,7 +39,38 @@ export default function TaskList({ addOpen, setAddOpen }: TaskListProps) {
   const { data: tasks = [] } = useTasksQuery();
   const filteredTasks = getFilteredTasks(tasks, filter);
   const [page, setPage]       = useState(1);
-  
+  const queryClient = useQueryClient();
+  const [selectMode, setSelectMode] = useState(false);
+  const [selected, setSelected]     = useState<Set<number>>(new Set());
+  const [bulkLoading, setBulkLoading] = useState(false);
+
+  const toggleSelect = (id: number) =>
+    setSelected(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });
+
+  const selectAll = () =>
+    setSelected(selected.size === paginated.length
+      ? new Set()
+      : new Set(paginated.map(t => t.id)));
+
+  const exitSelectMode = () => { setSelectMode(false); setSelected(new Set()); };
+
+  const bulkComplete = async () => {
+    setBulkLoading(true);
+    const incomplete = [...selected].filter(id => tasks.find(t => t.id === id && !t.completed));
+    await Promise.allSettled(incomplete.map(id => toggleTask(id, true)));
+    await queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    exitSelectMode();
+    setBulkLoading(false);
+  };
+
+  const bulkDelete = async () => {
+    if (!confirm(`Delete ${selected.size} task(s)?`)) return;
+    setBulkLoading(true);
+    await Promise.allSettled([...selected].map(id => deleteTask(id)));
+    await queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    exitSelectMode();
+    setBulkLoading(false);
+  };
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -99,7 +133,43 @@ export default function TaskList({ addOpen, setAddOpen }: TaskListProps) {
 
   return (
     <div className={styles.container}>
-      <FilterBar />
+      <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <FilterBar />
+        <button
+          className={`${styles.selectToggle} ${selectMode ? styles.selectToggleActive : ''}`}
+          onClick={() => selectMode ? exitSelectMode() : setSelectMode(true)}
+          title="Bulk Actions"
+        >
+          <PencilRuler size={14} />
+        </button>
+      </div>
+      {selectMode && (
+        <div className={styles.bulkBar}>
+          <span className={styles.bulkCount}>
+            {selected.size} of {paginated.length} selected
+          </span>
+          <button className={styles.bulkBtn} onClick={selectAll} title={selected.size === paginated.length ? 'Deselect All' : 'Select All'}>
+            {selected.size === paginated.length ? <List size={15}/> : <ListCheck size={15}/>}
+          </button>
+          <button
+            className={`${styles.bulkBtn} ${styles.bulkBtnDone}`}
+            onClick={bulkComplete}
+            title='Mark All As Complete'
+            disabled={bulkLoading || selected.size === 0}
+          >
+            <CheckSquare size={15}/>
+          </button>
+          <button
+            className={`${styles.bulkBtn} ${styles.bulkBtnDanger}`}
+            onClick={bulkDelete}
+            title='Delete All'
+            disabled={bulkLoading || selected.size === 0}
+          >
+            <Trash size={15}/>
+          </button>
+          <button className={styles.bulkBtn} onClick={exitSelectMode} title='Cancel'><X size={15}/></button>
+        </div>
+      )}
       {filter.deadlineDay && (
         <div className={styles.dateChip}>
           <Calendar /> {format(
@@ -136,7 +206,14 @@ export default function TaskList({ addOpen, setAddOpen }: TaskListProps) {
             .slice()
             .sort((a, b) => localOrder.indexOf(a.id) - localOrder.indexOf(b.id))
             .map((task, i) => (
-              <TaskCard key={task.id} task={task} index={i} />
+              <TaskCard
+                key={task.id}
+                task={task}
+                index={i}
+                selectMode={selectMode}
+                isSelected={selected.has(task.id)}
+                onToggleSelect={toggleSelect}
+              />
             ))}
         </div>
       </SortableContext>

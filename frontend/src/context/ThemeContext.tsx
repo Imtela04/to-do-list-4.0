@@ -26,6 +26,15 @@ const COLOR_ALIASES: Record<string, string[]> = {
   '--accent-secondary': ['--bg-card', '--bg-secondary'],
 };
 
+function hexToRgb(hex: string): string {
+  const clean = hex.replace('#', '');
+  const full  = clean.length === 3
+    ? clean.split('').map(c => c + c).join('')
+    : clean;
+  const n = parseInt(full, 16);
+  return `${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}`;
+}
+
 // ── DOM helper ─────────────────────────────────────────────────
 function applyThemeToDom(mode: ThemeMode, customColors: CustomColors): void {
   document.documentElement.setAttribute('data-theme', mode);
@@ -33,6 +42,7 @@ function applyThemeToDom(mode: ThemeMode, customColors: CustomColors): void {
   const allVars = [
     ...Object.keys(DEFAULT_CUSTOM),
     ...Object.values(COLOR_ALIASES).flat(),
+      '--accent-primary-rgb',
   ];
   allVars.forEach(k => document.documentElement.style.removeProperty(k));
 
@@ -42,10 +52,12 @@ function applyThemeToDom(mode: ThemeMode, customColors: CustomColors): void {
       COLOR_ALIASES[k]?.forEach(alias =>
         document.documentElement.style.setProperty(alias, v)
       );
+      // sync RGB companion
+      if (k === '--accent-primary') {
+        document.documentElement.style.setProperty('--accent-primary-rgb', hexToRgb(v));
+      }
     });
-  }
-}
-
+  }}
 // ── Context ────────────────────────────────────────────────────
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
@@ -55,7 +67,6 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     applyThemeToDom(saved, DEFAULT_CUSTOM);
     return saved;
   });
-
   const [custom, setCustom] = useState<CustomColors>(DEFAULT_CUSTOM);
   const saveTimer           = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -98,6 +109,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     const updated = { ...custom, [variable]: value };
     setCustom(updated);
     document.documentElement.style.setProperty(variable, value);
+    if (variable === '--accent-primary') {
+      document.documentElement.style.setProperty('--accent-primary-rgb', hexToRgb(value));
+    }
+
+
     COLOR_ALIASES[variable]?.forEach(alias =>
       document.documentElement.style.setProperty(alias, value)
     );
