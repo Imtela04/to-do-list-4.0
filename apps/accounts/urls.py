@@ -20,7 +20,8 @@ urlpatterns = [
     path('admin/bulk-action/',                       views.admin_bulk_action,     name='admin-bulk-action'),
     path('admin/export/users.csv',                   views.admin_export_users_csv, name='admin-export-csv'),
     path('admin/audit-log/', views.admin_audit_log, name='admin-audit-log'),
-    
+    path('auth/guest/',        views.guest_login,  name='guest-login'),
+    path('auth/guest/logout/', views.guest_logout, name='guest-logout'),
     path('register/',                    views.register),
     path('user/theme/',                  ThemeView.as_view(), name='user-theme'),
     path('me/',                          views.me,            name='me'),

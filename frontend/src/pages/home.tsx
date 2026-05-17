@@ -18,6 +18,7 @@ import AlarmModal from '@/components/layout/alarmmodal';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import ShortcutsModal from '@/components/layout/shortcutsmodal';
 import Heatmap from '@/components/widgets/heatmap';
+import GuestBanner from '@/components/layout/guestbanner';
 
 type View = 'list' | 'calendar';
 
@@ -65,6 +66,7 @@ export default function Dashboard() {
     <SessionGuard>
       <LevelUpToast />
       <AlarmModal />
+      <GuestBanner />
 
       <div className={styles.layout}>
 

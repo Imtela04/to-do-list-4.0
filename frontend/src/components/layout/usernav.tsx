@@ -52,7 +52,9 @@ export default function UserNav() {
   const [showEmailForm, setShowEmailForm]                  = useState(false);
   const [emailInput, setEmailInput]                        = useState('');
   const [emailMsg, setEmailMsg]                            = useState('');
-  const queryClient = useQueryClient();
+  const queryClient                                        = useQueryClient();
+  const isGuest                                            = useAppStore(s => s.isGuest);
+
   const handleEmailSave = async () => {
     try {
       await updateEmail(emailInput);
@@ -112,24 +114,26 @@ export default function UserNav() {
           {initials}
           <span className={styles.levelBadge}>{level}</span>
         </button>
-        <div className={styles.xpInfo}>
-          <div className={styles.xpLabelRow}>
-            <span className={styles.levelLabel}>{LEVEL_LABELS[level] ?? 'Master'}</span>
-            {streak > 0 && (
-              <span className={styles.streak}>
-                <Flame size={11} /> {streak}d
-              </span>
-            )}
-          </div>
-          <div className={styles.xpBarWrap}>
-            <div className={styles.xpBar} style={{ width: `${xpPct}%` }} />
-          </div>
-          <span className={styles.xpText}>
-            {nextLevelXp ? `${xpInLevel} / ${xpNeeded} XP` : `${xp} XP · Max Level`}
-          </span>
-        </div>
-      </div>
+        {!isGuest && (
+          <div className={styles.xpInfo}>
 
+            <div className={styles.xpLabelRow}>
+              <span className={styles.levelLabel}>{LEVEL_LABELS[level] ?? 'Master'}</span>
+              {streak > 0 && (
+                <span className={styles.streak}>
+                  <Flame size={11} /> {streak}d
+                </span>
+              )}
+            </div>
+            <div className={styles.xpBarWrap}>
+              <div className={styles.xpBar} style={{ width: `${xpPct}%` }} />
+            </div>
+            <span className={styles.xpText}>
+              {nextLevelXp ? `${xpInLevel} / ${xpNeeded} XP` : `${xp} XP · Max Level`}
+            </span>
+          </div>
+        )}
+      </div>
       {open && createPortal(
         <div
           ref={drawerRef}
@@ -165,24 +169,26 @@ export default function UserNav() {
 
           </div>
 
-          <div className={styles.drawerXp}>
-            <div className={styles.drawerXpLabelRow}>
-              <span className={styles.drawerXpLabel}>{xp} XP</span>
-              {streak > 0 && (
-                <span className={styles.drawerStreak}>
-                  <Flame size={12} /> {streak} day streak
+          {!isGuest && (
+            <div className={styles.drawerXp}>
+              <div className={styles.drawerXpLabelRow}>
+                <span className={styles.drawerXpLabel}>{xp} XP</span>
+                {streak > 0 && (
+                  <span className={styles.drawerStreak}>
+                    <Flame size={12} /> {streak} day streak
+                  </span>
+                )}
+              </div>
+              <div className={styles.drawerXpBarWrap}>
+                <div className={styles.drawerXpBar} style={{ width: `${xpPct}%` }} />
+              </div>
+              {nextLevelXp && (
+                <span className={styles.drawerXpSub}>
+                  {nextLevelXp - xp} XP to Level {level + 1}
                 </span>
               )}
             </div>
-            <div className={styles.drawerXpBarWrap}>
-              <div className={styles.drawerXpBar} style={{ width: `${xpPct}%` }} />
-            </div>
-            {nextLevelXp && (
-              <span className={styles.drawerXpSub}>
-                {nextLevelXp - xp} XP to Level {level + 1}
-              </span>
-            )}
-          </div>
+          )}
 
           {!email && (
             <div className={styles.emailWarning}>

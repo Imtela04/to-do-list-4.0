@@ -139,6 +139,10 @@ def me(request):
                     'categories': get_resource_count(request.user, 'categories'),
                     'notes':      get_resource_count(request.user, 'notes'),
         },
+        
+        'is_guest': profile.is_guest,
+
+
     })
 
 
@@ -195,6 +199,36 @@ def create_onboarding_data(user):
         is_onboarding=True
     )
 
+import uuid
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def guest_login(request):
+    """Create a temporary guest user and return JWT tokens."""
+    username = f'guest_{uuid.uuid4().hex[:12]}'
+    password = uuid.uuid4().hex
+    user = User.objects.create_user(username=username, password=password)
+    profile = UserProfile.objects.get(user=user)
+    profile.is_guest = True
+    profile.save()
+
+    # Issue tokens using simplejwt
+    from rest_framework_simplejwt.tokens import RefreshToken
+    refresh = RefreshToken.for_user(user)
+    return Response({
+        'access':  str(refresh.access_token),
+        'refresh': str(refresh),
+    }, status=status.HTTP_201_CREATED)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def guest_logout(request):
+    profile = getattr(request.user, 'profile', None)
+    if profile and profile.is_guest:
+        request.user.delete()   # wipes everything
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    return Response({'detail': 'Not a guest'}, status=400)
 
 @api_view(['POST'])
 @permission_classes([AllowAny])

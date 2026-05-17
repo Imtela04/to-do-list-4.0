@@ -56,6 +56,7 @@ export interface Profile {
   pomodoros_today: number;
   is_staff?:        boolean;
   email?: string;
+  is_guest?: boolean;
 }
 
 export interface XpResult {

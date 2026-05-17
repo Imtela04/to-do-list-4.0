@@ -47,10 +47,7 @@ def get_profile(user):
     return profile
 
 def check_limit(profile, resource):
-    """
-    Returns (allowed: bool, message: str | None)
-    resource is 'tasks', 'categories', or 'notes'
-    """
+   
     limits = profile.get_limits()
     limit  = limits.get(resource)
     if limit is None:
@@ -64,10 +61,12 @@ def check_limit(profile, resource):
         if profile.level < MAX_LEVEL:
             next_cfg   = LEVEL_CONFIG[next_level]
             needed_xp  = next_cfg['xp'] - profile.xp
-            return False, (
-                f'You\'ve reached your Level {profile.level} limit of {limit} {resource}. '
-                f'Earn {needed_xp} more XP to reach Level {next_level} and unlock more!'
-            )
+            message = f'You\'ve reached your Level {profile.level} limit of {limit} {resource}.\n Earn {needed_xp} more XP to reach Level {next_level} and unlock more {resource}s!'
+            if profile.is_guest == True:
+                message = f' Sign up to unlock more {resource} and earn XP for completing tasks!'
+                           
+            return False, message
+            
         return False, f'You\'ve reached the maximum {resource} limit.'
 
     return True, None

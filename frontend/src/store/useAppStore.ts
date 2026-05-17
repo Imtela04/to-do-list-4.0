@@ -38,6 +38,8 @@ interface AppState {
   filter:          Filter;
   isStaff:         boolean;
   email:           string;
+  isGuest: boolean;
+
 }
 
 interface AppActions {

@@ -3,12 +3,13 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 
 LEVEL_CONFIG = {
-    1: {'xp': 0,    'tasks': 5,    'categories': 2,    'notes': 0},
-    2: {'xp': 50,   'tasks': 12,   'categories': 3,    'notes': 2},
-    3: {'xp': 150,  'tasks': 25,   'categories': 5,    'notes': 5},
+    1: {'xp': 0,    'tasks': 10,    'categories': 2,    'notes': 0},
+    2: {'xp': 50,   'tasks': 20,   'categories': 3,    'notes': 2},
+    3: {'xp': 150,  'tasks': 30,   'categories': 5,    'notes': 5},
     4: {'xp': 350,  'tasks': None, 'categories': None, 'notes': None},
     5: {'xp': 700,  'tasks': None, 'categories': None, 'notes': None},
 }
+GUEST_LIMITS = {'tasks': 10, 'categories': 2, 'notes': 1}
 
 XP_REWARDS = {
     'complete':          10,
@@ -41,17 +42,25 @@ class UserProfile(models.Model):
     last_pomodoro_date  = models.DateField(null=True, blank=True)
     failed_login_attempts = models.IntegerField(default=0)
     lockout_until         = models.DateTimeField(null=True, blank=True)
-    
+    is_guest = models.BooleanField(default=False)
+
+
     def __str__(self):
         return f'{self.user.username} profile'
 
     def get_limits(self):
+        if self.is_guest:
+            return GUEST_LIMITS
         return LEVEL_CONFIG.get(self.level) or LEVEL_CONFIG[calc_level(self.xp)]
 
     def award_xp(self, task):
         """
         Award XP for completing a task. Returns a dict with results.
         """
+        if self.is_guest:
+            return {'xp_gained': 0, 'total_xp': 0, 'leveled_up': False,
+                    'new_level': 1, 'streak': 0}
+
         gained = XP_REWARDS['complete']
 
         # Priority bonus
@@ -98,12 +107,19 @@ class UserProfile(models.Model):
 
     def deduct_xp(self):
         """Called when a task is un-completed."""
+        if self.is_guest:
+            return
+
         self.xp = max(0, self.xp + XP_REWARDS['uncomplete'])
         self.level = calc_level(self.xp)
         self.save()
     
     def complete_pomodoro(self):
         """Called when a 25-min session finishes. Resets daily count if needed."""
+        if self.is_guest:
+            return {'xp_gained': 0, 'total_xp': 0, 'leveled_up': False,
+                    'new_level': 1, 'streak': 0, 'pomodoros_today': 0}
+
         today = timezone.now().date()
         if self.last_pomodoro_date != today:
             self.pomodoros_today = 0 #reset for new day
