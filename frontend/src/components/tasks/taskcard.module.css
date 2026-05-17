@@ -195,7 +195,7 @@
   height: 26px;
   border-radius: 8px;
   border: 1px solid var(--border-subtle);
-  background: var(accent-primary);
+  background: var(--accent-primary);
   color: var(--text-muted);
   display: flex;
   align-items: center;
