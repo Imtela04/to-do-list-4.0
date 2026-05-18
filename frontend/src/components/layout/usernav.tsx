@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Sun, Moon, Pipette, User, Power, Flame, Star, Trash, ShieldCogCorner, TriangleAlert, HatGlasses } from 'lucide-react';
+import { Sun, Moon, Pipette, User, Power, Flame, Star, Trash, ShieldCogCorner, TriangleAlert, Ghost } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { useTheme } from '@/context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
@@ -112,7 +112,7 @@ export default function UserNav() {
       <div className={styles.avatarRow}>
         <button ref={btnRef} className={styles.avatar} onClick={() => setOpen(o => !o)}>
           {initials}
-          {!isGuest ? (<span className={styles.levelBadge}>{level}</span>):(<span className={styles.levelBadge}><HatGlasses/></span>)}
+          {!isGuest ? (<span className={styles.levelBadge}>{level}</span>):(<span className={styles.levelBadge}><Ghost/></span>)}
         </button>
         {!isGuest && (
           <div className={styles.xpInfo}>
@@ -142,7 +142,7 @@ export default function UserNav() {
         >
         <div className={styles.drawerHeader}>
           
-          <div className={styles.drawerAvatar}>{!isGuest ?(<User size={20}/>):(<HatGlasses size={20}/>)}</div>
+          <div className={styles.drawerAvatar}>{!isGuest ?(<User size={20}/>):(<Ghost size={20}/>)}</div>
           <div className={styles.drawerUser}>
             <span className={styles.drawerUsername}>{username ?? 'User'}</span>
 

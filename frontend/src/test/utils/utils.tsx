@@ -2,7 +2,7 @@ import { ReactElement } from 'react';
 import { render, RenderResult } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { MemoryRouter } from 'react-router-dom';
-import { ThemeProvider } from '../context/ThemeContext';
+import { ThemeProvider } from '../../context/ThemeContext';
 
 export function makeQueryClient(): QueryClient {
   return new QueryClient({
@@ -69,6 +69,7 @@ export interface Task {
   completed_at: string | null;
   subtasks:     Subtask[];
   [key: string]: unknown;
+  recurrence: 'daily' | 'weekly' | 'monthly' | 'yearly' | null;
 }
 
 export const mockTask = (overrides: Partial<Task> = {}): Task => ({
@@ -83,6 +84,7 @@ export const mockTask = (overrides: Partial<Task> = {}): Task => ({
   created_at:   new Date().toISOString(),
   completed_at: null,
   subtasks:     [],
+  recurrence:   'daily',
   ...overrides,
 });
 

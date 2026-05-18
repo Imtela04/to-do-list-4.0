@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { login } from '../api/services';
 import { useAppStore } from '@/store/useAppStore';
 import styles from './login.module.css';
-import { HatGlasses, Loader, LogIn } from 'lucide-react';
+import { Ghost, Loader, LogIn } from 'lucide-react';
 
 interface LoginForm {
   username: string;
@@ -119,7 +119,7 @@ export default function Login() {
           disabled={guestLoading}
           className={styles.guest}          
         >
-          {guestLoading ? <Loader size={15}/> : <HatGlasses size={15}/>}
+          {guestLoading ? <Loader size={15}/> : <Ghost size={15}/>}
         </button>
       </div>
     </div>

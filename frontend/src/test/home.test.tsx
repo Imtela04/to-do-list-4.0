@@ -1,7 +1,7 @@
 import { screen } from '@testing-library/react';
 import { vi } from 'vitest';
 import Home from '../pages/home';
-import { renderWithProviders } from './utils';
+import { renderWithProviders } from './utils/utils';
 
 // Mock components
 vi.mock('../components/layout/greetings', () => ({

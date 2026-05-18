@@ -4,7 +4,7 @@ import { useDataLoader } from '../hooks/useDataLoader';
 
 // Mock the hooks
 vi.mock('../hooks/useTasksQuery', () => ({
-  useTasksQuery: vi.fn()
+  useTasksQuery: vi.fn(() => ({ data: [], isLoading: false }))
 }));
 
 vi.mock('../hooks/useCategoriesQuery', () => ({

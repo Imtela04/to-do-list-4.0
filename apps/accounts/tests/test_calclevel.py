@@ -41,7 +41,7 @@ class UserProfileTest(TestCase):
 
     def test_get_limits_level_1(self):
         limits = self.profile.get_limits()
-        self.assertEqual(limits['tasks'], 5)
+        self.assertEqual(limits['tasks'], 10)
         self.assertEqual(limits['categories'], 2)
         self.assertEqual(limits['notes'], 0)
 

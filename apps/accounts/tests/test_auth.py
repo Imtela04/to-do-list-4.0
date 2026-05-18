@@ -10,8 +10,10 @@ class RegisterTests(APITestCase):
         """Valid credentials create a user and return 201."""
         response = self.client.post(self.url, {
             'username': 'testuser',
+            'email': 'test@example.com',
             'password': 'testpass123'
         })
+
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(User.objects.filter(username='testuser').exists())
 

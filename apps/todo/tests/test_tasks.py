@@ -35,7 +35,7 @@ class GetTasksTests(BaseTestCase):
         self.create_task('Task 2')
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
+        self.assertEqual(len(response.data['results']), 2)
 
     def test_get_tasks_unauthenticated(self):
         """Unauthenticated request returns 401."""
@@ -48,14 +48,15 @@ class GetTasksTests(BaseTestCase):
         self.create_task('My task')
         self.create_task('Other task', user=self.other_user)
         response = self.client.get(self.url)
-        self.assertEqual(len(response.data), 1)
-        self.assertEqual(response.data[0]['title'], 'My task')
+        self.assertEqual(len(response.data['results']), 1)
+        self.assertEqual(response.data['results'][0]['title'], 'My task')
+
 
     def test_get_tasks_empty(self):
         """Returns empty list when no tasks exist."""
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 0)
+        self.assertEqual(len(response.data['results']), 0)
 
 
 class AddTaskTests(BaseTestCase):
@@ -161,7 +162,7 @@ class UpdateTaskTitleTests(BaseTestCase):
             'title': 'New Title'
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['title'], 'New Title')
+        self.assertEqual(response.data['task']['title'], 'New Title')
 
     def test_update_title_other_users_task(self):
         """Cannot update another user's task title."""
@@ -180,7 +181,7 @@ class UpdateTaskDescriptionTests(BaseTestCase):
             'description': 'New description'
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['description'], 'New description')
+        self.assertEqual(response.data['task']['description'], 'New description')
 
     def test_update_description_other_users_task(self):
         """Cannot update another user's task description."""
@@ -199,7 +200,7 @@ class UpdateTaskDeadlineTests(BaseTestCase):
             'deadline': '2026-12-31T00:00:00'
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIsNotNone(response.data['deadline'])
+        self.assertIsNotNone(response.data['task']['deadline'])
 
     def test_clear_deadline(self):
         """Sending empty deadline clears it."""
@@ -208,7 +209,7 @@ class UpdateTaskDeadlineTests(BaseTestCase):
             'deadline': ''
         })
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIsNone(response.data['deadline'])
+        self.assertIsNone(response.data['task']['deadline'])
 
 
 class ToggleTaskTests(BaseTestCase):
@@ -216,7 +217,7 @@ class ToggleTaskTests(BaseTestCase):
         task = self.create_task()
         response = self.client.patch(f'/api/tasks/{task.id}/', {'completed': True})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertTrue(response.data['completed'])
+        self.assertTrue(response.data['task']['completed'])
 
     def test_toggle_task_uncompletes_it(self):
         task = self.create_task()
@@ -224,7 +225,7 @@ class ToggleTaskTests(BaseTestCase):
         task.save()
         response = self.client.patch(f'/api/tasks/{task.id}/', {'completed': False})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertFalse(response.data['completed'])
+        self.assertFalse(response.data['task']['completed'])
 
     def test_toggle_other_users_task(self):
         task = self.create_task(user=self.other_user)

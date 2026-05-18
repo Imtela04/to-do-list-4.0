@@ -13,6 +13,11 @@ const localStorageMock = (() => {
 })();
 Object.defineProperty(window, 'localStorage', { value: localStorageMock });
 
+global.Notification = {
+  permission: 'default',
+  requestPermission: vi.fn().mockResolvedValue('default'),
+};
+
 // mock axios client so tests never hit the network
 vi.mock('@/api/client', () => ({
   default: {

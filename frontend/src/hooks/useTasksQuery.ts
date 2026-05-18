@@ -6,9 +6,9 @@ export function useTasksQuery(enabled = !!localStorage.getItem('authToken')): Us
   return useQuery({
     queryKey: ['tasks'],
         queryFn: async () => {
-      const res = await getTasks();
-      return res.data.results;
-    },
+          const res = await getTasks();
+          return Array.isArray(res.data) ? res.data : (res.data.results ?? []);
+        },
 
     enabled,
     retry: false,
