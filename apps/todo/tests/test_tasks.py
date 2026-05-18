@@ -61,6 +61,21 @@ class GetTasksTests(BaseTestCase):
 class AddTaskTests(BaseTestCase):
     url = '/api/tasks/'
 
+    def test_add_task_title_too_long(self):
+        """Title over 255 chars returns 400."""
+        response = self.client.post(self.url, {'title': 'x' * 256, 'priority': 'low'})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_add_task_with_deadline(self):
+        """Deadline is stored and returned."""
+        response = self.client.post(self.url, {
+            'title': 'Deadline Task',
+            'priority': 'low',
+            'deadline': '2027-12-31T23:59:00',
+        })
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIsNotNone(response.data['deadline'])
+
     def test_add_task_minimal(self):
         """Task with only title is created successfully."""
         response = self.client.post(self.url, {'title': 'New Task'})
@@ -135,6 +150,10 @@ class DeleteTaskTests(BaseTestCase):
 
 
 class UpdateTaskTitleTests(BaseTestCase):
+    def test_update_title_too_long_returns_400(self):
+        task = self.create_task('Short')
+        response = self.client.patch(f'/api/tasks/{task.id}/', {'title': 'x' * 256})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)    
     def test_update_title_success(self):
         """Title is updated and returned."""
         task = self.create_task('Old Title')
