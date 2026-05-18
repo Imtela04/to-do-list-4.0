@@ -85,27 +85,22 @@ export default function TaskCard({
   const updateXp    = useAppStore(s => s.updateXp);
   const { data: categories = [] } = useCategoriesQuery();
 
-  const [deleting, setDeleting]                   = useState(false);
-  const [editing, setEditing]                     = useState(false);
-  const [expanded, setExpanded]                   = useState(false);
-  const [confirmDelete, setConfirmDelete]         = useState(false);
-  const [confirmUncomplete, setConfirmUncomplete] = useState(false);
-  const [editForm, setEditForm] = useState<EditForm>({
-    title: '', description: '', priority: '', category: '', deadline: null, timed: false, recurrence: '',
-  });
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =  useSortable({ id: task.id });
+  const [deleting, setDeleting]                                                   = useState(false);
+  const [editing, setEditing]                                                     = useState(false);
+  const [expanded, setExpanded]                                                   = useState(false);
+  const [confirmDelete, setConfirmDelete]                                         = useState(false);
+    const [confirmUncomplete, setConfirmUncomplete]                               = useState(false);
+  const [editForm, setEditForm]                                                   = useState<EditForm>({title: '', description: '', priority: '', category: '', deadline: null, timed: false, recurrence: '', });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging }  = useSortable({ id: task.id });
+  const cardRef                                                                   = useRef<HTMLDivElement>(null);
+  const clickTimer                                                                = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
   const dragStyle = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.4 : 1,
     zIndex:  isDragging ? 50 : undefined,
   };
-
-
-
-  const cardRef        = useRef<HTMLDivElement>(null);
-  const clickTimer     = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   const category   = task.category;
   const subtasks       = task.subtasks ?? [];
   const completedCount = subtasks.filter(s => s.completed).length;

@@ -20,11 +20,11 @@
   cursor: pointer;
   border: 2px solid var(--accent-primary);
   transition: all var(--transition-fast);
-  box-shadow: 0 0 0 0 rgba(124, 106, 255, 0.4);
+  box-shadow: 0 0 0 0 var(--accent-primary);
 }
 .avatar:hover {
   border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(124, 106, 255, 0.2);
+  box-shadow: 0 0 8px  var(--accent-primary);
 }
 
 .logoutBtn, .dangerBtn{
@@ -107,7 +107,7 @@
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  white-space: nowrap;  /* ← prevents wrapping */
+  white-space: nowrap;
 }
 
 .drawerClose {
@@ -177,7 +177,7 @@
 .toggleActive {
   background: var(--bg-card);
   color: var(--text-primary);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 4px var(--bg-glass);
 }
 
 .customBtn, .adminBtn {
@@ -199,7 +199,6 @@
 
 .customBtn:hover{ color: var(--accent-primary); }
 .themeActive {
-  background: rgba(124, 106, 255, 0.1);
   color: var(--accent-primary) !important;
 }
 
@@ -227,12 +226,12 @@
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 .colorSwatch:hover {
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 8px rgba(124, 106, 255, 0.3);
+  border-color: var(--border-accent);
+  box-shadow: 0 0 8px var(--border-accent);
 }
 .swatchActive {
   border-color: var(--accent-primary) !important;
-  box-shadow: 0 0 8px rgba(124, 106, 255, 0.4) !important;
+  box-shadow: 0 0 8px var(--accent-primary) !important;
 }
 
 .colorLabel {
@@ -322,13 +321,13 @@
   align-items: center;
   gap: 2px;
   font-size: 0.65rem;
-  color: #f59e0b;
+  color: var(--accent-warm);
   font-weight: 600;
 }
 
 .xpBarWrap {
   height: 3px;
-  background: rgba(128,128,128,0.2);
+  background: var(--bg-glass);
   border-radius: var(--radius-full);
   overflow: hidden;
   outline: 1px solid var(--border-accent);
@@ -374,7 +373,7 @@
   align-items: center;
   gap: 4px;
   font-size: 0.72rem;
-  color: #f59e0b;
+  color: var(--accent-warm);
   font-weight: 600;
 }
 
@@ -443,22 +442,25 @@
 }
 
 .emailSaveBtn:hover {
-  background: #8f7fff;
+  background: var(--accent-primary);
 }
 
-.emailWarning {
+.emailWarning, .guestWarning {
   padding: 8px 14px;
-  background: rgba(255, 170, 106, 0.08);
+  background: var(--bg-glass);
+  border: 1px solid var(--danger);
   border-radius: 8px;
   margin: 4px 0;
 }
 
-.emailWarningText {
+.emailWarningText, .guestWarningText {
   font-size: 0.72rem;
-  color: #ffaa6a;
+  color: var(--accent-warm);
   margin-bottom: 6px;
 }
-
+.guestWarningText{
+  color: var(--danger);
+}
 .emailAddBtn {
   font-size: 0.72rem;
   color: var(--accent-primary);
@@ -473,3 +475,4 @@
   color: var(--text-muted);
   margin-top: 4px;
 }
+

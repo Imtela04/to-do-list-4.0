@@ -110,6 +110,7 @@ export const useAppStore = create<AppStore>((set) => ({
     pomodoros_today: data.pomodoros_today ?? 0,
     isStaff:         data.is_staff ?? false,
     email:           data.email ?? '',
+    isGuest:         data.is_guest ?? false,
   }),
 
   updateXp: (payload) => set(s => ({

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Sun, Moon, Pipette, User, Power, Flame, Star, Trash, ShieldCogCorner, TriangleAlert } from 'lucide-react';
+import { Sun, Moon, Pipette, User, Power, Flame, Star, Trash, ShieldCogCorner, TriangleAlert, HatGlasses } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import { useTheme } from '@/context/ThemeContext';
 import { useNavigate } from 'react-router-dom';
@@ -112,7 +112,7 @@ export default function UserNav() {
       <div className={styles.avatarRow}>
         <button ref={btnRef} className={styles.avatar} onClick={() => setOpen(o => !o)}>
           {initials}
-          <span className={styles.levelBadge}>{level}</span>
+          {!isGuest ? (<span className={styles.levelBadge}>{level}</span>):(<span className={styles.levelBadge}><HatGlasses/></span>)}
         </button>
         {!isGuest && (
           <div className={styles.xpInfo}>
@@ -141,13 +141,17 @@ export default function UserNav() {
           style={{ position: 'fixed', left: pos.left, bottom: pos.bottom }}
         >
         <div className={styles.drawerHeader}>
-          <div className={styles.drawerAvatar}><User /></div>
+          
+          <div className={styles.drawerAvatar}>{!isGuest ?(<User size={20}/>):(<HatGlasses size={20}/>)}</div>
           <div className={styles.drawerUser}>
             <span className={styles.drawerUsername}>{username ?? 'User'}</span>
 
+          {!isGuest &&(
             <span className={styles.drawerRole}>
               <Star size={10} /> {LEVEL_LABELS[level]} · Lv{level}
             </span>
+
+          )}
           </div>
             
             {isStaff && (
@@ -168,6 +172,12 @@ export default function UserNav() {
             </button>
 
           </div>
+
+          {isGuest && (
+            <div className={styles.guestWarning}>
+              <p className={styles.guestWarningText}><TriangleAlert size={15}/> You are logged in as a guest. Progress won't be saved.</p>
+            </div>
+          )}
 
           {!isGuest && (
             <div className={styles.drawerXp}>
@@ -190,7 +200,7 @@ export default function UserNav() {
             </div>
           )}
 
-          {!email && (
+          {!isGuest && !email && (
             <div className={styles.emailWarning}>
               <p className={styles.emailWarningText}><TriangleAlert size={15}/> No email set — password reset won't work.</p>
               {showEmailForm ? (
