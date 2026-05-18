@@ -7,7 +7,6 @@ import type { Task, Subtask as SubtaskType } from '@/types';
 import styles from './subtask.module.css';
 import { Plus, Check } from 'lucide-react';
 
-const SUBTASK_LIMIT = 10;
 
 interface Props {
   taskId: number;
@@ -18,12 +17,16 @@ interface Props {
 }
 
 export default function Subtask({ taskId, subtasks, optimisticUpdate, rollback }: Props) {
-  const queryClient        = useQueryClient();
-  const updateXp           = useAppStore(s => s.updateXp);
-  const [newSubtaskTitle, setNewSubtaskTitle] = useState('');
-  const [addingSubtask, setAddingSubtask]     = useState(false);
-  const subtaskInputRef = useRef<HTMLInputElement>(null);
-
+  const queryClient                               = useQueryClient();
+  const updateXp                                  = useAppStore(s => s.updateXp);
+  const [newSubtaskTitle, setNewSubtaskTitle]     = useState('');
+  const [addingSubtask, setAddingSubtask]         = useState(false);
+  const subtaskInputRef                           = useRef<HTMLInputElement>(null);
+  const isStaff                                   = useAppStore(s=>s.isStaff)
+  
+  
+  const SUBTASK_LIMIT = isStaff ? 999999:20;
+  
   const atSubtaskLimit = subtasks.length >= SUBTASK_LIMIT;
 
   useEffect(() => {
