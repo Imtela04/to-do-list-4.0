@@ -89,12 +89,12 @@ export default function TaskCard({
   const [editing, setEditing]                                                     = useState(false);
   const [expanded, setExpanded]                                                   = useState(false);
   const [confirmDelete, setConfirmDelete]                                         = useState(false);
-    const [confirmUncomplete, setConfirmUncomplete]                               = useState(false);
+  const [confirmUncomplete, setConfirmUncomplete]                                 = useState(false);
   const [editForm, setEditForm]                                                   = useState<EditForm>({title: '', description: '', priority: '', category: '', deadline: null, timed: false, recurrence: '', });
   const { attributes, listeners, setNodeRef, transform, transition, isDragging }  = useSortable({ id: task.id });
   const cardRef                                                                   = useRef<HTMLDivElement>(null);
   const clickTimer                                                                = useRef<ReturnType<typeof setTimeout> | null>(null);
-  
+  const isGuest                                                                   = useAppStore(s=>s.isGuest)
   const dragStyle = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -397,17 +397,20 @@ export default function TaskCard({
               <option value="">Category</option>
               {categories.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
             </select>
-            <div className={styles.priorities}>
-              {(['daily','weekly','monthly','yearly'] as const).map(r => (
-                <button
-                  key={r}
-                  className={`${styles.prioBtn} ${editForm.recurrence === r ? styles.prioActive : ''}`}
-                  onClick={() => set('recurrence', editForm.recurrence === r ? '' : r)}
-                >
-                  <RotateCcw size={10}/>{r}
-                </button>
-              ))}
-            </div>
+
+            {!isGuest && (
+              <div className={styles.priorities}>
+                {(['daily','weekly','monthly','yearly'] as const).map(r => (
+                  <button
+                    key={r}
+                    className={`${styles.prioBtn} ${editForm.recurrence === r ? styles.prioActive : ''}`}
+                    onClick={() => set('recurrence', editForm.recurrence === r ? '' : r)}
+                  >
+                    <RotateCcw size={10}/>{r}
+                  </button>
+                ))}
+              </div>
+            )}
             <div className={styles.dateTimeRow}>
             <DatePicker
               selected={editForm.deadline}
@@ -519,9 +522,10 @@ export default function TaskCard({
       )}
 
       {/* Confirm uncomplete */}
+      
       {confirmUncomplete && (
         <div className={styles.overlay}>
-          <p className={styles.overlayText}>Mark incomplete? You'll lose 5 XP.</p>
+          <p className={styles.overlayText}>Mark incomplete? {!isGuest ? "You'll lose 5 XP.": ""} </p>
           <div className={styles.overlayActions}>
             <button className={styles.cancelBtn} onClick={() => setConfirmUncomplete(false)}>Cancel</button>
             <button className={styles.deleteConfirmBtn} onClick={handleConfirmUncomplete}>Confirm</button>

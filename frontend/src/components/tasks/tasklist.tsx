@@ -103,7 +103,6 @@ export default function TaskList({ addOpen, setAddOpen }: TaskListProps) {
 
   useEffect(() => { setPage(1); }, [filter]);
 
-// correct — uses the server-side count which excludes onboarding
   const counts = useAppStore(s => s.counts);
   const tasksLocked = limits.tasks !== null && counts.tasks >= limits.tasks;
   const pageItems = Array.from({ length: totalPages }, (_, i) => i + 1)
@@ -121,7 +120,7 @@ export default function TaskList({ addOpen, setAddOpen }: TaskListProps) {
       t.priority,
       t.completed ? 'completed' : 'active',
       t.category ? t.category.name : '',
-      t.deadline ? new Date(t.deadline).toLocaleDateString() : '',
+      t.deadline ? new Date(t.deadline).toLocaleDateString() : 'null',
       new Date(t.created_at).toLocaleDateString(),
     ]);
     const csv = [headers, ...rows].map(r => r.join(',')).join('\n');

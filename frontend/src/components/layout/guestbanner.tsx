@@ -1,7 +1,7 @@
 import { useAppStore } from '@/store/useAppStore';
 import { useNavigate } from 'react-router-dom';
 import styles from './guestbanner.module.css';
-import { HatGlasses, LogIn, PenTool } from 'lucide-react';
+import { HatGlasses } from 'lucide-react';
 
 export default function GuestBanner() {
   const isGuest    = useAppStore(s => s.isGuest);
@@ -31,15 +31,17 @@ export default function GuestBanner() {
   return (
     <div className={styles.banner}>
       <span className={styles.text}>
-        <HatGlasses size={15}/> Guest mode
-        <span className={styles.limits}>· data is temporary</span>
+        <HatGlasses size={15}/> Guest mode |
+        <span className={styles.limits}></span>
       </span>
-      <button className={styles.exitBtn} onClick={()=>handleExit('register')} title="Register">
-        <PenTool size={15}/>
+      <button className={styles.exitBtn} onClick={()=>handleExit('register')}>
+        Register
       </button>
-      <button className={styles.exitBtn} onClick={()=>handleExit('login')} title="Log In">
-        <LogIn size={15} />
+      or
+      <button className={styles.exitBtn} onClick={()=>handleExit('login')}>
+        Login
       </button>
+      to save progress
     </div>
   );
 }

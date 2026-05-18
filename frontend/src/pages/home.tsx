@@ -9,7 +9,7 @@ import StickyNotes from '@/components/widgets/stickynote';
 import Categories from '@/components/categories/categorypanel';
 import UserNav from '@/components/layout/usernav';
 import styles from './home.module.css';
-import { ClockAlert, Menu, X, NotebookPen, LayoutList, CalendarDays, BellCheck } from 'lucide-react';
+import { Menu, X, NotebookPen, LayoutList, CalendarDays, BellCheck, AlarmClockCheck } from 'lucide-react';
 import SessionGuard from '@/components/layout/sessionguard';
 import LevelUpToast from '@/components/layout/leveluptoast';
 import Pomodoro from '../components/widgets/pomodoro';
@@ -19,13 +19,14 @@ import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
 import ShortcutsModal from '@/components/layout/shortcutsmodal';
 import Heatmap from '@/components/widgets/heatmap';
 import GuestBanner from '@/components/layout/guestbanner';
+import { useAppStore } from '@/store/useAppStore';
 
 type View = 'list' | 'calendar';
 
 export function Logo(){
   return(
     <div>
-        <div className={styles.logo}><span className={styles.logoText}>what-d<ClockAlert className={styles.logoIcon} /></span></div>
+        <div className={styles.logo}><span className={styles.logoText}>what-d<AlarmClockCheck className={styles.logoIcon} /></span></div>
     </div>
   
   )
@@ -38,7 +39,8 @@ export default function Dashboard() {
   const location                           = useLocation();
   const [notifStatus, setNotifStatus]      = useState(Notification.permission);
   const [shortcutsOpen, setShortcutsOpen]  = useState(false);
-  const [addOpen, setAddOpen] = useState(false);
+  const [addOpen, setAddOpen]              = useState(false);
+  const isGuest                            = useAppStore(s=>s.isGuest)
 
   useKeyboardShortcuts({
     onNewTask:       () => setAddOpen(true),
@@ -81,7 +83,8 @@ export default function Dashboard() {
           </button>
           <div className={styles.sideSection}><ClockWidget /></div>
           <div className={styles.sideSection}><StatsWidget /></div>
-          <div className={styles.sideSection}><Heatmap /></div>
+          {!isGuest && (<div className={styles.sideSection}><Heatmap /></div>
+)}
           <div className={`${styles.sideSection} ${styles.sideSectionGrow}`}>
             <Categories onNavigate={() => setSidebarOpen(false)} />
           </div>

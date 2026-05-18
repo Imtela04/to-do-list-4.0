@@ -8,6 +8,7 @@ import styles from './addtask.module.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { Pickaxe, Trash, Lock } from 'lucide-react';
+import { useAppStore } from '@/store/useAppStore';
 
 const PRIORITIES = ['low', 'medium', 'high', 'critical'] as const;
 const DRAFT_KEY  = 'draft_task';
@@ -31,20 +32,15 @@ interface AddTaskProps {
 export default function AddTask({ open, setOpen }: AddTaskProps) {
   const queryClient = useQueryClient();
   
-  const { data: categories = [] } = useCategoriesQuery();
-  const { save, load, clear }     = useDraft<TaskForm>(DRAFT_KEY);
-
-  const [form, setForm] = useState<TaskForm>({
-    title: '', description: '', priority: '', category: '',
-    due_date: null, due_time: null, timed: false,
-    recurrence: '',
-  });
-  const [hasDraft, setHasDraft]     = useState(!!load());
-  const [limitError, setLimitError] = useState<string | null>(null);
-
-  const [pendingSubtasks, setPendingSubtasks] = useState<string[]>([]);
-  const [subtaskInput, setSubtaskInput]       = useState('');
+  const { data: categories = [] }                  = useCategoriesQuery();
+  const { save, load, clear }                      = useDraft<TaskForm>(DRAFT_KEY);
+  const [form, setForm]                            = useState<TaskForm>({title: '', description: '', priority: '', category: '', due_date: null, due_time: null, timed: false, recurrence: '', });
+  const [hasDraft, setHasDraft]                    = useState(!!load());
+  const [limitError, setLimitError]                = useState<string | null>(null);
+  const [pendingSubtasks, setPendingSubtasks]      = useState<string[]>([]);
+  const [subtaskInput, setSubtaskInput]            = useState('');
   const SUBTASK_LIMIT = 10;
+  const isGuest                                    = useAppStore(s=>s.isGuest);
 
   useEffect(() => {
     if (open) {
@@ -53,7 +49,7 @@ export default function AddTask({ open, setOpen }: AddTaskProps) {
       if (draft) {
         setForm({ ...draft, due_date: draft.due_date ? new Date(draft.due_date) : null });
       } else {
-        setForm({ title: '', description: '', priority: '', category: '', due_date: null, due_time: null, timed: false });
+        setForm({ title: '', description: '', priority: '', category: '', due_date: null, due_time: null, timed: false, recurrence: '' });
       }
     }
   }, [open]);
@@ -195,20 +191,24 @@ export default function AddTask({ open, setOpen }: AddTaskProps) {
             popperPlacement="top-start"
           />
         </div>
-        <div className={styles.field}>
-          <label className={styles.label}>Repeat</label>
-          <div className={styles.priorities}>
-            {(['daily','weekly','monthly','yearly'] as const).map(r => (
-              <button
-                key={r}
-                className={`${styles.prioBtn} ${form.recurrence === r ? styles.prioActive : ''}`}
-                onClick={() => set('recurrence', form.recurrence === r ? '' : r)}
-              >
-                {r}
-              </button>
-            ))}
+        
+        {!isGuest && (
+          <div className={styles.field}>
+            <label className={styles.label}>Repeat</label>
+            <div className={styles.priorities}>
+              {(['daily','weekly','monthly','yearly'] as const).map(r => (
+                <button
+                  key={r}
+                  className={`${styles.prioBtn} ${form.recurrence === r ? styles.prioActive : ''}`}
+                  onClick={() => set('recurrence', form.recurrence === r ? '' : r)}
+                >
+                  {r}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
+
         {form.due_date && (
           <div className={styles.field}>
             <label className={styles.label}>

@@ -37,10 +37,12 @@
   cursor: pointer;
   font-weight: 700;
   font-size: 0.75rem;
-  color: var(--accent-secondary);
+  color: var(--accent-tertiary);
   flex-shrink: 0;
+  
 }
 
 .exitBtn:hover {
-  color: var(--accent-tertiary);
+  text-decoration:underline;
+
 }
