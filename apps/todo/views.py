@@ -349,11 +349,12 @@ def subtasks(request, task_id):
         return Response({'detail': 'Title is required'}, status=status.HTTP_400_BAD_REQUEST)
     if len(title) > 255:
         return Response({'detail': 'Title too long'}, status=status.HTTP_400_BAD_REQUEST)
-    if task.subtasks.count() >= SUBTASK_LIMIT:
-        return Response(
-            {'detail': f'Maximum {SUBTASK_LIMIT} subtasks per task.'},
-            status=status.HTTP_400_BAD_REQUEST
-        )
+    if not request.user.is_staff:
+        if task.subtasks.count() >= SUBTASK_LIMIT:
+            return Response(
+                {'detail': f'Maximum {SUBTASK_LIMIT} subtasks per task.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
     subtask = Subtask.objects.create(task=task, title=title)
     return Response(SubtaskSerializer(subtask).data, status=status.HTTP_201_CREATED)
