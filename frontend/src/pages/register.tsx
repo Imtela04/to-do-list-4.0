@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { register } from '../api/services';
 import styles from './register.module.css';
+import { Logo } from './home';
 
 interface RegisterForm {
   username: string;
@@ -46,6 +47,7 @@ export default function Register() {
 
   return (
     <div className={styles.layout}>
+      <Link to='/'><Logo /></Link>
       <div className={styles.main}>
         <h1>Register</h1>
         {error && <p className={styles.error}>{error}</p>}

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import Greeting from '@/components/layout/greetings';
 import ClockWidget from '@/components/widgets/clock';
 import TaskList from '@/components/tasks/tasklist';
@@ -77,7 +77,7 @@ export default function Dashboard() {
         )}
 
         <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ''}`}>
-          <Logo/>
+          <Link to="/"><Logo/></Link>
           <button className={styles.sidebarClose} onClick={() => setSidebarOpen(false)}>
             <X size={16} />
           </button>

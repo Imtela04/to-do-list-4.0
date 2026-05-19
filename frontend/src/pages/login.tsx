@@ -5,6 +5,7 @@ import { login } from '../api/services';
 import { useAppStore } from '@/store/useAppStore';
 import styles from './login.module.css';
 import { Ghost, Loader, LogIn } from 'lucide-react';
+import { Logo } from './home';
 
 interface LoginForm {
   username: string;
@@ -70,6 +71,10 @@ export default function Login() {
 
   return (
     <div className={styles.layout}>
+      <button>
+        <Link to="/" className={styles.logoLink}><Logo/></Link>
+      </button>
+
       <div className={styles.main}>
         <h1>Login</h1>
         {error && <p className={styles.error}>{error}</p>}
@@ -121,6 +126,7 @@ export default function Login() {
         >
           {guestLoading ? <Loader size={15}/> : <Ghost size={15}/>}
         </button>
+        
       </div>
     </div>
   );

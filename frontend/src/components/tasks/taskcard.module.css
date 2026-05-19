@@ -48,12 +48,16 @@
 .toggle:hover { border-color: var(--accent-primary); }
 
 .activeDot {
-  width: 7px;
-  height: 7px;
+
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
-  background: var(--accent-primary);
-  display: block;
+  background: var(--accent-tertiary);
+  box-shadow: 0 0 8px var(--accent-primary);
+  animation: pulse 2s ease infinite;
 }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
 
 /* ── Pinned badge ─────────────────────────────────────────── */
 .pinnedBadge {

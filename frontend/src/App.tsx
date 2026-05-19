@@ -8,6 +8,7 @@ import { registerErrorHandler } from '@/api/client';
 import OfflineBanner from '@/components/layout/offlinebanner';
 
 //lazy load all pages
+const Landing = lazy(() => import('@/pages/landing'));
 const Dashboard = lazy(() => import('@/pages/home'));
 const Login     = lazy(() => import('@/pages/login'));
 const Register  = lazy(() => import('@/pages/register'));
@@ -94,7 +95,7 @@ export default function App() {
         <ErrorHandlerRegistrar />
         <Suspense fallback={<div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>}>
           <Routes key={authKey}>
-            <Route path="/" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+            <Route path="/" element={localStorage.getItem('authToken') ? <PrivateRoute><Dashboard /></PrivateRoute> : <Landing />} />
             <Route path="/admin" element={<AdminRoute><AdminDashboard /></AdminRoute>} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
