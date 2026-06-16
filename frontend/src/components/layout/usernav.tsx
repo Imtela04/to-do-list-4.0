@@ -252,13 +252,16 @@ export default function UserNav() {
               </button>
             </div>
             
-              <button
-                className={styles.dangerBtn}
-                onClick={() => { setOpen(false); setShowDeleteModal(true); }}
-                title='Delete Account'
-              >
-                <Trash size={13} />
-              </button>
+          {!isGuest && (
+            <button
+              className={styles.dangerBtn}
+              onClick={() => { setOpen(false); setShowDeleteModal(true); }}
+              title='Delete Account'
+            >
+              <Trash size={13} />
+            </button>
+          )}
+
 
           </div>
 
