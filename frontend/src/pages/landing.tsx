@@ -1,4 +1,4 @@
-import { Ghost, LogIn, UserPen, ArrowRight, Flame, Timer, Calendar, Bolt, ChartColumnStacked, BrickWallFire, Zap } from "lucide-react";
+import { Power, Ghost, LogIn, UserPen, ArrowRight, Flame, Timer, Calendar, Bolt, ChartColumnStacked, BrickWallFire, Zap } from "lucide-react";
 import styles from './landing.module.css';
 import { useNavigate } from "react-router-dom";
 import { Logo } from "./home";
@@ -30,6 +30,23 @@ const MOCK_TASKS = [
 export default function Landing() {
   const navigate                            = useNavigate();
   const [guestLoading, setGuestLoading]     = useState(false);
+  const [loggedIn, setLoggedIn] = useState(() => {
+  const token = localStorage.getItem('authToken');
+  if (!token) return false;
+    try {
+      const { exp } = JSON.parse(atob(token.split('.')[1])) as { exp: number };
+      return exp * 1000 > Date.now();
+    } catch { return false; }
+  });
+
+  const savedName = localStorage.getItem('lastUsername') || localStorage.getItem('userName') || '';
+
+  const handleLogout = () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('lastUsername');
+    setLoggedIn(false);
+  };
 
   const handleGuest = async () => {
     setGuestLoading(true);
@@ -61,12 +78,20 @@ export default function Landing() {
       <nav className={styles.nav}>
         <Logo />
         <div className={styles.navActions}>
-          <button onClick={() => navigate('/login')} className={styles.navBtn}>
-            <LogIn size={15} /> Log in
-          </button>
-          <button onClick={() => navigate('/register')} className={styles.navBtnPrimary}>
-            <UserPen size={15} /> Sign up
-          </button>
+          {loggedIn ? (
+            <button onClick={() => navigate('/')} className={styles.navBtnPrimary}>
+              {savedName ? `Hi, ${savedName} —` : ''} Open Dashboard <ArrowRight size={15} />
+            </button>
+          ) : (
+            <>
+              <button onClick={() => navigate('/login')} className={styles.navBtn}>
+                <LogIn size={15} /> Log in
+              </button>
+              <button onClick={() => navigate('/register')} className={styles.navBtnPrimary}>
+                <UserPen size={15} /> Sign up
+              </button>
+            </>
+          )}
         </div>
       </nav>
 
@@ -84,14 +109,26 @@ export default function Landing() {
         </p>
 
         <div className={styles.heroActions}>
-          <button onClick={() => navigate('/register')} className={styles.heroCta}>
-            Start for free <ArrowRight size={16} />
-          </button>
-          <button onClick={handleGuest} className={styles.heroGuest} disabled={guestLoading}>
-            <Ghost size={15} /> {guestLoading ? 'Starting...' : 'Try as guest'}
-          </button>
+          {loggedIn ? (
+            <>
+              <button onClick={() => navigate('/')} className={styles.heroCta}>
+                Back to Dashboard <ArrowRight size={16} />
+              </button>
+              <button onClick={handleLogout} className={styles.heroGuest}>
+                <Power size={15} /> Log out
+              </button>
+            </>
+          ) : (
+            <>
+              <button onClick={() => navigate('/register')} className={styles.heroCta}>
+                Start for free <ArrowRight size={16} />
+              </button>
+              <button onClick={handleGuest} className={styles.heroGuest} disabled={guestLoading}>
+                <Ghost size={15} /> {guestLoading ? 'Starting...' : 'Try as guest'}
+              </button>
+            </>
+          )}
         </div>
-
         {/* Mock UI preview */}
         <div className={styles.heroPreview}>
           <div className={styles.previewWindow}>
@@ -172,12 +209,20 @@ export default function Landing() {
             <h2 className={styles.ctaTitle}>Ready to level up your productivity?</h2>
             <p className={styles.ctaSub}>Join and start turning your task list into an adventure.</p>
             <div className={styles.ctaActions}>
-              <button onClick={() => navigate('/register')} className={styles.heroCta}>
-                Create free account <ArrowRight size={16} />
-              </button>
-              <button onClick={handleGuest} className={styles.heroGuest}>
-                <Ghost size={15} /> Try as guest
-              </button>
+              {loggedIn ? (
+                <button onClick={() => navigate('/')} className={styles.heroCta}>
+                  Open Dashboard <ArrowRight size={16} />
+                </button>
+              ) : (
+                <>
+                  <button onClick={() => navigate('/register')} className={styles.heroCta}>
+                    Create free account <ArrowRight size={16} />
+                  </button>
+                  <button onClick={handleGuest} className={styles.heroGuest}>
+                    <Ghost size={15} /> Try as guest
+                  </button>
+                </>
+              )}
             </div>
           </div>
         </div>
