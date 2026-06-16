@@ -19,6 +19,7 @@ export default function Login() {
   const navigate                        = useNavigate();
   const resetState                      = useAppStore(s => s.resetState);
   const [guestLoading, setGuestLoading] = useState(false);
+  const [rememberMe, setRememberMe]     = useState(false);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
@@ -33,6 +34,7 @@ export default function Login() {
       localStorage.setItem('authToken', res.data.access);
       localStorage.setItem('refreshToken', res.data.refresh);
       sessionStorage.setItem('sessionActive', '1');
+      localStorage.setItem('lastUsername', form.username);
 
       resetState();
       window.dispatchEvent(new Event('auth-change'));
@@ -87,6 +89,14 @@ export default function Login() {
             autoComplete="username"
             className={styles.inputClass}
           />
+          <label className={styles.rememberMe}>
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={e => setRememberMe(e.target.checked)}
+            />
+            Remember me
+          </label>
           <div className={styles.passwordContainer}>
             <input
               type="password"

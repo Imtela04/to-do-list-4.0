@@ -54,16 +54,16 @@ export interface Profile {
   limits:          Limits;
   counts:          Counts;
   pomodoros_today: number;
-  is_staff?:        boolean;
-  email?: string;
-  is_guest?: boolean;
+  is_staff?:       boolean;
+  email?:          string;
+  is_guest?:       boolean;
 }
 
 export interface XpResult {
-  total_xp:   number;
-  new_level:  number | null;
-  streak:     number | null;
-  leveled_up: boolean;
+  total_xp:        number;
+  new_level:       number | null;
+  streak:          number | null;
+  leveled_up:      boolean;
 }
 
 export interface PomodoroResult {
@@ -74,25 +74,26 @@ export interface PomodoroResult {
 }
 
 export interface Theme {
-  mode:          string;
-  custom_colors: Record<string, string> | null;
+  mode:            string;
+  custom_colors:   Record<string, string> | null;
 }
 
 export interface AuthTokens {
-  access:  string;
-  refresh: string;
+  access:         string;
+  refresh:        string;
 }
 
 export interface LoginCredentials {
-  username: string;
-  password: string;
+  username:       string;
+  password:       string;
+  remember_me?:   boolean;
 }
 
 export interface RegisterData {
-  username: string;
-  email: string;
-  password: string;
-  confirm:  string;
+  username:       string;
+  email:          string;
+  password:       string;
+  confirm:        string;
 }
 
 export interface TaskPayload {

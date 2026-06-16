@@ -96,20 +96,27 @@ class LockableTokenObtainPairView(TokenObtainPairView):
 
         try:
             response = super().post(request, *args, **kwargs)
+            remember_me = bool(request.data.get('remember_me', False))
+
             if user and user.is_staff:
-                # Staff get 5-min access tokens, not 15
                 token = RefreshToken(response.data['refresh'])
                 token.access_token.set_exp(lifetime=timedelta(minutes=5))
                 response.data['access'] = str(token.access_token)
+            elif remember_me and user:
+                new_refresh = RefreshToken.for_user(user)
+                new_refresh.set_exp(lifetime=timedelta(days=30))
+                response.data['refresh'] = str(new_refresh)
+                response.data['access'] = str(new_refresh.access_token)
+
             if user:
                 record_successful_login(user)
-                log(request, 'login_ok', target=user, detail=user.username)              
+                log(request, 'login_ok', target=user, detail=user.username)
             return response
         except Exception:
             record_failed_login(username)
             log(request, 'login_fail', detail=username)
             raise
-        
+                
 class ThemeView(APIView):
     permission_classes = [IsAuthenticated]
 
