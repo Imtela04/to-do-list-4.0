@@ -77,14 +77,13 @@ export default function Dashboard() {
         )}
 
         <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ''}`}>
-          <Link to="/"><Logo/></Link>
+          <Link to="/landing"><Logo/></Link>
           <button className={styles.sidebarClose} onClick={() => setSidebarOpen(false)}>
             <X size={16} />
           </button>
           <div className={styles.sideSection}><ClockWidget /></div>
           <div className={styles.sideSection}><StatsWidget /></div>
-          {!isGuest && (<div className={styles.sideSection}><Heatmap /></div>
-)}
+          {!isGuest && (<div className={styles.sideSection}><Heatmap /></div>)}
           <div className={`${styles.sideSection} ${styles.sideSectionGrow}`}>
             <Categories onNavigate={() => setSidebarOpen(false)} />
           </div>
