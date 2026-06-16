@@ -45,6 +45,8 @@ export default function AddTask({ open, setOpen }: AddTaskProps) {
   useEffect(() => {
     if (open) {
       setLimitError(null);
+      setPendingSubtasks([]);
+      setSubtaskInput('');
       const draft = load();
       if (draft) {
         setForm({ ...draft, due_date: draft.due_date ? new Date(draft.due_date) : null });
@@ -72,11 +74,11 @@ export default function AddTask({ open, setOpen }: AddTaskProps) {
       await Promise.all(
         pendingSubtasks.map(title => createSubtask(newTaskId, { title }))
       );
-      queryClient.setQueryData(['tasks'], (old: unknown[]) => [res.data, ...(old ?? [])]);
-      void queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      await queryClient.invalidateQueries({ queryKey: ['tasks'] });
       clear();
       setHasDraft(false);
       setPendingSubtasks([]);
+      setSubtaskInput('');
       setOpen(false);
     },
 
