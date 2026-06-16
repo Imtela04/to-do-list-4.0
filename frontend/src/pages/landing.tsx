@@ -2,6 +2,7 @@ import { Ghost, LogIn, UserPen, ArrowRight, Flame, Timer, Calendar, Bolt, ChartC
 import styles from './landing.module.css';
 import { useNavigate } from "react-router-dom";
 import { Logo } from "./home";
+import { useState } from "react";
 
 const FEATURES = [
   { icon: <Bolt size={20}/>,        title: 'Earn XP',           desc: 'Every completed task awards XP. Priority and on-time bonuses stack up fast.' },
@@ -27,12 +28,27 @@ const MOCK_TASKS = [
 ];
 
 export default function Landing() {
-  const navigate = useNavigate();
+  const navigate                            = useNavigate();
+  const [guestLoading, setGuestLoading]     = useState(false);
 
-  const handleGuest = () => {
-    localStorage.setItem('guestUser', 'true');
-    navigate('/home');
+  const handleGuest = async () => {
+    setGuestLoading(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/guest/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await res.json();
+      localStorage.setItem('authToken', data.access);
+      localStorage.setItem('refreshToken', data.refresh);
+      navigate('/');
+    } catch {
+      // silently fall through
+    } finally {
+      setGuestLoading(false);
+    }
   };
+
 
   return (
     <div className={styles.page}>
@@ -71,8 +87,8 @@ export default function Landing() {
           <button onClick={() => navigate('/register')} className={styles.heroCta}>
             Start for free <ArrowRight size={16} />
           </button>
-          <button onClick={handleGuest} className={styles.heroGuest}>
-            <Ghost size={15} /> Try as guest
+          <button onClick={handleGuest} className={styles.heroGuest} disabled={guestLoading}>
+            <Ghost size={15} /> {guestLoading ? 'Starting...' : 'Try as guest'}
           </button>
         </div>
 
@@ -169,7 +185,7 @@ export default function Landing() {
 
       <footer className={styles.footer}>
         <Logo/>
-        <span className={styles.footerNote}>Built to help you actually do things.</span>
+        <span className={styles.footerNote}>Built to help you <i>actually</i> accomplish goals.</span>
       </footer>
     </div>
   );
