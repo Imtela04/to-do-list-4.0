@@ -12,6 +12,10 @@ urlpatterns = [
     path('tasks/<int:task_id>/subtasks/',             views.subtasks),
     path('tasks/<int:task_id>/subtasks/<int:subtask_id>/', views.subtask_detail),
 
+    #attachments
+    path('tasks/<int:task_id>/attachments/', views.attachments),
+    path('tasks/<int:task_id>/attachments/<int:attachment_id>/', views.attachment_detail),
+
     # categories
     path('categories/', views.categories),
     path('categories/<int:cat_id>/', views.category_detail),

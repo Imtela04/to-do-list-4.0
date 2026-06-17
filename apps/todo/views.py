@@ -7,8 +7,8 @@ from django.db.models import Count
 import re
 from django.shortcuts import get_object_or_404
 from datetime import datetime, timezone as dt_timezone
-from .serializers import TodoSerializer, CategorySerializer, StickyNoteSerializer, SubtaskSerializer
-from .models import Todo, Category, StickyNotes, Subtask
+from .serializers import TodoSerializer, CategorySerializer, StickyNoteSerializer, SubtaskSerializer, AttachmentSerializer
+from .models import Todo, Category, StickyNotes, Subtask, Attachment
 from apps.accounts.models import UserProfile
 from django.utils import timezone
 import bleach
@@ -498,3 +498,51 @@ def task_heatmap(request):
 
     data = {str(r['day']): r['count'] for r in rows}
     return Response({'start': str(start), 'end': str(today), 'data': data})
+
+
+ALLOWED_ATTACHMENT_TYPES = {
+    'image/png', 'image/jpeg', 'image/gif', 'image/webp', 'application/pdf',
+    'text/plain', 'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+}
+MAX_ATTACHMENT_SIZE      = 5 * 1024 * 1024
+MAX_ATTACHMENTS_PER_TASK = 5
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def attachments(request, task_id):
+    task = Todo.objects.filter(id=task_id, owner=request.user).first()
+    if not task:
+        return Response({'detail': 'Task not found'}, status=status.HTTP_404_NOT_FOUND)
+
+    if request.method == 'GET':
+        return Response(AttachmentSerializer(task.attachments.all(), many=True).data)
+
+    f = request.FILES.get('file')
+    if not f:
+        return Response({'detail': 'No file provided'}, status=status.HTTP_400_BAD_REQUEST)
+    if f.size > MAX_ATTACHMENT_SIZE:
+        return Response({'detail': 'File too large (max 5MB)'}, status=status.HTTP_400_BAD_REQUEST)
+    if f.content_type not in ALLOWED_ATTACHMENT_TYPES:
+        return Response({'detail': 'File type not allowed'}, status=status.HTTP_400_BAD_REQUEST)
+    if task.attachments.count() >= MAX_ATTACHMENTS_PER_TASK:
+        return Response({'detail': f'Max {MAX_ATTACHMENTS_PER_TASK} attachments per task'}, status=status.HTTP_400_BAD_REQUEST)
+
+    attachment = Attachment.objects.create(
+        task=task, file=f, filename=f.name, size=f.size, content_type=f.content_type,
+    )
+    return Response(AttachmentSerializer(attachment).data, status=status.HTTP_201_CREATED)
+
+
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def attachment_detail(request, task_id, attachment_id):
+    attachment = Attachment.objects.filter(
+        id=attachment_id, task_id=task_id, task__owner=request.user
+    ).first()
+    if not attachment:
+        return Response({'detail': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+    attachment.file.delete(save=False)
+    attachment.delete()
+    return Response(status=status.HTTP_204_NO_CONTENT)

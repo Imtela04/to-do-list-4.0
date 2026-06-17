@@ -85,3 +85,11 @@ class StickyNotes(models.Model):
 
     def __str__(self):
         return self.note or ''
+    
+class Attachment(models.Model):
+    task         = models.ForeignKey(Todo, on_delete=models.CASCADE, related_name='attachments')
+    file         = models.FileField(upload_to='attachments/%Y/%m/')
+    filename     = models.CharField(max_length=255)
+    size         = models.PositiveIntegerField()
+    content_type = models.CharField(max_length=100, blank=True)
+    uploaded_at  = models.DateTimeField(auto_now_add=True)

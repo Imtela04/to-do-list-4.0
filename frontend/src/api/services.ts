@@ -136,3 +136,15 @@ export const deleteSubtask = (
   subtaskId: number,
 ): Promise<AxiosResponse<Task>> =>
   client.delete(`/tasks/${taskId}/subtasks/${subtaskId}/`);
+
+export const uploadAttachment = (taskId: number, file: File): Promise<AxiosResponse<Attachment>> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  return client.post(`/tasks/${taskId}/attachments/`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  } as Record<string, unknown>);
+};
+
+// ── Attachments ─────────────────────────────────────────────────────
+export const deleteAttachment = (taskId: number, attachmentId: number): Promise<AxiosResponse> =>
+  client.delete(`/tasks/${taskId}/attachments/${attachmentId}/`);

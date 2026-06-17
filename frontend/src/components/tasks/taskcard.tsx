@@ -13,6 +13,7 @@ import Subtask from './subtask';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical } from 'lucide-react';
+import Attachments from './attachments';
 
 const PRIORITY_MAP: Record<string, { color: string; label: string }> = {
   low:      { color: 'var(--priority-low)',      label: 'Low'      },
@@ -488,6 +489,7 @@ export default function TaskCard({
             optimisticUpdate={optimisticUpdate}
             rollback={rollback}
           />
+          <Attachments taskId={task.id} attachments={task.attachments ?? []} />
           </div>
         )}
       </div>

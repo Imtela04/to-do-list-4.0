@@ -211,7 +211,28 @@ CORS_ALLOW_CREDENTIALS = False
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL  = '/static/'
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+if os.environ.get('R2_BUCKET_NAME'):
+    STORAGES = {
+        "default": {"BACKEND": "storages.backends.s3.S3Storage"},
+        "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+    }
+    AWS_ACCESS_KEY_ID        = os.environ.get('R2_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY    = os.environ.get('R2_SECRET_ACCESS_KEY')
+    AWS_STORAGE_BUCKET_NAME  = os.environ.get('R2_BUCKET_NAME')
+    AWS_S3_ENDPOINT_URL      = os.environ.get('R2_ENDPOINT_URL')   # https://<account_id>.r2.cloudflarestorage.com
+    AWS_S3_REGION_NAME       = 'auto'
+    AWS_DEFAULT_ACL          = None
+    AWS_S3_FILE_OVERWRITE    = False
+    AWS_QUERYSTRING_EXPIRE   = 3600   # signed URLs valid 1hr, regenerated each API call
+else:
+    STORAGES = {
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
+    }
+
+# default DRF/Django limit is 2.5MB — raise it for attachment uploads
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
+FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
 STATICFILES_DIRS = [
     BASE_DIR / 'frontend_dist',  # Vite output, collected into staticfiles/
 ]
