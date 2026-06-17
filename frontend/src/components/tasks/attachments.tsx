@@ -30,6 +30,7 @@ export default function Attachments({ taskId, attachments }: { taskId: number; a
       queryClient.setQueryData<Task[]>(['tasks'], old =>
         old?.map(t => t.id === taskId ? { ...t, attachments: [...(t.attachments ?? []), res.data] } : t) ?? []
       );
+      queryClient.invalidateQueries({ queryKey: ['attachments'] });
       setError(null);
     },
     onError: (err: any) => setError(err.response?.data?.detail ?? 'Upload failed'),
@@ -42,7 +43,10 @@ export default function Attachments({ taskId, attachments }: { taskId: number; a
         old?.map(t => t.id === taskId ? { ...t, attachments: t.attachments.filter(a => a.id !== id) } : t) ?? []
       );
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['attachments'] });
+    },
   });
 
   const handleFile = (file: File | undefined) => {
