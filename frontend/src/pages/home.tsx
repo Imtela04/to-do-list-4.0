@@ -43,6 +43,12 @@ export default function Dashboard() {
   const [addOpen, setAddOpen]              = useState(false);
   const isGuest                            = useAppStore(s=>s.isGuest)
   const [mediaOpen, setMediaOpen]          = useState(false);
+  const setFocusTask = useAppStore(s => s.setFocusTask);
+
+  const handleViewTask = (taskId: number) => {
+    setFocusTask(taskId);
+    setView('list');
+  };
 
   useKeyboardShortcuts({
     onNewTask:       () => setAddOpen(true),
@@ -154,7 +160,7 @@ export default function Dashboard() {
           </header>
 
           <section className={styles.tasksSection}>
-            {view === 'list' ? <TaskList addOpen={addOpen} setAddOpen={setAddOpen} /> : <CalendarView />}
+            {view === 'list' ? <TaskList addOpen={addOpen} setAddOpen={setAddOpen} /> : <CalendarView onViewTask={handleViewTask} />}
           </section>
         </main>
 

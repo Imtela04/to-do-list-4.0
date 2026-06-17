@@ -39,6 +39,7 @@ interface AppState {
   isStaff:         boolean;
   email:           string;
   isGuest:         boolean;
+  focusTaskId:     number | null;
 
 }
 
@@ -50,6 +51,7 @@ interface AppActions {
   clearLevelUp:     () => void;
   setGreeting:      (greeting: string) => void;
   resetState:       () => void;
+  setFocusTask:     (id: number|null) => void;
 }
 
 type AppStore = AppState & AppActions;
@@ -86,6 +88,7 @@ const DEFAULT_STATE: AppState = {
   isStaff:         false,
   email:           '',
   isGuest:         false,
+  focusTaskId:     null,
 };
 
 // ── Store ──────────────────────────────────────────────────────
@@ -133,6 +136,8 @@ export const useAppStore = create<AppStore>((set) => ({
     localStorage.setItem('userName', greeting);
     set({ greeting });
   },
+
+  setFocusTask: (id) => set({ focusTaskId: id }),
 
   resetState: () => {
     localStorage.removeItem('taskFilter');

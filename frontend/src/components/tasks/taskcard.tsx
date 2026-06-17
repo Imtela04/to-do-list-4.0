@@ -96,6 +96,16 @@ export default function TaskCard({
   const cardRef                                                                   = useRef<HTMLDivElement>(null);
   const clickTimer                                                                = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isGuest                                                                   = useAppStore(s=>s.isGuest)
+  const focusTaskId                                                               = useAppStore(s => s.focusTaskId);
+  const clearFocusTask                                                            = useAppStore(s => s.setFocusTask);
+
+  useEffect(() => {
+    if (focusTaskId !== task.id) return;
+    setExpanded(true);
+    cardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    clearFocusTask(null);
+  }, [focusTaskId, task.id]);
+    
   const dragStyle = {
     transform: CSS.Transform.toString(transform),
     transition,

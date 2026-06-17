@@ -31,18 +31,26 @@ interface TaskListProps {
 }
 
 export default function TaskList({ addOpen, setAddOpen }: TaskListProps) {
-  const filter    = useAppStore(s => s.filter);
-  const limits    = useAppStore(s => s.limits);
-  const level     = useAppStore(s => s.level);
-  const setFilter = useAppStore(s => s.setFilter);
-  const [localOrder, setLocalOrder] = useState<number[]>([]);
-  const { data: tasks = [] } = useTasksQuery();
-  const filteredTasks = getFilteredTasks(tasks, filter);
-  const [page, setPage]       = useState(1);
-  const queryClient = useQueryClient();
-  const [selectMode, setSelectMode] = useState(false);
-  const [selected, setSelected]     = useState<Set<number>>(new Set());
-  const [bulkLoading, setBulkLoading] = useState(false);
+  const filter                                = useAppStore(s => s.filter);
+  const limits                                = useAppStore(s => s.limits);
+  const level                                 = useAppStore(s => s.level);
+  const setFilter                             = useAppStore(s => s.setFilter);
+  const [localOrder, setLocalOrder]           = useState<number[]>([]);
+  const { data: tasks = [] }                  = useTasksQuery();
+  const filteredTasks                         = getFilteredTasks(tasks, filter);
+  const [page, setPage]                       = useState(1);
+  const queryClient                           = useQueryClient();
+  const [selectMode, setSelectMode]           = useState(false);
+  const [selected, setSelected]               = useState<Set<number>>(new Set());
+  const [bulkLoading, setBulkLoading]         = useState(false);
+  const focusTaskId                           = useAppStore(s => s.focusTaskId);
+
+  useEffect(() => {
+    if (focusTaskId == null) return;
+    const idx = filteredTasks.findIndex(t => t.id === focusTaskId);
+    if (idx === -1) return;
+    setPage(Math.floor(idx / PAGE_SIZE) + 1);
+  }, [focusTaskId, filteredTasks]);
 
   const toggleSelect = (id: number) =>
     setSelected(s => { const n = new Set(s); n.has(id) ? n.delete(id) : n.add(id); return n; });

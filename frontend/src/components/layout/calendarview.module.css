@@ -429,4 +429,10 @@
   border-radius: var(--radius-full);
   padding: 1px 6px;
   flex-shrink: 0;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.panelAttachBadge:hover {
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
 }

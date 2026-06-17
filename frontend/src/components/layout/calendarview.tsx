@@ -21,9 +21,12 @@ interface SelectedDay {
   day:   number;
 }
 
-type MutateCtx = { previous?: Task[] };
+interface CalendarViewProps {
+  onViewTask?: (taskId: number) => void;
+}
 
-export default function CalendarView() {
+export default function CalendarView({ onViewTask }: CalendarViewProps) {
+  type MutateCtx = { previous?: Task[] };
   const queryClient = useQueryClient();
   const limits      = useAppStore(s => s.limits);
   const level       = useAppStore(s => s.level);
@@ -195,9 +198,13 @@ export default function CalendarView() {
                 </button>
                 <span className={styles.panelTaskTitle}>{task.title}</span>
                 {(task.attachments ?? []).length > 0 && (
-                  <span className={styles.panelAttachBadge} title={`${task.attachments.length} attachment${task.attachments.length > 1 ? 's' : ''}`}>
+                  <button
+                    className={styles.panelAttachBadge}
+                    onClick={() => onViewTask?.(task.id)}
+                    title={`${task.attachments.length} attachment${task.attachments.length > 1 ? 's' : ''} — view task`}
+                  >
                     <Paperclip size={10} /> {task.attachments.length}
-                  </span>
+                  </button>
                 )}
                 {task.priority && <span className={styles.panelPrio} style={{ background: PRIORITY_COLORS[task.priority] }} />}
                 <button className={styles.panelDelete} onClick={() => deleteMutation.mutate(task.id)}><X size={11} /></button>
