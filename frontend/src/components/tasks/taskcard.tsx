@@ -180,9 +180,11 @@ export default function TaskCard({
       return { previous };
     },
     onError:   (_e: Error, _v: void, ctx: MutationContext | undefined) => { if (ctx) rollback(ctx); },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['attachments'] });
+    },
   });
-
   
   // ── Handlers ───────────────────────────────────────────────
   const handleCardClick = (e: React.MouseEvent<HTMLDivElement>) => {

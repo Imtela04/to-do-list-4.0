@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { AxiosResponse } from 'axios';
 import { useAppStore } from '../../store/useAppStore';
 import { createTask, deleteTask, toggleTask } from '@/api/services';
-import { ChevronLeft, ChevronRight, Plus, X, Check, Lock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, X, Check, Lock, Paperclip } from 'lucide-react';
 import styles from './calendarview.module.css';
 import { useTasksQuery } from '@/hooks/useTasksQuery';
 import type { Task, TaskPayload, XpResult } from '@/types';
@@ -104,7 +104,10 @@ export default function CalendarView() {
       return { previous };
     },
     onError: (_err, _vars, ctx) => queryClient.setQueryData(['tasks'], ctx?.previous),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      queryClient.invalidateQueries({ queryKey: ['attachments'] });
+    },
   });
 
   const handleDayClick = (day: number | null): void => {
@@ -191,6 +194,11 @@ export default function CalendarView() {
                   {task.completed ? <Check size={11} /> : <span className={styles.toggleDot} />}
                 </button>
                 <span className={styles.panelTaskTitle}>{task.title}</span>
+                {(task.attachments ?? []).length > 0 && (
+                  <span className={styles.panelAttachBadge} title={`${task.attachments.length} attachment${task.attachments.length > 1 ? 's' : ''}`}>
+                    <Paperclip size={10} /> {task.attachments.length}
+                  </span>
+                )}
                 {task.priority && <span className={styles.panelPrio} style={{ background: PRIORITY_COLORS[task.priority] }} />}
                 <button className={styles.panelDelete} onClick={() => deleteMutation.mutate(task.id)}><X size={11} /></button>
               </div>

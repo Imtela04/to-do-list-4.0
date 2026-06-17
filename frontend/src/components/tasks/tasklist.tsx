@@ -68,6 +68,7 @@ export default function TaskList({ addOpen, setAddOpen }: TaskListProps) {
     setBulkLoading(true);
     await Promise.allSettled([...selected].map(id => deleteTask(id)));
     await queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    await queryClient.invalidateQueries({ queryKey: ['attachments'] });
     exitSelectMode();
     setBulkLoading(false);
   };

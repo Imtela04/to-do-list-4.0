@@ -416,3 +416,17 @@
 @media (hover: none) {
   .panelDelete { opacity: 1; }
 }
+
+.panelAttachBadge {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.65rem;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  background: var(--bg-glass);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  padding: 1px 6px;
+  flex-shrink: 0;
+}
