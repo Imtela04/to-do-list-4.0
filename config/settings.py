@@ -211,7 +211,7 @@ CORS_ALLOW_CREDENTIALS = False
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL  = '/static/'
-if os.environ.get('SUPABASE_S3_BUCKET_NAME'):
+if os.environ.get('SUPABASE_S3_BUCKET'):
     STORAGES = {
         "default": {"BACKEND": "storages.backends.s3.S3Storage"},
         "staticfiles": {"BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage"},
