@@ -7,6 +7,11 @@ import styles from './attachments.module.css';
 
 const MAX_SIZE  = 5 * 1024 * 1024;
 const MAX_FILES = 5;
+const API_ORIGIN = (import.meta.env.VITE_API_URL as string).replace(/\/api\/?$/, '');
+
+function resolveUrl(url: string): string {
+  return url.startsWith('http') ? url : `${API_ORIGIN}${url}`;
+}
 
 function formatSize(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
@@ -53,9 +58,9 @@ export default function Attachments({ taskId, attachments }: { taskId: number; a
       {attachments.map(a => (
         <div key={a.id} className={styles.row}>
           <Paperclip size={12} />
-          <a href={a.url} target="_blank" rel="noreferrer" className={styles.name}>{a.filename}</a>
+          <a href={resolveUrl(a.url)} target="_blank" rel="noreferrer" className={styles.name}>{a.filename}</a>
           <span className={styles.size}>{formatSize(a.size)}</span>
-          <a href={a.url} download={a.filename} className={styles.iconBtn}><Download size={12} /></a>
+          <a href={resolveUrl(a.url)} download={a.filename} className={styles.iconBtn}><Download size={12} /></a>
           <button className={styles.iconBtn} onClick={() => deleteMutation.mutate(a.id)}><Trash2 size={12} /></button>
         </div>
       ))}

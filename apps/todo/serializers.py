@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from apps.accounts.serializers import UserPublicSerializer
-from apps.todo.models import Todo, Category, StickyNotes, Subtask
+from apps.todo.models import Todo, Category, StickyNotes, Subtask, Attachment
 
 class CategorySerializer(serializers.ModelSerializer):
     class Meta:
@@ -18,7 +18,6 @@ class StickyNoteSerializer(serializers.ModelSerializer):
         model  = StickyNotes
         fields = ['id', 'note', 'color', 'owner']
 
-from apps.todo.models import Todo, Category, StickyNotes, Subtask, Attachment  # add Attachment to existing import
 
 class AttachmentSerializer(serializers.ModelSerializer):
     url = serializers.SerializerMethodField()
