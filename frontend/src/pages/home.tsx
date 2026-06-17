@@ -9,7 +9,7 @@ import StickyNotes from '@/components/widgets/stickynote';
 import Categories from '@/components/categories/categorypanel';
 import UserNav from '@/components/layout/usernav';
 import styles from './home.module.css';
-import { Menu, X, NotebookPen, LayoutList, CalendarDays, BellCheck, AlarmClockCheck } from 'lucide-react';
+import { Menu, X, NotebookPen, LayoutList, CalendarDays, BellCheck, AlarmClockCheck, FolderOpen } from 'lucide-react';
 import SessionGuard from '@/components/layout/sessionguard';
 import LevelUpToast from '@/components/layout/leveluptoast';
 import Pomodoro from '../components/widgets/pomodoro';
@@ -20,6 +20,7 @@ import ShortcutsModal from '@/components/layout/shortcutsmodal';
 import Heatmap from '@/components/widgets/heatmap';
 import GuestBanner from '@/components/layout/guestbanner';
 import { useAppStore } from '@/store/useAppStore';
+import MediaHub from '@/components/layout/mediahub';
 
 type View = 'list' | 'calendar';
 
@@ -41,6 +42,7 @@ export default function Dashboard() {
   const [shortcutsOpen, setShortcutsOpen]  = useState(false);
   const [addOpen, setAddOpen]              = useState(false);
   const isGuest                            = useAppStore(s=>s.isGuest)
+  const [mediaOpen, setMediaOpen]          = useState(false);
 
   useKeyboardShortcuts({
     onNewTask:       () => setAddOpen(true),
@@ -144,6 +146,10 @@ export default function Dashboard() {
                 <NotebookPen size={18} />
               </button>
 
+              <button className={styles.notesToggle} onClick={() => setMediaOpen(o => !o)} title='Media Hub'>
+                <FolderOpen size={18} />
+              </button>
+
             </div>
           </header>
 
@@ -164,6 +170,21 @@ export default function Dashboard() {
           </div>
           <div className={styles.notesDrawerBody}>
             <StickyNotes />
+          </div>
+        </aside>
+
+        {mediaOpen && (
+          <div className={styles.overlay} onClick={() => setMediaOpen(false)} />
+        )}
+        <aside className={`${styles.notesDrawer} ${mediaOpen ? styles.notesDrawerOpen : ''}`}>
+          <div className={styles.notesDrawerHeader}>
+            <span className={styles.notesDrawerTitle}>Media Hub</span>
+            <button className={styles.notesDrawerClose} onClick={() => setMediaOpen(false)}>
+              <X size={16} />
+            </button>
+          </div>
+          <div className={styles.notesDrawerBody}>
+            <MediaHub />
           </div>
         </aside>
 

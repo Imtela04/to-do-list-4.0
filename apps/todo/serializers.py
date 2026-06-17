@@ -28,6 +28,18 @@ class AttachmentSerializer(serializers.ModelSerializer):
 
     def get_url(self, obj):
         return obj.file.url
+
+class AttachmentWithTaskSerializer(serializers.ModelSerializer):
+    url        = serializers.SerializerMethodField()
+    task_id    = serializers.IntegerField(source='task.id')
+    task_title = serializers.CharField(source='task.title')
+
+    class Meta:
+        model  = Attachment
+        fields = ['id', 'filename', 'size', 'content_type', 'uploaded_at', 'url', 'task_id', 'task_title']
+
+    def get_url(self, obj):
+        return obj.file.url
     
 class TodoSerializer(serializers.ModelSerializer):
     owner    = UserPublicSerializer(read_only=True)

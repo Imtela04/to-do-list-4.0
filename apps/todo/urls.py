@@ -15,6 +15,7 @@ urlpatterns = [
     #attachments
     path('tasks/<int:task_id>/attachments/', views.attachments),
     path('tasks/<int:task_id>/attachments/<int:attachment_id>/', views.attachment_detail),
+    path('attachments/', views.media_hub),
 
     # categories
     path('categories/', views.categories),

@@ -1,0 +1,45 @@
+.hub { display: flex; flex-direction: column; gap: 10px; }
+
+.searchWrap { position: relative; display: flex; align-items: center; }
+.searchIcon { position: absolute; left: 9px; color: var(--text-muted); pointer-events: none; }
+.search {
+  width: 100%; background: var(--bg-card); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md); padding: 7px 10px 7px 28px; font-size: 0.8rem;
+  color: var(--text-primary); outline: none;
+}
+.search:focus { border-color: var(--accent-primary); }
+
+.tabs { display: flex; gap: 4px; background: var(--bg-secondary); border-radius: 8px; padding: 3px; }
+.tab {
+  flex: 1; font-size: 0.72rem; padding: 5px 6px; border-radius: 6px; color: var(--text-muted);
+  text-transform: capitalize; transition: all var(--transition-fast);
+}
+.tabActive { background: var(--bg-primary); color: var(--text-primary); font-weight: 600; }
+
+.filterChip {
+  display: flex; align-items: center; gap: 6px; font-size: 0.72rem; color: var(--accent-primary);
+  background: rgba(124,106,255,0.08); border: 1px solid rgba(124,106,255,0.2);
+  border-radius: var(--radius-sm); padding: 4px 8px; align-self: flex-start;
+}
+
+.list { display: flex; flex-direction: column; gap: 6px; }
+.empty { font-size: 0.78rem; color: var(--text-muted); text-align: center; padding: 16px 0; font-style: italic; }
+
+.row {
+  display: flex; align-items: center; gap: 8px; padding: 8px;
+  background: var(--bg-card); border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);
+  color: var(--text-muted);
+}
+.info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.name {
+  font-size: 0.78rem; color: var(--text-secondary); text-decoration: underline;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.taskBadge {
+  align-self: flex-start; font-size: 0.65rem; color: var(--text-muted); background: var(--bg-glass);
+  border-radius: var(--radius-sm); padding: 1px 6px;
+}
+.taskBadge:hover { color: var(--accent-primary); }
+.size { font-size: 0.68rem; color: var(--text-muted); flex-shrink: 0; }
+.iconBtn { color: var(--text-muted); display: flex; flex-shrink: 0; }
+.iconBtn:hover { color: var(--accent-primary); }

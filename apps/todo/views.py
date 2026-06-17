@@ -7,7 +7,7 @@ from django.db.models import Count
 import re
 from django.shortcuts import get_object_or_404
 from datetime import datetime, timezone as dt_timezone
-from .serializers import TodoSerializer, CategorySerializer, StickyNoteSerializer, SubtaskSerializer, AttachmentSerializer
+from .serializers import TodoSerializer, CategorySerializer, StickyNoteSerializer, SubtaskSerializer, AttachmentSerializer, AttachmentWithTaskSerializer
 from .models import Todo, Category, StickyNotes, Subtask, Attachment
 from apps.accounts.models import UserProfile
 from django.utils import timezone
@@ -543,6 +543,26 @@ def attachment_detail(request, task_id, attachment_id):
     ).first()
     if not attachment:
         return Response({'detail': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
-    attachment.file.delete(save=False)
     attachment.delete()
     return Response(status=status.HTTP_204_NO_CONTENT)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def media_hub(request):
+    qs = Attachment.objects.filter(task__owner=request.user).select_related('task').order_by('-uploaded_at')
+
+    search = request.query_params.get('search')
+    if search:
+        qs = qs.filter(filename__icontains=search)
+
+    file_type = request.query_params.get('type')
+    if file_type == 'image':
+        qs = qs.filter(content_type__startswith='image/')
+    elif file_type == 'document':
+        qs = qs.exclude(content_type__startswith='image/')
+
+    task_id = request.query_params.get('task_id')
+    if task_id:
+        qs = qs.filter(task_id=task_id)
+
+    return Response(AttachmentWithTaskSerializer(qs, many=True).data)

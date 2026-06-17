@@ -148,3 +148,8 @@ export const uploadAttachment = (taskId: number, file: File): Promise<AxiosRespo
 // ── Attachments ─────────────────────────────────────────────────────
 export const deleteAttachment = (taskId: number, attachmentId: number): Promise<AxiosResponse> =>
   client.delete(`/tasks/${taskId}/attachments/${attachmentId}/`);
+
+export const getAllAttachments = (
+  params: Record<string, unknown> = {},
+): Promise<AxiosResponse<AttachmentWithTask[]>> =>
+  client.get('/attachments/', { params });

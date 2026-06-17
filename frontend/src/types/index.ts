@@ -16,6 +16,7 @@ export interface Task {
   created_at:  string;
   completed_at: string | null;
   subtasks: Subtask[];
+  attachments: Attachment[];
   recurrence: 'daily' | 'weekly' | 'monthly' | 'yearly' | null;
 }
 
@@ -120,4 +121,18 @@ export interface NotePayload {
 export interface ThemePayload {
   mode:          string;
   custom_colors?: Record<string, string>;
+}
+
+export interface Attachment {
+  id:           number;
+  filename:     string;
+  size:         number;
+  content_type: string;
+  uploaded_at:  string;
+  url:          string;
+}
+
+export interface AttachmentWithTask extends Attachment {
+  task_id:    number;
+  task_title: string;
 }
