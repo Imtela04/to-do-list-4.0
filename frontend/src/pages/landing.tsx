@@ -1,4 +1,4 @@
-import { Power, Ghost, LogIn, UserPen, ArrowRight, Flame, Timer, Calendar, Bolt, ChartColumnStacked, BrickWallFire, Zap } from "lucide-react";
+import { Power, Ghost, LogIn, UserPen, ArrowRight, Flame, Timer, Calendar, Bolt, ChartColumnStacked, BrickWallFire, Zap, ChevronRight } from "lucide-react";
 import styles from './landing.module.css';
 import { useNavigate } from "react-router-dom";
 import { Logo } from "./home";
@@ -30,7 +30,7 @@ const MOCK_TASKS = [
 export default function Landing() {
   const navigate                            = useNavigate();
   const [guestLoading, setGuestLoading]     = useState(false);
-  const [loggedIn, setLoggedIn] = useState(() => {
+  const [loggedIn] = useState(() => {
   const token = localStorage.getItem('authToken');
   if (!token) return false;
     try {
@@ -41,12 +41,6 @@ export default function Landing() {
 
   const savedName = localStorage.getItem('lastUsername') || localStorage.getItem('userName') || '';
 
-  const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('refreshToken');
-    localStorage.removeItem('lastUsername');
-    setLoggedIn(false);
-  };
 
   const handleGuest = async () => {
     setGuestLoading(true);
@@ -79,9 +73,9 @@ export default function Landing() {
         <Logo />
         <div className={styles.navActions}>
           {loggedIn ? (
-            <button onClick={() => navigate('/')} className={styles.navBtnPrimary}>
-              {savedName ? `Hi, ${savedName} —` : ''} Open Dashboard <ArrowRight size={15} />
-            </button>
+            <div className={styles.navBtnPrimary}>
+              <ChevronRight size={15} />{savedName ? `Welcome back, ${savedName}` : ''}
+            </div>
           ) : (
             <>
               <button onClick={() => navigate('/login')} className={styles.navBtn}>
@@ -112,10 +106,7 @@ export default function Landing() {
           {loggedIn ? (
             <>
               <button onClick={() => navigate('/')} className={styles.heroCta}>
-                Back to Dashboard <ArrowRight size={16} />
-              </button>
-              <button onClick={handleLogout} className={styles.heroGuest}>
-                <Power size={15} /> Log out
+                <ChevronRight size={16} />Pick up where you left off 
               </button>
             </>
           ) : (
@@ -210,8 +201,9 @@ export default function Landing() {
             <p className={styles.ctaSub}>Join and start turning your task list into an adventure.</p>
             <div className={styles.ctaActions}>
               {loggedIn ? (
-                <button onClick={() => navigate('/')} className={styles.heroCta}>
-                  Open Dashboard <ArrowRight size={16} />
+                <button onClick={() => navigate('/')} className={styles.heroCta} title="Continue">
+                  
+                  <ChevronRight size={16} />
                 </button>
               ) : (
                 <>

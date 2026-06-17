@@ -89,14 +89,6 @@ export default function Login() {
             autoComplete="username"
             className={styles.inputClass}
           />
-          <label className={styles.rememberMe}>
-            <input
-              type="checkbox"
-              checked={rememberMe}
-              onChange={e => setRememberMe(e.target.checked)}
-            />
-            Remember me
-          </label>
           <div className={styles.passwordContainer}>
             <input
               type="password"
@@ -116,6 +108,16 @@ export default function Login() {
             </button>
 
           </div>
+
+         <label className={styles.rememberMe}>
+            <input
+              type="checkbox"
+              checked={rememberMe}
+              onChange={e => setRememberMe(e.target.checked)}
+            />
+            Remember me
+          </label>
+
           
         </form>
         <p className={styles.registerText}>
