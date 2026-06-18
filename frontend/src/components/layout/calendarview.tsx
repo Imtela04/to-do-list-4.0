@@ -26,33 +26,29 @@ interface CalendarViewProps {
 }
 
 export default function CalendarView({ onViewTask }: CalendarViewProps) {
-  type MutateCtx = { previous?: Task[] };
-  const queryClient = useQueryClient();
-  const limits      = useAppStore(s => s.limits);
-  const level       = useAppStore(s => s.level);
+  type MutateCtx                                = { previous?: Task[] };
+  const queryClient                             = useQueryClient();
+  const limits                                  = useAppStore(s => s.limits);
+  const level                                   = useAppStore(s => s.level);
 
-  const { data: tasks = [] } = useTasksQuery();
+  const { data: tasks = [] }                    = useTasksQuery();
 
-  const [calMonth, setCalMonth]     = useState(new Date());
-  const [selectedDay, setSelectedDay] = useState<SelectedDay | null>(null);
-  const [newTitle, setNewTitle]     = useState('');
-  const [adding, setAdding]         = useState(false);
-  const [limitError, setLimitError] = useState<string | null>(null);
+  const [calMonth, setCalMonth]                 = useState(new Date());
+  const [selectedDay, setSelectedDay]           = useState<SelectedDay | null>(null);
+  const [newTitle, setNewTitle]                 = useState('');
+  const [adding, setAdding]                     = useState(false);
+  const [limitError, setLimitError]             = useState<string | null>(null);
 
-  const year  = calMonth.getFullYear();
-  const month = calMonth.getMonth();
+  const year                                    = calMonth.getFullYear();
+  const month                                   = calMonth.getMonth();
 
-  const firstDay    = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const calCells: (number | null)[] = [
-    ...Array(firstDay).fill(null),
-    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
-  ];
-  const today       = new Date();
-// correct — uses the server-side count which excludes onboarding
-  const counts = useAppStore(s => s.counts);
-  const tasksLocked = limits.tasks !== null && counts.tasks >= limits.tasks;
-  const tasksByDay: Record<number, Task[]> = {};
+  const firstDay                                = new Date(year, month, 1).getDay();
+  const daysInMonth                             = new Date(year, month + 1, 0).getDate();
+  const calCells: (number | null)[]             = [...Array(firstDay).fill(null), ...Array.from({ length: daysInMonth }, (_, i) => i + 1), ];
+  const today                                   = new Date();
+  const counts                                  = useAppStore(s => s.counts);
+  const tasksLocked                             = limits.tasks !== null && counts.tasks >= limits.tasks;
+  const tasksByDay: Record<number, Task[]>      = {};
   tasks.forEach(t => {
     if (!t.deadline) return;
     const d = new Date(t.deadline);
@@ -62,9 +58,10 @@ export default function CalendarView({ onViewTask }: CalendarViewProps) {
     tasksByDay[day].push(t);
   });
 
-  const selectedTasks = selectedDay ? (tasksByDay[selectedDay.day] ?? []) : [];
+   const selectedTasks                          = selectedDay ? (tasksByDay[selectedDay.day] ?? []) : [];
 
-  const addMutation = useMutation<AxiosResponse<Task>, Error, TaskPayload, MutateCtx>({
+
+  const addMutation= useMutation<AxiosResponse<Task>, Error, TaskPayload, MutateCtx>({
     mutationFn: (payload) => createTask(payload),
     onSuccess: (res) => {
       queryClient.setQueryData(['tasks'], (old: Task[] | undefined) => [res.data, ...(old ?? [])]);
@@ -166,7 +163,7 @@ export default function CalendarView({ onViewTask }: CalendarViewProps) {
                     <div className={styles.pills}>
                       {active.slice(0, 3).map(t => (
                         <span key={t.id} className={styles.pill} style={{ background: PRIORITY_COLORS[t.priority] ?? 'var(--accent-primary)' }} title={t.title}>
-                          {t.title}
+                          {t.title}{t.attachments.length>0 ? <Paperclip size={8}/>: ''}
                         </span>
                       ))}
                       {active.length > 3 && <span className={styles.pillMore}>+{active.length - 3}</span>}

@@ -8,7 +8,7 @@ import type { Task, TaskPayload } from '@/types';
 import styles from './taskcard.module.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { Pin, PinOff, Trash, SquarePen, CalendarPlus, Hourglass, Check, RotateCcw } from 'lucide-react';
+import { Pin, PinOff, Trash, SquarePen, CalendarPlus, Hourglass, Check, RotateCcw, Paperclip } from 'lucide-react';
 import Subtask from './subtask';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -112,16 +112,17 @@ export default function TaskCard({
     opacity: isDragging ? 0.4 : 1,
     zIndex:  isDragging ? 50 : undefined,
   };
-  const category   = task.category;
-  const subtasks       = task.subtasks ?? [];
-  const completedCount = subtasks.filter(s => s.completed).length;
-  const hasSubtasks    = subtasks.length > 0;
-  const allDone        = hasSubtasks && completedCount === subtasks.length;  
-  const priority   = PRIORITY_MAP[task.priority] ?? PRIORITY_MAP.low;
-  const dueDate    = task.deadline ? new Date(task.deadline) : null;
-  const isDueToday = dueDate ? isToday(dueDate) : false;
-  const isTimed    = dueDate ? !(dueDate.getHours() === 23 && dueDate.getMinutes() === 59) : false;
-  const isOverdue  = dueDate && !task.completed
+  const category                                                                 = task.category;
+  const subtasks                                                                 = task.subtasks ?? [];
+  const hasAttachments                                                           = task.attachments.length > 0;
+  const completedCount                                                           = subtasks.filter(s => s.completed).length;
+  const hasSubtasks                                                              = subtasks.length > 0;
+  const allDone                                                                  = hasSubtasks && completedCount === subtasks.length;  
+  const priority                                                                 = PRIORITY_MAP[task.priority] ?? PRIORITY_MAP.low;
+  const dueDate                                                                  = task.deadline ? new Date(task.deadline) : null;
+  const isDueToday                                                               = dueDate ? isToday(dueDate) : false;
+  const isTimed                                                                  = dueDate ? !(dueDate.getHours() === 23 && dueDate.getMinutes() === 59) : false;
+  const isOverdue                                                                = dueDate && !task.completed
     ? (isTimed ? isPast(dueDate) : isPast(dueDate) && !isToday(dueDate))
     : false;
   const countdown  = useCountdown(task.deadline, isTimed);
@@ -328,13 +329,14 @@ export default function TaskCard({
           >
             {isSelected && <Check size={10} strokeWidth={3} />}
           </button>
-        ) : (
-          <button className={styles.toggle} onClick={handleToggle} title={task.completed ? 'Mark incomplete' : 'Mark complete'}>
-            {task.completed
-              ? <Check size={12} strokeWidth={3} />
-              : <span className={styles.activeDot} />}
-          </button>
-        )}
+          ) : (
+            <button className={styles.toggle} onClick={handleToggle} title={task.completed ? 'Mark incomplete' : 'Mark complete'}>
+              {task.completed
+                ? <Check size={12} strokeWidth={3} />
+                : <span className={styles.activeDot} />}
+            </button>
+          )
+        }
       {/* Main content */}
       <div className={styles.body}>
 
@@ -348,6 +350,7 @@ export default function TaskCard({
               {task.title}
             </p>
 
+
             <div className={styles.meta}>
               {dueDate && !task.completed && (
                 <span className={`${styles.countdown} ${isOverdue ? styles.overdue : ''}`}>
@@ -355,9 +358,15 @@ export default function TaskCard({
                   {isOverdue ? `overdue · ${format(dueDate, 'MMM d')}` : countdown}
                 </span>
               )}
+
               {hasSubtasks && (
                 <span className={styles.subtaskBadge}>
                   {completedCount}/{subtasks.length}
+                </span>
+              )}
+              {hasAttachments && (
+                <span className={styles.subtaskBadge}>
+                  <Paperclip size={10}/>{task.attachments.length}
                 </span>
               )}
             </div>
