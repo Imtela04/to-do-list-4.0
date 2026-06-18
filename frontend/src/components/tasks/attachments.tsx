@@ -2,7 +2,7 @@ import { useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { uploadAttachment, deleteAttachment } from '@/api/services';
 import type { Task, Attachment } from '@/types';
-import { Paperclip, Download, Trash2, Upload } from 'lucide-react';
+import { Download, Trash2, Upload, FileText } from 'lucide-react';
 import styles from './attachments.module.css';
 
 const MAX_SIZE  = 5 * 1024 * 1024;
@@ -20,10 +20,11 @@ function formatSize(bytes: number): string {
 }
 
 export default function Attachments({ taskId, attachments }: { taskId: number; attachments: Attachment[] }) {
-  const queryClient = useQueryClient();
-  const inputRef = useRef<HTMLInputElement | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
+  const queryClient                     = useQueryClient();
+  const inputRef                        = useRef<HTMLInputElement | null>(null);
+  const [error, setError]               = useState<string | null>(null);
+  const [dragOver, setDragOver]         = useState(false);
+  
   const uploadMutation = useMutation({
     mutationFn: (file: File) => uploadAttachment(taskId, file),
     onSuccess: (res) => {
@@ -61,7 +62,10 @@ export default function Attachments({ taskId, attachments }: { taskId: number; a
     <div className={styles.section}>
       {attachments.map(a => (
         <div key={a.id} className={styles.row}>
-          <Paperclip size={12} />
+            {a.content_type.startsWith('image/')
+              ? <img src={resolveUrl(a.url)} className={styles.thumb} alt={a.filename} />
+              : <FileText size={12} />
+            }
           <a href={resolveUrl(a.url)} target="_blank" rel="noreferrer" className={styles.name}>{a.filename}</a>
           <span className={styles.size}>{formatSize(a.size)}</span>
           <a href={resolveUrl(a.url)} download={a.filename} className={styles.iconBtn}><Download size={12} /></a>
@@ -70,9 +74,16 @@ export default function Attachments({ taskId, attachments }: { taskId: number; a
       ))}
       {error && <p className={styles.error}>{error}</p>}
       {attachments.length < MAX_FILES && (
-        <button className={styles.addBtn} onClick={() => inputRef.current?.click()} disabled={uploadMutation.isPending}>
-          <Upload size={12} /> {uploadMutation.isPending ? 'Uploading...' : 'Attach file'}
-        </button>
+        <div
+          className={`${styles.dropZone} ${dragOver ? styles.dropZoneActive : ''} ${uploadMutation.isPending ? styles.dropZoneLoading : ''}`}
+          onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={e => { e.preventDefault(); setDragOver(false); handleFile(e.dataTransfer.files?.[0]); }}
+          onClick={() => inputRef.current?.click()}
+        >
+          <Upload size={13} />
+          <span>{uploadMutation.isPending ? 'Uploading...' : dragOver ? 'Drop to attach' : 'Attach file or drag here'}</span>
+        </div>
       )}
       <input ref={inputRef} type="file" hidden onChange={e => handleFile(e.target.files?.[0])} />
     </div>
