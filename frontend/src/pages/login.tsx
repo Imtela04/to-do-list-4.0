@@ -37,8 +37,10 @@ export default function Login() {
       });
       localStorage.setItem('authToken', res.data.access);
       localStorage.setItem('refreshToken', res.data.refresh);
+      localStorage.setItem('rememberMe', rememberMe ? '1':'0');
       sessionStorage.setItem('sessionActive', '1');
       localStorage.setItem('lastUsername', form.username);
+
 
       resetState();
       window.dispatchEvent(new Event('auth-change'));

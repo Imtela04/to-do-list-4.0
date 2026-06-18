@@ -142,6 +142,7 @@ export const useAppStore = create<AppStore>((set) => ({
   resetState: () => {
     localStorage.removeItem('taskFilter');
     localStorage.removeItem('userName');
+    localStorage.removeItem('rememberMe');
     set({
       ...DEFAULT_STATE,
       filter: {

@@ -5,13 +5,14 @@ import { useFocusTrap } from '@/hooks/useFocusTrap';
 import styles from './sessionguard.module.css';
 
 interface Props {
-  children: ReactNode;
+  children                                      : ReactNode;
+  enabled?                                      : boolean;
 }
 
-const REMEMBERED_WARNING_AFTER                  = 4 *60 * 60 * 10000;
-const REMEMBERED_EXPIRE_AFTER                   = REMEMBERED_WARNING_AFTER + 5 * 60 * 10000;
+const REMEMBERED_WARNING_AFTER                  = 4 *60 * 60 * 1000;
+const REMEMBERED_EXPIRE_AFTER                   = REMEMBERED_WARNING_AFTER + 5 * 60 * 1000;
 
-export default function SessionGuard({ children }: Props) {
+export default function SessionGuard({ children, enabled = true }: Props) {
   const rememberMe                              = localStorage.getItem('rememberMe') === '1';
   const [warning, setWarning]                   = useState(false);
   const navigate                                = useNavigate();
@@ -22,11 +23,11 @@ export default function SessionGuard({ children }: Props) {
     localStorage.removeItem('authToken');
     window.dispatchEvent(new Event('auth-change'));
     navigate('/login');
-  }, [navigate]);
+  }, [navigate, enabled]);
 
   const handleWarn = useCallback((): void => {
     setWarning(true);
-  }, []);
+  }, [enabled]);
 
   const { reset, clear } = useSessionTimer({
     onWarn:   handleWarn,
