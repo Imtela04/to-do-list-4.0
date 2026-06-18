@@ -193,7 +193,7 @@ export default function CalendarView({ onViewTask }: CalendarViewProps) {
                 <button className={styles.panelToggle} onClick={() => toggleMutation.mutate({ id: task.id, completed: !task.completed })}>
                   {task.completed ? <Check size={11} /> : <span className={styles.toggleDot} />}
                 </button>
-                <span className={styles.panelTaskTitle}>{task.title}</span>
+                <span className={styles.panelTaskTitle} onClick={() => onViewTask?.(task.id)}>{task.title}</span>
                 {(task.attachments ?? []).length > 0 && (
                   <button
                     className={styles.panelAttachBadge}

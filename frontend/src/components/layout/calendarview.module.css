@@ -261,6 +261,7 @@
 
 .panelTaskDone .panelTaskTitle {
   text-decoration: line-through;
+
 }
 
 .panelToggle {
@@ -296,6 +297,7 @@
   line-height: 1.3;
   word-break: break-word;
   min-width: 0;
+  cursor: pointer;
 }
 
 .panelPrio {
