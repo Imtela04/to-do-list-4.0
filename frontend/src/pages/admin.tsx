@@ -15,6 +15,8 @@ import { adminResetXp, adminDeleteUser, adminEditUser, adminAuditLog, adminViewN
 import { useNavigate } from 'react-router-dom';
 import styles from './admin.module.css';
 import DOMPurify from 'dompurify';
+import SessionGuard from '@/components/layout/sessionguard';
+
 
 // ─── Shared stat card ────────────────────────────────────────────────────────
 
@@ -645,57 +647,60 @@ export default function AdminDashboard() {
   if (!stats) return <div style={{ padding: 32 }}>Loading…</div>;
 
   return (
-    <div className={styles.layout}>
-      {/* ── Sidebar ── */}
-      <nav className={styles.sidebar}>
-        <Logo />
-        <div className={styles.sidebarTitle}>
-          <button className={styles.sidebarUserBtn} onClick={() => navigate('/')} title="Task Mode">
-            <UserStar />
-          </button>
-          Admin
-        </div>
-        {TABS.map(t => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={`${styles.navBtn} ${tab === t.id ? styles.navBtnActive : ''}`}
-          >
-            {t.icon}{t.label}
-          </button>
-        ))}
-      </nav>
+    <SessionGuard>
+      <div className={styles.layout}>
+        {/* ── Sidebar ── */}
+        <nav className={styles.sidebar}>
+          <Logo />
+          <div className={styles.sidebarTitle}>
+            <button className={styles.sidebarUserBtn} onClick={() => navigate('/')} title="Task Mode">
+              <UserStar />
+            </button>
+            Admin
+          </div>
+          {TABS.map(t => (
+            <button
+              key={t.id}
+              onClick={() => setTab(t.id)}
+              className={`${styles.navBtn} ${tab === t.id ? styles.navBtnActive : ''}`}
+            >
+              {t.icon}{t.label}
+            </button>
+          ))}
+        </nav>
 
-      {/* ── Main content ── */}
-      <main className={styles.main}>
-        <div className={styles.mainHeader}>
-          <h1 className={styles.mainTitle}>Admin Dashboard</h1>
-          <button
-            onClick={() => {
-              const next = !autoRefresh;
-              setAutoRefresh(r => !r);
-              if (next) refresh();
-            }}
-            title="Auto sync"
-            className={`${styles.refreshBtn} ${autoRefresh ? styles.refreshBtnActive : ''}`}
-          >
-            <RefreshCcw size={16} />
-          </button>
-          {lastUpdated && (
+        {/* ── Main content ── */}
+        <main className={styles.main}>
+          <div className={styles.mainHeader}>
+            <h1 className={styles.mainTitle}>Admin Dashboard</h1>
+            <button
+              onClick={() => {
+                const next = !autoRefresh;
+                setAutoRefresh(r => !r);
+                if (next) refresh();
+              }}
+              title="Auto sync"
+              className={`${styles.refreshBtn} ${autoRefresh ? styles.refreshBtnActive : ''}`}
+            >
+              <RefreshCcw size={16} />
+            </button>
+            {lastUpdated && (
 
-            <span className={styles.updatedAt}>
-              {autoRefresh ? 'Auto-sync on · ' : ''}Last updated {lastUpdated.toLocaleTimeString()}
-            </span>
-          )}
-        </div>
+              <span className={styles.updatedAt}>
+                {autoRefresh ? 'Auto-sync on · ' : ''}Last updated {lastUpdated.toLocaleTimeString()}
+              </span>
+            )}
+          </div>
 
-        {tab === 'overview'    && <OverviewTab    stats={stats} />}
-        {tab === 'users'       && <UsersTab       stats={stats} />}
-        {tab === 'leaderboard' && <LeaderboardTab stats={stats} />}
-        {tab === 'tasks'       && <TasksTab       stats={stats} />}
-        {tab === 'system' && <SystemTab stats={stats} />}
-        {tab === 'audit' && <AuditTab />}
-      </main>
-    </div>
+          {tab === 'overview'    && <OverviewTab    stats={stats} />}
+          {tab === 'users'       && <UsersTab       stats={stats} />}
+          {tab === 'leaderboard' && <LeaderboardTab stats={stats} />}
+          {tab === 'tasks'       && <TasksTab       stats={stats} />}
+          {tab === 'system' && <SystemTab stats={stats} />}
+          {tab === 'audit' && <AuditTab />}
+        </main>
+      </div>
+    </SessionGuard>
+    
   );
 }

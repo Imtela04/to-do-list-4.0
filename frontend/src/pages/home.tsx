@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Greeting from '@/components/layout/greetings';
 import ClockWidget from '@/components/widgets/clock';
@@ -23,7 +23,10 @@ import { useAppStore } from '@/store/useAppStore';
 import MediaHub from '@/components/layout/mediahub';
 
 type View = 'list' | 'calendar';
-
+interface Props {
+  children:                                 ReactNode;
+  enabled?:                                 boolean;
+}
 export function Logo(){
   return(
     <div>
@@ -33,6 +36,7 @@ export function Logo(){
   )
 }
 export default function Dashboard() {
+
   const [sidebarOpen, setSidebarOpen]      = useState(false);
   const [notesOpen, setNotesOpen]          = useState(false);
   const [view, setView]                    = useState<View>('list');
@@ -72,8 +76,9 @@ export default function Dashboard() {
     setSidebarOpen(false);
   }, [location.pathname]);
 
+  const rememberMe = localStorage.getItem('rememberMe') === '1';
   return (
-    <SessionGuard>
+    <SessionGuard enabled={!rememberMe}>
       <LevelUpToast />
       <AlarmModal />
       <GuestBanner />

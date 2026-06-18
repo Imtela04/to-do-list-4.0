@@ -8,10 +8,14 @@ interface Props {
   children: ReactNode;
 }
 
+const REMEMBERED_WARNING_AFTER                  = 4 *60 * 60 * 10000;
+const REMEMBERED_EXPIRE_AFTER                   = REMEMBERED_WARNING_AFTER + 5 * 60 * 10000;
+
 export default function SessionGuard({ children }: Props) {
-  const [warning, setWarning] = useState(false);
-  const navigate = useNavigate();
-  const trapRef = useFocusTrap(warning);
+  const rememberMe                              = localStorage.getItem('rememberMe') === '1';
+  const [warning, setWarning]                   = useState(false);
+  const navigate                                = useNavigate();
+  const trapRef                                 = useFocusTrap(warning);
 
   const handleExpire = useCallback((): void => {
     setWarning(false);
@@ -27,6 +31,10 @@ export default function SessionGuard({ children }: Props) {
   const { reset, clear } = useSessionTimer({
     onWarn:   handleWarn,
     onExpire: handleExpire,
+    ...(rememberMe && {
+      warningAfter: REMEMBERED_WARNING_AFTER,
+      expireAfter: REMEMBERED_EXPIRE_AFTER,
+    })
   });
 
   const handleContinue = (): void => {
