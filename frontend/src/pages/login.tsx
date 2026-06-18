@@ -30,7 +30,11 @@ export default function Login() {
     }
     setLoading(true);
     try {
-      const res = await login({ username: form.username, password: form.password });
+      const res = await login({
+        username: form.username,
+        password: form.password,
+        remember_me: rememberMe,
+      });
       localStorage.setItem('authToken', res.data.access);
       localStorage.setItem('refreshToken', res.data.refresh);
       sessionStorage.setItem('sessionActive', '1');
