@@ -19,6 +19,7 @@ export default function SessionGuard({ children, enabled = true }: Props) {
   const trapRef                                 = useFocusTrap(warning);
 
   const handleExpire = useCallback((): void => {
+    if (!enabled) return;
     setWarning(false);
     localStorage.removeItem('authToken');
     window.dispatchEvent(new Event('auth-change'));
@@ -26,6 +27,7 @@ export default function SessionGuard({ children, enabled = true }: Props) {
   }, [navigate, enabled]);
 
   const handleWarn = useCallback((): void => {
+    if (!enabled) return;
     setWarning(true);
   }, [enabled]);
 
