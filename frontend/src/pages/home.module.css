@@ -326,8 +326,8 @@
 }
 
 .viewBtnActive {
-  background: var(--accent-primary);
-  color: white !important;
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
 }
 
 .pomodoroDrawer {
