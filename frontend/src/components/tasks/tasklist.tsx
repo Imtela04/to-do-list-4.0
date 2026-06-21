@@ -102,7 +102,7 @@ export default function TaskList({ addOpen, setAddOpen }: TaskListProps) {
   const totalPages  = Math.ceil(filteredTasks.length / PAGE_SIZE);
   const paginated   = filteredTasks.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  useEffect(() => { setLocalOrder(filteredTasks.map(t => t.id)); }, [tasks]);
+  useEffect(() => { setLocalOrder(filteredTasks.map(t => t.id)); }, [tasks, filter]);
 
   const sensors = useSensors(useSensor(PointerSensor, {
     activationConstraint: { distance: 6 }, // prevents accidental drags
