@@ -6,6 +6,9 @@ import type { ReactNode } from 'react';
 import { ToastProvider, useToast   } from './context/ToastContext';
 import { registerErrorHandler } from '@/api/client';
 import OfflineBanner from '@/components/layout/offlinebanner';
+import DashboardSkeleton from '@/components/layout/skeletons/dashboardskeleton';
+import { useDelayedLoading } from '@/hooks/useDelayedLoading';
+import RouteLoader from './components/layout/routeloader';
 
 //lazy load all pages
 const Landing = lazy(() => import('@/pages/landing'));
@@ -48,7 +51,9 @@ function PrivateRoute({ children }: { children: ReactNode }) {
 }
 
 function AppLoader({ children }: { children: ReactNode }) {
-  useDataLoader();
+  const { isLoading } = useDataLoader();
+  const showSkeleton = useDelayedLoading(isLoading);
+  if (showSkeleton) return <DashboardSkeleton />;
   return children;
 }
 
@@ -93,7 +98,7 @@ export default function App() {
       <ToastProvider>
         <OfflineBanner />
         <ErrorHandlerRegistrar />
-        <Suspense fallback={<div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}>Loading...</div>}>
+        <Suspense fallback={<RouteLoader />}>
           <Routes key={authKey}>
             <Route path="/" element={localStorage.getItem('authToken') ? <PrivateRoute><Dashboard /></PrivateRoute> : <Landing />} />
             <Route path="/landing" element={<Landing />} />

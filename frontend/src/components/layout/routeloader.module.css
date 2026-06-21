@@ -1,0 +1,13 @@
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  height: 100vh;
+  justify-content: center;
+}
+.tip {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  font-style: italic;
+}

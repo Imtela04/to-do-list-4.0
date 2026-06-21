@@ -6,6 +6,7 @@ import { useProfileQuery }    from '@/hooks/useProfileQuery';
 import { useAlarms }          from '@/hooks/useAlarm';
 
 export function useDataLoader() {
+
   const queryClient = useQueryClient();
   const isAuthed    = !!localStorage.getItem('authToken');
 
@@ -13,11 +14,15 @@ export function useDataLoader() {
   useCategoriesQuery(isAuthed);
   useNotesQuery(isAuthed);
   useProfileQuery(isAuthed);
+  const profileQuery = useProfileQuery(isAuthed);
+  const isLoading = tasksQuery.isLoading || profileQuery.isLoading;
+
 
   useAlarms(tasksQuery.data ?? []);
 
   const reload = (keys: Array<'tasks' | 'categories' | 'notes' | 'profile'> = ['tasks', 'categories', 'notes', 'profile']) =>
     Promise.all(keys.map(key => queryClient.invalidateQueries({ queryKey: [key] })));
 
-  return { reload };
+  
+  return { reload, isLoading };
 }
