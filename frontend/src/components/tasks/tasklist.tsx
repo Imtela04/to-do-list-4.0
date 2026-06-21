@@ -123,9 +123,10 @@ export default function TaskList({ addOpen, setAddOpen }: TaskListProps) {
     }, []);
 
     const handleExportCsv = () => {
-    const headers = ['Title', 'Priority', 'Status', 'Category', 'Deadline', 'Created'];
+    const headers = ['Title', 'Description', 'Priority', 'Status', 'Category', 'Deadline', 'Created'];
     const rows = filteredTasks.map(t => [
       `"${t.title.replace(/"/g, '""')}"`,
+      t.description,
       t.priority,
       t.completed ? 'completed' : 'active',
       t.category ? t.category.name : '',
