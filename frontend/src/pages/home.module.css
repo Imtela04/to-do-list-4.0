@@ -210,6 +210,25 @@
 }
 .pomToggle:hover, .notesToggle:hover { color: var(--accent-primary); border-color: var(--accent-primary); }
 
+.pomToggle { position: relative; }
+
+.pomBadge {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 50%;
+  background: var(--accent-warm);
+  color: var(--bg-primary);
+  font-size: 0.55rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* ── Burger & panel toggle ── */
 .burger {
   display: none;

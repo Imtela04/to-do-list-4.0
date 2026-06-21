@@ -40,8 +40,10 @@ interface AppState {
   email:           string;
   isGuest:         boolean;
   focusTaskId:     number | null;
-
+  pomodoroQueue:   number[];
+  pomodoroOpen:    boolean;
 }
+
 
 interface AppActions {
   setFilter:        (payload: Partial<Filter>) => void;
@@ -52,6 +54,10 @@ interface AppActions {
   setGreeting:      (greeting: string) => void;
   resetState:       () => void;
   setFocusTask:     (id: number|null) => void;
+  addToPomodoroQueue:      (taskId: number) => void;
+  removeFromPomodoroQueue: (taskId: number) => void;
+  clearPomodoroQueue:      () => void;
+  setPomodoroOpen:         (open: boolean) => void;
 }
 
 type AppStore = AppState & AppActions;
@@ -89,6 +95,9 @@ const DEFAULT_STATE: AppState = {
   email:           '',
   isGuest:         false,
   focusTaskId:     null,
+  pomodoroQueue:   [],
+  pomodoroOpen:    false,
+
 };
 
 // ── Store ──────────────────────────────────────────────────────
@@ -139,8 +148,16 @@ export const useAppStore = create<AppStore>((set) => ({
 
   setFocusTask: (id) => set({ focusTaskId: id }),
 
-  resetState: () => {
-    localStorage.removeItem('taskFilter');
+  addToPomodoroQueue: (taskId) => set(s =>
+    s.pomodoroQueue.includes(taskId) ? s : { pomodoroQueue: [...s.pomodoroQueue, taskId] }
+  ),
+  removeFromPomodoroQueue: (taskId) => set(s => ({
+    pomodoroQueue: s.pomodoroQueue.filter(id => id !== taskId),
+  })),
+  clearPomodoroQueue: () => set({ pomodoroQueue: [] }),
+  setPomodoroOpen:    (open) => set({ pomodoroOpen: open }),
+
+  resetState: () => {    localStorage.removeItem('taskFilter');
     localStorage.removeItem('userName');
     localStorage.removeItem('rememberMe');
     set({

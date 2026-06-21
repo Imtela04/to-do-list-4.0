@@ -27,14 +27,16 @@ interface Props {
 }
 
 export default function Pomodoro({ onClose }: Props) {
-  const pomodoroComplete = useAppStore(s => s.pomodoroComplete);
+  const pomodoroComplete        = useAppStore(s => s.pomodoroComplete);
+  const pomodoroQueue           = useAppStore(s => s.pomodoroQueue);
+  const addToPomodoroQueue      = useAppStore(s => s.addToPomodoroQueue);
+  const removeFromPomodoroQueue = useAppStore(s => s.removeFromPomodoroQueue);
   const { data: tasks = [] } = useTasksQuery();
 
   const [modeIndex, setModeIndex] = useState(0);
   const [timeLeft, setTimeLeft]   = useState(MODES.work.duration);
   const [running, setRunning]     = useState(false);
   const [sessions, setSessions]   = useState(0);
-  const [taskId, setTaskId]       = useState('');
   const [xpToast, setXpToast]     = useState<string | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioRef    = useRef<HTMLAudioElement | null>(null);
@@ -83,6 +85,13 @@ export default function Pomodoro({ onClose }: Props) {
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [running, handleSessionComplete]);
 
+  // auto-drop tasks that got completed/deleted elsewhere while the panel is open
+  useEffect(() => {
+    pomodoroQueue
+      .filter(id => { const t = tasks.find((x: Task) => x.id === id); return !t || t.completed; })
+      .forEach(removeFromPomodoroQueue);
+  }, [tasks, pomodoroQueue, removeFromPomodoroQueue]);
+
   const handleReset = (): void => {
     setRunning(false);
     if (intervalRef.current) clearInterval(intervalRef.current);
@@ -99,8 +108,8 @@ export default function Pomodoro({ onClose }: Props) {
 
   const mins = String(Math.floor(timeLeft / 60)).padStart(2, '0');
   const secs = String(timeLeft % 60).padStart(2, '0');
-  const linkedTask = tasks.find((t: Task) => t.id === parseInt(taskId));
-
+  const queuedTasks    = pomodoroQueue.map(id => tasks.find((t: Task) => t.id === id)).filter((t): t is Task => !!t);
+  const availableTasks = tasks.filter((t: Task) => !t.completed && !pomodoroQueue.includes(t.id));
   return (
     <div className={styles.panel}>
       <audio ref={audioRef} src="/sounds/bell.mp3" preload="auto" />
@@ -144,14 +153,28 @@ export default function Pomodoro({ onClose }: Props) {
         <span className={styles.sessionCount}>{sessions} session{sessions !== 1 ? 's' : ''} today</span>
       </div>
       <div className={styles.taskLink}>
-        <select className={styles.taskSelect} value={taskId} onChange={e => setTaskId(e.target.value)}>
-          <option value="">No task linked</option>
-          {tasks.filter((t: Task) => !t.completed).map((t: Task) => (
+        <select
+          className={styles.taskSelect}
+          value=""
+          onChange={e => { if (e.target.value) addToPomodoroQueue(parseInt(e.target.value)); }}
+        >
+          <option value="">+ Add task to queue</option>
+          {availableTasks.map((t: Task) => (
             <option key={t.id} value={t.id}>{t.title}</option>
           ))}
         </select>
-        {linkedTask && (
-          <span className={styles.linkedTask}>🎯 Focusing on: <strong>{linkedTask.title}</strong></span>
+        {queuedTasks.length > 0 && (
+          <div className={styles.taskQueue}>
+            {queuedTasks.map((t, i) => (
+              <div key={t.id} className={styles.queueItem}>
+                <span className={styles.queueDot}>{i === 0 ? '🎯' : i + 1}</span>
+                <span className={styles.queueTitle}>{t.title}</span>
+                <button className={styles.queueRemove} onClick={() => removeFromPomodoroQueue(t.id)}>
+                  <X size={11} />
+                </button>
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>

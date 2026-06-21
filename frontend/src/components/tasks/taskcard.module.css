@@ -214,6 +214,11 @@
 
 .pinned { color: var(--accent-primary); }
 
+.pomodoroQueued {
+  color: var(--accent-warm);
+  border-color: var(--accent-warm);
+}
+
 .nextDay:hover {
   background: rgba(106, 180, 255, 0.1);
   border-color: rgba(106, 180, 255, 0.25);

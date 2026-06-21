@@ -8,7 +8,7 @@ import type { Task, TaskPayload } from '@/types';
 import styles from './taskcard.module.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
-import { Pin, PinOff, Trash, SquarePen, CalendarPlus, Hourglass, Check, RotateCcw, Paperclip } from 'lucide-react';
+import { Pin, PinOff, Trash, SquarePen, CalendarPlus, Hourglass, Check, RotateCcw, Paperclip, Timer } from 'lucide-react';
 import Subtask from './subtask';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -98,7 +98,11 @@ export default function TaskCard({
   const isGuest                                                                   = useAppStore(s=>s.isGuest)
   const focusTaskId                                                               = useAppStore(s => s.focusTaskId);
   const clearFocusTask                                                            = useAppStore(s => s.setFocusTask);
-
+  const pomodoroQueue                                                             = useAppStore(s => s.pomodoroQueue);
+  const addToPomodoroQueue                                                        = useAppStore(s => s.addToPomodoroQueue);
+  const removeFromPomodoroQueue                                                   = useAppStore(s => s.removeFromPomodoroQueue);
+  const setPomodoroOpen                                                           = useAppStore(s => s.setPomodoroOpen);
+  const inPomodoroQueue                                                           = pomodoroQueue.includes(task.id);
   useEffect(() => {
     if (focusTaskId !== task.id) return;
     setExpanded(true);
@@ -243,6 +247,11 @@ export default function TaskCard({
     });
   };
 
+  const handlePomodoro = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (inPomodoroQueue) removeFromPomodoroQueue(task.id);
+    else { addToPomodoroQueue(task.id); setPomodoroOpen(true); }
+  };
   const handleMoveToNextDay = (e: React.MouseEvent) => {
     e.stopPropagation();
     const tomorrow = addDays(new Date(), 1);
@@ -530,6 +539,15 @@ export default function TaskCard({
         <button className={`${styles.actionBtn} ${task.pinned ? styles.pinned : ''}`} onClick={handlePin} title={task.pinned ? 'Unpin' : 'Pin'}>
           {task.pinned ? <PinOff size={13} /> : <Pin size={13} />}
         </button>
+        {!task.completed && (
+          <button
+            className={`${styles.actionBtn} ${inPomodoroQueue ? styles.pomodoroQueued : ''}`}
+            onClick={handlePomodoro}
+            title={inPomodoroQueue ? 'Remove from Pomodoro queue' : 'Add to Pomodoro queue'}
+          >
+            <Timer size={13} />
+          </button>
+        )}
         {isOverdue && (
           <button className={`${styles.actionBtn} ${styles.nextDay}`} onClick={handleMoveToNextDay} title="Move to tomorrow">
             <CalendarPlus size={13} />

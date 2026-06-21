@@ -40,7 +40,8 @@ export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen]      = useState(false);
   const [notesOpen, setNotesOpen]          = useState(false);
   const [view, setView]                    = useState<View>('list');
-  const [pomodoroOpen, setPomodoroOpen]    = useState(false);
+  const pomodoroOpen    = useAppStore(s => s.pomodoroOpen);
+  const setPomodoroOpen = useAppStore(s => s.setPomodoroOpen);
   const location                           = useLocation();
   const [notifStatus, setNotifStatus]      = useState(Notification.permission);
   const [shortcutsOpen, setShortcutsOpen]  = useState(false);
@@ -48,6 +49,7 @@ export default function Dashboard() {
   const isGuest                            = useAppStore(s=>s.isGuest)
   const [mediaOpen, setMediaOpen]          = useState(false);
   const setFocusTask = useAppStore(s => s.setFocusTask);
+  const pomodoroQueue = useAppStore(s => s.pomodoroQueue);
 
   const handleViewTask = (taskId: number) => {
     setFocusTask(taskId);
@@ -147,10 +149,11 @@ export default function Dashboard() {
               </div>
               <button
                 className={`${styles.pomToggle} ${pomodoroOpen ? styles.viewBtnActive : ''}`}
-                onClick={() => setPomodoroOpen(o => !o)}
+                onClick={() => setPomodoroOpen(!pomodoroOpen)}
                 title="Pomodoro timer"
               >
                   🍅︎
+                  {pomodoroQueue.length > 0 && <span className={styles.pomBadge}>{pomodoroQueue.length}</span>}
               </button>
 
               <button className={styles.notesToggle} onClick={() => setNotesOpen(o => !o)} title='Sticky Notes'>
