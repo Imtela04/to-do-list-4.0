@@ -124,15 +124,22 @@ def tasks(request):
     if not allowed:
         return Response({'detail': message, 'limit_reached': True}, status=status.HTTP_403_FORBIDDEN)
 
+    recurrence = request.data.get('recurrence') or None
+    deadline = parse_deadline(request.data.get('deadline'))
+    if recurrence and not deadline:
+        # Recurring tasks always need a deadline — default to end of today
+        deadline = timezone.now().replace(hour=23, minute=59, second=0, microsecond=0)
+
     task = Todo.objects.create(
         title=title,
         owner=request.user,
         description=(request.data.get('description') or '').strip() or None,
-        deadline=parse_deadline(request.data.get('deadline')),
+        deadline=deadline,
         category_id=resolve_category(request.data.get('category'), request.user),
         priority=request.data.get('priority', 'low'),
-        recurrence=request.data.get('recurrence') or None,
+        recurrence=recurrence,
     )
+
     log(request, 'task_create', detail=task.title)
     return Response(TodoSerializer(task).data, status=status.HTTP_201_CREATED)
 
@@ -215,7 +222,8 @@ def task_detail(request, task_id):
             log(request, 'level_up', detail=f'Level {xp_result["new_level"]}')
     # Spawn next occurrence on completion
     if 'completed' in request.data and task.completed and not was_completed and task.recurrence:
-        nd = next_recurrence_deadline(task.deadline, task.recurrence)
+        base_deadline = task.deadline or timezone.now().replace(hour=23, minute=59, second=0, microsecond=0)
+        nd = next_recurrence_deadline(base_deadline, task.recurrence)
         Todo.objects.create(
             title=task.title,
             owner=request.user,
@@ -224,7 +232,7 @@ def task_detail(request, task_id):
             category_id=task.category_id,
             priority=task.priority,
             recurrence=task.recurrence,
-        )    
+        )
     return Response({
         'task':      data,
         'xp_result': xp_result,  # None if no change

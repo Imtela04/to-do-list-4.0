@@ -202,7 +202,11 @@ export default function AddTask({ open, setOpen }: AddTaskProps) {
                 <button
                   key={r}
                   className={`${styles.prioBtn} ${form.recurrence === r ? styles.prioActive : ''}`}
-                  onClick={() => set('recurrence', form.recurrence === r ? '' : r)}
+                  onClick={() => {
+                    const next = form.recurrence === r ? '' : r;
+                    set('recurrence', next);
+                    if (next && !form.due_date) set('due_date', new Date());
+                  }}
                 >
                   {r}
                 </button>

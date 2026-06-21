@@ -167,10 +167,16 @@ export default function TaskCard({
     },
 
     onError:   (_e: Error, _v: ToggleMutationVars, ctx: MutationContext | undefined) => { if (ctx) rollback(ctx); },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
-  });
-
-  const updateMutation = useMutation({
+    onSettled: (_data, _err, vars: ToggleMutationVars) => {
+      // Give the strikethrough a beat before the next recurrence appears
+      const delay = task.recurrence && vars.completed ? 900 : 0;
+      if (delay) {
+        setTimeout(() => queryClient.invalidateQueries({ queryKey: ['tasks'] }), delay);
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      }
+    },
+  });  const updateMutation = useMutation({
     mutationFn: ({ changes }: UpdateMutationVars) => updateTaskApi(task.id, changes),
     onMutate: async ({ updated }: UpdateMutationVars) => {
       await queryClient.cancelQueries({ queryKey: ['tasks'] });
@@ -426,7 +432,11 @@ export default function TaskCard({
                   <button
                     key={r}
                     className={`${styles.prioBtn} ${editForm.recurrence === r ? styles.prioActive : ''}`}
-                    onClick={() => set('recurrence', editForm.recurrence === r ? '' : r)}
+                    onClick={() => {
+                      const next = editForm.recurrence === r ? '' : r;
+                      set('recurrence', next);
+                      if (next && !editForm.deadline) set('deadline', new Date());
+                    }}
                   >
                     <RotateCcw size={10}/>{r}
                   </button>

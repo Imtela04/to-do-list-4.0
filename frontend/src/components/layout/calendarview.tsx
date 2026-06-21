@@ -77,7 +77,7 @@ export default function CalendarView({ onViewTask }: CalendarViewProps) {
     },
   });
 
-  const toggleMutation = useMutation<
+  const toggleMutation = useMutation
     AxiosResponse<{ xp_result?: XpResult }>, Error, { id: number; completed: boolean }, MutateCtx
   >({
     mutationFn: ({ id, completed }) => toggleTask(id, completed),
@@ -90,7 +90,15 @@ export default function CalendarView({ onViewTask }: CalendarViewProps) {
       return { previous };
     },
     onError: (_err, _vars, ctx) => queryClient.setQueryData(['tasks'], ctx?.previous),
-    onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
+    onSettled: (_data, _err, vars) => {
+      const justCompletedTask = tasks.find(t => t.id === vars.id);
+      const delay = justCompletedTask?.recurrence && vars.completed ? 900 : 0;
+      if (delay) {
+        setTimeout(() => queryClient.invalidateQueries({ queryKey: ['tasks'] }), delay);
+      } else {
+        queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      }
+    },
   });
 
   const deleteMutation = useMutation<AxiosResponse, Error, number, MutateCtx>({
