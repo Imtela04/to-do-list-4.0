@@ -65,16 +65,7 @@ const LoadingScreen: React.FC = () => {
 
                 {/* Creative Visual Loader (Concentric Rings & Core) */}
                 <div className={styles.loaderWrapper}>
-                    <div className={styles.outerRing}></div>
-                    <div className={styles.middleRing}></div>
-                    <div className={styles.innerRing}></div>
-                    
-                    {/* Core Element */}
-                    <div className={styles.coreWrapper}>
-                        <div className={styles.coreBox}>
-                            <div className={`${styles.coreIcon} icon-cpu`}></div>
-                        </div>
-                    </div>
+
                 </div>
 
                 {/* Typewriter Text Container */}
