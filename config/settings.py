@@ -44,10 +44,13 @@ if not DEBUG:
     CSRF_COOKIE_HTTPONLY = True
   
 # Application definition
-CSRF_TRUSTED_ORIGINS = list(filter(None, [
-    os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',')[0],
+CSRF_TRUSTED_ORIGINS = list(dict.fromkeys(filter(None, [
+    *[o.strip() for o in os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',') if o.strip()],
+    os.environ.get('RENDER_URL', ''),
     'https://what-do.onrender.com',
-]))
+    'https://what-do-api.onrender.com',
+])))
+
 
 INSTALLED_APPS = [
     'corsheaders',
