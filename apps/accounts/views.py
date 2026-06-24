@@ -343,9 +343,8 @@ def delete_account(request):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
-def health(request):
-    return Response({'status': 'ok'})
-
+def render_health_check(request):
+    return HttpResponse("OK")
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -820,3 +819,5 @@ def admin_view_note(request, note_id):
         detail=f'{request.user.username} read note#{note_id} belonging to {note.owner.username}')
 
     return Response(StickyNoteSerializer(note).data)
+
+

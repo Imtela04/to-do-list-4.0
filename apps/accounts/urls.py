@@ -1,6 +1,6 @@
 from django.urls import path
 from . import views
-from .views import ThemeView
+from .views import ThemeView, render_health_check
 
 urlpatterns = [
     path('admin/stats/',               views.admin_stats,       name='admin-stats'),
@@ -26,9 +26,9 @@ urlpatterns = [
     path('user/theme/',                  ThemeView.as_view(), name='user-theme'),
     path('me/',                          views.me,            name='me'),
     path('account/',                     views.delete_account, name='delete-account'),
-    path('health/',                      views.health,         name='health'),
     path('auth/password-reset/',         views.request_password_reset, name='password-reset'),
     path('auth/password-reset/confirm/', views.confirm_password_reset,  name='password-reset-confirm'),
     path('auth/pomodoro/complete/',      views.complete_pomodoro, name='pomodoro-complete'),
     path('auth/update-email/', views.update_email, name='update-email'),
+    path('health/', render_health_check, name='health_check'),
 ]
