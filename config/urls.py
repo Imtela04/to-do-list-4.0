@@ -6,6 +6,12 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from django.views.generic import TemplateView
 from rest_framework.throttling import ScopedRateThrottle
 from apps.accounts.views import LockableTokenObtainPairView
+from django.urls import path, include
+from django.http import HttpResponse
+
+# The absolute bare-minimum view
+def health_check(request):
+    return HttpResponse("OK")
 
 class RefreshView(TokenRefreshView):
     throttle_classes = [ScopedRateThrottle]
@@ -13,12 +19,14 @@ class RefreshView(TokenRefreshView):
 
 
 urlpatterns = [
+    path('health/', health_check),
     path('admin/', admin.site.urls),
     path('api/auth/login/', LockableTokenObtainPairView.as_view()),
     path('api/auth/refresh/', RefreshView.as_view()),
     path('api/auth/',         include('apps.accounts.urls')),
     path('api/',              include('apps.accounts.urls')),
     path('api/',              include('apps.todo.urls')),
+    path('api/', include('your_app.urls')),
 ]
 
 if settings.DEBUG:

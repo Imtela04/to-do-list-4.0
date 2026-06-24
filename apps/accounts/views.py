@@ -343,8 +343,9 @@ def delete_account(request):
 
 @api_view(['GET'])
 @permission_classes([AllowAny])
-def render_health_check(request):
-    return HttpResponse("OK")
+def health(request):
+    return Response({'status': 'ok'})
+
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
