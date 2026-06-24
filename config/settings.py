@@ -42,13 +42,10 @@ if not DEBUG:
     CSRF_COOKIE_HTTPONLY = True
   
 # Application definition
-CSRF_TRUSTED_ORIGINS = [
-    'https://what-do.up.railway.app',
-]
-
-render_url = os.environ.get('RENDER_URL', '')
-if render_url:
-    CSRF_TRUSTED_ORIGINS.append(render_url)
+CSRF_TRUSTED_ORIGINS = list(filter(None, [
+    os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',')[0],
+    'https://what-do.onrender.com',
+]))
 
 INSTALLED_APPS = [
     'corsheaders',
@@ -99,7 +96,7 @@ ROOT_URLCONF = 'config.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'frontend_dist'],  # index.html lives here
+        'DIRS': [],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -236,8 +233,6 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'  # where collectstatic puts everything
-WHITENOISE_ROOT = BASE_DIR / 'staticfiles'
-WHITENOISE_INDEX_FILE = True
 MEDIA_URL  = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 SESSION_COOKIE_AGE = 3600          # 1 hour
