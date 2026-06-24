@@ -43,6 +43,8 @@ if not DEBUG:
     SECURE_CONTENT_TYPE_NOSNIFF      = True
     CSRF_COOKIE_HTTPONLY = True
   
+cors_env = os.environ.get('CORS_ALLOWED_ORIGINS', '')
+CORS_ALLOWED_ORIGINS = cors_env.split(',') if cors_env else []
 # Application definition
 CSRF_TRUSTED_ORIGINS = list(dict.fromkeys(filter(None, [
     *[o.strip() for o in os.environ.get('CORS_ALLOWED_ORIGINS', '').split(',') if o.strip()],
@@ -86,9 +88,10 @@ CORS_ALLOW_HEADERS = [
     'x-requested-with',
 ]
 MIDDLEWARE = [
+
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
