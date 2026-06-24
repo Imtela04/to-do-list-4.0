@@ -12,7 +12,6 @@ export default defineConfig({
   },
   base: process.env.NODE_ENV === 'production' ? '/static/' : '/',
   build: {
-    outDir: '../frontend_dist',
     emptyOutDir: true,
   },
   test: {
