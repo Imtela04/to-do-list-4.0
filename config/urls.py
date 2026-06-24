@@ -9,7 +9,6 @@ from apps.accounts.views import LockableTokenObtainPairView
 from django.urls import path, include
 from django.http import HttpResponse
 
-# The absolute bare-minimum view
 def health_check(request):
     return HttpResponse("OK")
 
@@ -26,7 +25,6 @@ urlpatterns = [
     path('api/auth/',         include('apps.accounts.urls')),
     path('api/',              include('apps.accounts.urls')),
     path('api/',              include('apps.todo.urls')),
-    path('api/', include('your_app.urls')),
 ]
 
 if settings.DEBUG:
