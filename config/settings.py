@@ -234,9 +234,6 @@ else:
 # default DRF/Django limit is 2.5MB — raise it for attachment uploads
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
 FILE_UPLOAD_MAX_MEMORY_SIZE = 10 * 1024 * 1024
-STATICFILES_DIRS = [
-    BASE_DIR / 'frontend_dist',  # Vite output, collected into staticfiles/
-]
 
 STATIC_ROOT = BASE_DIR / 'staticfiles'  # where collectstatic puts everything
 WHITENOISE_ROOT = BASE_DIR / 'staticfiles'
