@@ -148,91 +148,97 @@ export default function KanbanView({ onViewTask }: Props) {
   };
 
   return (
-    <DndContext
-      sensors={sensors}
-      onDragStart={handleDragStart}
-      onDragOver={handleDragOver}
-      onDragEnd={handleDragEnd}
-    >
-    <FilterBar/>
-      <div className={styles.board}>
-        {COLUMNS.map(col => (
-          <div key={col.id} className={styles.column}>
+    <div className={styles.kanban}>
+			<DndContext
+				sensors={sensors}
+				onDragStart={handleDragStart}
+				onDragOver={handleDragOver}
+				onDragEnd={handleDragEnd}
+			>    
+			
+			<FilterBar/>
 
-            {/* Header */}
-            <div className={styles.columnHeader}>
-              <span className={styles.columnDot} style={{ background: col.dot }} />
-              <span className={styles.columnTitle} style={{ color: col.color }}>{col.label}</span>
-              <span className={styles.columnCount}>{columns[col.id].length}</span>
-            </div>
+			<div className={styles.board}>
+					
+				{COLUMNS.map(col => (
+				<div key={col.id} className={styles.column}>
 
-            {/* Droppable body */}
-            <DroppableColumn id={col.id} isOver={overId === col.id}>
-              {columns[col.id].length === 0 && !addingInCol && (
-                <p className={styles.empty}>No tasks here</p>
-              )}
-              {columns[col.id].map(task => (
-                <KanbanCard
-                  key={task.id}
-                  task={task}
-                  onClick={() => onViewTask?.(task.id)}
-                />
-              ))}
+					{/* Header */}
+					<div className={styles.columnHeader}>
+						<span className={styles.columnDot} style={{ background: col.dot }} />
+						<span className={styles.columnTitle} style={{ color: col.color }}>{col.label}</span>
+						<span className={styles.columnCount}>{columns[col.id].length}</span>
+					</div>
 
-              {/* Inline add form */}
-              {addingInCol === col.id && (
-                <div className={styles.addForm}>
-                  <input
-                    autoFocus
-                    className={styles.addInput}
-                    placeholder="Task title..."
-                    value={newTitle}
-                    onChange={e => setNewTitle(e.target.value)}
-                    onKeyDown={e => {
-                      if (e.key === 'Enter')  handleAdd(col.id);
-                      if (e.key === 'Escape') { setAddingInCol(null); setNewTitle(''); }
-                    }}
-                  />
-                  <div className={styles.addFormActions}>
-                    <button className={styles.addFormCancel} onClick={() => { setAddingInCol(null); setNewTitle(''); }}>
-                      Cancel
-                    </button>
-                    <button
-                      className={styles.addFormConfirm}
-                      onClick={() => handleAdd(col.id)}
-                      disabled={addMutation.isPending || !newTitle.trim()}
-                    >
-                      {addMutation.isPending ? '...' : 'Add'}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </DroppableColumn>
+					{/* Droppable body */}
+					<DroppableColumn id={col.id} isOver={overId === col.id}>
+					{columns[col.id].length === 0 && !addingInCol && (
+						<p className={styles.empty}>No tasks here</p>
+					)}
+					{columns[col.id].map(task => (
+						<KanbanCard
+						key={task.id}
+						task={task}
+						onClick={() => onViewTask?.(task.id)}
+						/>
+					))}
 
-            {/* Add button (not in Done column) */}
-            {col.id !== 'done' && addingInCol !== col.id && (
-              <button
-                className={styles.addBtn}
-                onClick={() => { if (!tasksLocked) { setAddingInCol(col.id); setNewTitle(''); } }}
-                disabled={tasksLocked}
-                title={tasksLocked ? 'Task limit reached' : `Add to ${col.label}`}
-              >
-                <Plus size={13} />
-                Add task
-              </button>
-            )}
-          </div>
-        ))}
-      </div>
+					{/* Inline add form */}
+					{addingInCol === col.id && (
+						<div className={styles.addForm}>
+							<input
+								autoFocus
+								className={styles.addInput}
+								placeholder="Task title..."
+								value={newTitle}
+								onChange={e => setNewTitle(e.target.value)}
+								onKeyDown={e => {
+								if (e.key === 'Enter')  handleAdd(col.id);
+								if (e.key === 'Escape') { setAddingInCol(null); setNewTitle(''); }
+								}}
+							/>
+							<div className={styles.addFormActions}>
+								<button className={styles.addFormCancel} onClick={() => { setAddingInCol(null); setNewTitle(''); }}>
+									Cancel
+								</button>
+								<button
+									className={styles.addFormConfirm}
+									onClick={() => handleAdd(col.id)}
+									disabled={addMutation.isPending || !newTitle.trim()}
+								>
+									{addMutation.isPending ? '...' : 'Add'}
+								</button>
+							</div>
+						</div>
+					)}
+					</DroppableColumn>
 
-      {/* Drag overlay — renders above everything while dragging */}
-      <DragOverlay dropAnimation={null}>
-        {activeTask && (
-          <div className={`${styles.card} ${styles.cardOverlay}`}>
-            <KanbanCardInner task={activeTask} />
-          </div>
-        )}
-      </DragOverlay>
-    </DndContext>
+					{/* Add button (not in Done column) */}
+					{col.id !== 'done' && addingInCol !== col.id && (
+					<button
+						className={styles.addBtn}
+						onClick={() => { if (!tasksLocked) { setAddingInCol(col.id); setNewTitle(''); } }}
+						disabled={tasksLocked}
+						title={tasksLocked ? 'Task limit reached' : `Add to ${col.label}`}
+					>
+						<Plus size={13} />
+						Add task
+					</button>
+					)}
+				</div>
+				))}
+			</div>
+
+			{/* Drag overlay — renders above everything while dragging */}
+			<DragOverlay dropAnimation={null}>
+				{activeTask && (
+				<div className={`${styles.card} ${styles.cardOverlay}`}>
+					<KanbanCardInner task={activeTask} />
+				</div>
+				)}
+			</DragOverlay>
+			</DndContext> 
+    </div>
+
   );
 }

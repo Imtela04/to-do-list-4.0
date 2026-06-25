@@ -1,3 +1,13 @@
+/* Kanban View */
+.kanban{
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  height: 100%;
+  overflow-y: auto;
+
+}
+
 /* ── Board ── */
 .board {
   display: flex;
@@ -6,15 +16,17 @@
   min-height: 0;
   overflow-x: auto;
   padding-bottom: 4px;
-  align-items: flex-start;
+  /* align-items: flex-start; */
+  justify-content: space-between;
 }
+
 .board::-webkit-scrollbar { height: 5px; }
 
 /* ── Column ── */
 .column {
   flex: 1;
   min-width: 260px;
-  max-width: 320px;
+  max-width: auto;
   display: flex;
   flex-direction: column;
   background: var(--bg-secondary);
