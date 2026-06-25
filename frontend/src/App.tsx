@@ -8,7 +8,7 @@ import { registerErrorHandler } from '@/api/client';
 import OfflineBanner from '@/components/layout/offlinebanner';
 import DashboardSkeleton from '@/components/layout/skeletons/dashboardskeleton';
 import { useDelayedLoading } from '@/hooks/useDelayedLoading';
-import RouteLoader from './components/layout/LoadingScreen';
+import LoadingScreen from './components/layout/LoadingScreen';
 import { lazyMin } from './utils/lazyMin';
 
 //lazy load all pages
@@ -99,7 +99,7 @@ export default function App() {
       <ToastProvider>
         <OfflineBanner />
         <ErrorHandlerRegistrar />
-        <Suspense fallback={<RouteLoader />}>
+        <Suspense fallback={<LoadingScreen />}>
           <Routes key={authKey}>
             <Route path="/" element={localStorage.getItem('authToken') ? <PrivateRoute><Dashboard /></PrivateRoute> : <Landing />} />
             <Route path="/landing" element={<Landing />} />
