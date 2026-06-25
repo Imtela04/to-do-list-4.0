@@ -1,0 +1,276 @@
+/* ── Board ── */
+.board {
+  display: flex;
+  gap: 14px;
+  height: 100%;
+  min-height: 0;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  align-items: flex-start;
+}
+.board::-webkit-scrollbar { height: 5px; }
+
+/* ── Column ── */
+.column {
+  flex: 1;
+  min-width: 260px;
+  max-width: 320px;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  max-height: 100%;
+}
+
+.columnHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.columnDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.columnTitle {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  flex: 1;
+}
+
+.columnCount {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: var(--bg-glass);
+  color: var(--text-muted);
+  border: 1px solid var(--border-subtle);
+}
+
+/* ── Column body (droppable) ── */
+.columnBody {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 80px;
+  transition: background var(--transition-fast);
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-medium) transparent;
+}
+
+.columnDropOver {
+  background: rgba(124, 106, 255, 0.05);
+  outline: 1px dashed var(--border-accent);
+  outline-offset: -4px;
+  border-radius: var(--radius-md);
+}
+
+.empty {
+  text-align: center;
+  font-size: 0.73rem;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 20px 0;
+  opacity: 0.7;
+}
+
+/* ── Add button & form ── */
+.addBtn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 10px 10px;
+  padding: 7px 10px;
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--border-subtle);
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+.addBtn:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  background: rgba(124, 106, 255, 0.05);
+}
+
+.addForm {
+  background: var(--bg-card);
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius-md);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: scaleIn 150ms ease both;
+}
+
+.addInput {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--border-medium);
+  outline: none;
+  font-size: 0.82rem;
+  color: var(--text-primary);
+  padding: 4px 0 6px;
+  width: 100%;
+  font-family: var(--font-body);
+}
+.addInput:focus { border-bottom-color: var(--accent-primary); }
+.addInput::placeholder { color: var(--text-muted); }
+
+.addFormActions {
+  display: flex;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+.addFormCancel {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+.addFormCancel:hover { color: var(--text-primary); background: var(--bg-glass-hover); }
+
+.addFormConfirm {
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: var(--accent-primary);
+  color: white;
+  padding: 4px 12px;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition-fast);
+}
+.addFormConfirm:hover { background: var(--accent-tertiary); }
+
+/* ── Kanban Card ── */
+.card {
+  position: relative;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 11px 12px 11px 15px;
+  cursor: grab;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  transition: border-color var(--transition-fast), transform var(--transition-fast), box-shadow var(--transition-fast);
+  touch-action: none;
+  user-select: none;
+}
+.card:hover {
+  border-color: var(--border-medium);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+.card:active { cursor: grabbing; }
+
+.cardDragging {
+  opacity: 0.35;
+  transform: scale(0.97);
+}
+
+.cardOverlay {
+  cursor: grabbing;
+  box-shadow: var(--shadow-md);
+  transform: rotate(1.5deg) scale(1.03);
+  border-color: var(--border-accent);
+}
+
+.priorityBar {
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+}
+
+.cardTitle {
+  font-size: 0.84rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.cardCompleted {
+  text-decoration: line-through;
+  opacity: 0.5;
+}
+
+.cardMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.64rem;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  background: var(--bg-glass);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.chipOverdue {
+  color: var(--danger);
+  border-color: rgba(255, 68, 68, 0.2);
+  background: rgba(255, 68, 68, 0.06);
+}
+
+/* ── Subtask progress ── */
+.progressWrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.progressTrack {
+  flex: 1;
+  height: 3px;
+  background: var(--bg-glass);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  outline: 1px solid var(--border-subtle);
+}
+
+.progressFill {
+  height: 100%;
+  background: var(--accent-primary);
+  border-radius: var(--radius-full);
+  transition: width 0.3s ease;
+}
+
+.progressDone { background: var(--accent-tertiary); }
+
+.progressText {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  flex-shrink: 0;
+}

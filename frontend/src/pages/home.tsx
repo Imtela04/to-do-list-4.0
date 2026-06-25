@@ -9,7 +9,7 @@ import StickyNotes from '@/components/widgets/stickynote';
 import Categories from '@/components/categories/categorypanel';
 import UserNav from '@/components/layout/usernav';
 import styles from './home.module.css';
-import { Menu, X, NotebookPen, LayoutList, CalendarDays, BellCheck, AlarmClockCheck, FolderOpen } from 'lucide-react';
+import { Menu, X, NotebookPen, LayoutList, CalendarDays, Kanban, BellCheck, AlarmClockCheck, FolderOpen } from 'lucide-react';
 import SessionGuard from '@/components/layout/sessionguard';
 import LevelUpToast from '@/components/layout/leveluptoast';
 import Pomodoro from '../components/widgets/pomodoro';
@@ -21,8 +21,8 @@ import Heatmap from '@/components/widgets/heatmap';
 import GuestBanner from '@/components/layout/guestbanner';
 import { useAppStore } from '@/store/useAppStore';
 import MediaHub from '@/components/layout/mediahub';
-
-type View = 'list' | 'calendar';
+import KanbanView from '@/components/tasks/kanbanview';
+type View = 'list' | 'calendar' | 'kanban';
 interface Props {
   children:                                 ReactNode;
   enabled?:                                 boolean;
@@ -60,7 +60,7 @@ export default function Dashboard() {
     onNewTask:       () => setAddOpen(true),
     onToggleNotes:   () => setNotesOpen(o => !o),
     onTogglePomodoro: () => setPomodoroOpen(o => !o),
-    onToggleView:    () => setView(v => v === 'list' ? 'calendar' : 'list'),
+    onToggleView: () => setView(v => v === 'list' ? 'calendar' : v === 'calendar' ? 'kanban' : 'list'),
   });
 
   useEffect(() => {
@@ -146,6 +146,13 @@ export default function Dashboard() {
                 >
                   <CalendarDays size={16} />
                 </button>
+                <button
+                  className={`${styles.viewBtn} ${view === 'kanban' ? styles.viewBtnActive : ''}`}
+                  onClick={() => setView('kanban')}
+                  title="Kanban view"
+                >
+                  <Kanban size={16} />
+                </button>
               </div>
               <button
                 className={`${styles.pomToggle} ${pomodoroOpen ? styles.viewBtnActive : ''}`}
@@ -168,7 +175,10 @@ export default function Dashboard() {
           </header>
 
           <section className={styles.tasksSection}>
-            {view === 'list' ? <TaskList addOpen={addOpen} setAddOpen={setAddOpen} /> : <CalendarView onViewTask={handleViewTask} />}
+            {view === 'list'     ? <TaskList addOpen={addOpen} setAddOpen={setAddOpen} /> 
+            : view === 'calendar' ? <CalendarView onViewTask={handleViewTask} />
+            : <KanbanView onViewTask={handleViewTask} />}
+
           </section>
         </main>
 
