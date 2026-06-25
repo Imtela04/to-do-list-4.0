@@ -5,7 +5,7 @@ import { login } from '../api/services';
 import { useAppStore } from '@/store/useAppStore';
 import styles from './login.module.css';
 import { Ghost, Loader, LogIn } from 'lucide-react';
-import { Logo } from './home';
+import { Logo } from '@/components/common/logo';
 
 interface LoginForm {
   username: string;

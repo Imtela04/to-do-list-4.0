@@ -10,7 +10,7 @@ import {
   adminDeleteNote, adminExportCsv,
 } from '@/api/services';
 import { Ban, Bolt, ChartNoAxesCombined, Check, ClipboardClock, Copy, Download, Edit, Eye, Flame, ListTodo, Lock, LogOut, MonitorCog, RefreshCcw, RotateCcw, ShieldUser, SquareCheck, Trash2, TriangleAlert, Trophy, User, Users, UserStar } from 'lucide-react';
-import { Logo } from './home';
+import { Logo } from '@/components/common/logo';
 import { adminResetXp, adminDeleteUser, adminEditUser, adminAuditLog, adminViewNote } from '@/api/services';
 import { useNavigate } from 'react-router-dom';
 import styles from './admin.module.css';

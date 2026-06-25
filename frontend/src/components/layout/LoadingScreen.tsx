@@ -63,11 +63,6 @@ const LoadingScreen: React.FC = () => {
                 <div className={styles.bgDecor1}></div>
                 <div className={styles.bgDecor2}></div>
 
-                {/* Creative Visual Loader (Concentric Rings & Core) */}
-                <div className={styles.loaderWrapper}>
-
-                </div>
-
                 {/* Typewriter Text Container */}
                 <div className={styles.textContainer}>
                     <h2 className={styles.heading}>

@@ -3,7 +3,7 @@ import type { FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { register } from '../api/services';
 import styles from './register.module.css';
-import { Logo } from './home';
+import { Logo } from '@/components/common/logo';
 
 interface RegisterForm {
   username: string;
