@@ -18,19 +18,20 @@ class Todo(models.Model):
         ('high',     'High'),
         ('critical', 'Critical'),
     ]
-    title        = models.CharField(max_length=255)
-    completed    = models.BooleanField(default=False)
-    description  = models.TextField(null=True, blank=True)
-    deadline     = models.DateTimeField(null=True, blank=True)
-    category     = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
-    priority     = models.CharField(max_length=20, choices=PRIORITY_CHOICES)
-    pinned       = models.BooleanField(default=False)
-    position = models.PositiveIntegerField(default=0, db_index=True)
-    owner        = models.ForeignKey(User, on_delete=models.CASCADE, related_name='todos')
-    created_at   = models.DateTimeField(auto_now_add=True)
-    completed_at = models.DateTimeField(null=True, blank=True)
-    is_onboarding = models.BooleanField(default=False)
-    recurrence = models.CharField(max_length=20, null=True, blank=True)
+    title           = models.CharField(max_length=255)
+    completed       = models.BooleanField(default=False)
+    description     = models.TextField(null=True, blank=True)
+    deadline        = models.DateTimeField(null=True, blank=True)
+    category        = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True)
+    priority        = models.CharField(max_length=20, choices=PRIORITY_CHOICES)
+    pinned          = models.BooleanField(default=False)
+    position        = models.PositiveIntegerField(default=0, db_index=True)
+    owner           = models.ForeignKey(User, on_delete=models.CASCADE, related_name='todos')
+    created_at      = models.DateTimeField(auto_now_add=True)
+    completed_at    = models.DateTimeField(null=True, blank=True)
+    is_onboarding   = models.BooleanField(default=False)
+    recurrence      = models.CharField(max_length=20, null=True, blank=True)
+    wip             = models.BooleanField(default=False)
 
     def __str__(self):
         return self.title

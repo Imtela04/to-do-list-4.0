@@ -8,7 +8,6 @@ import { registerErrorHandler } from '@/api/client';
 import OfflineBanner from '@/components/layout/offlinebanner';
 import DashboardSkeleton from '@/components/layout/skeletons/dashboardskeleton';
 import { useDelayedLoading } from '@/hooks/useDelayedLoading';
-import LoadingScreen from './components/layout/LoadingScreen';
 
 //lazy load all pages
 const Landing = lazy(() => import('@/pages/landing'));

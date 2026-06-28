@@ -18,6 +18,7 @@ export interface Task {
   subtasks: Subtask[];
   attachments: Attachment[];
   recurrence: 'daily' | 'weekly' | 'monthly' | 'yearly' | null;
+  wip: boolean;
 }
 
 export interface Subtask {
@@ -106,6 +107,7 @@ export interface TaskPayload {
   completed?:  boolean;
   pinned?:     boolean;
   recurrence?: 'daily' | 'weekly' | 'monthly' | 'yearly' | null;
+  wip?:        boolean;
 }
 
 export interface CategoryPayload {

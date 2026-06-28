@@ -52,6 +52,6 @@ class TodoSerializer(serializers.ModelSerializer):
         fields = [
             'id', 'title', 'completed', 'description', 'deadline',
             'category', 'priority', 'owner', 'created_at', 'pinned',
-            'completed_at', 'subtasks', 'attachments','recurrence', 
+            'completed_at', 'subtasks', 'attachments','recurrence', 'wip',
         ]
 

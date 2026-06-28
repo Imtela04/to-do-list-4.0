@@ -18,16 +18,16 @@ import FilterBar from '../layout/filterbar';
 
 // ── Column config ─────────────────────────────────────────────
 const COLUMNS = [
-  { id: 'todo',        label: 'To Do',       dot: '#6b6b8a',  color: 'var(--text-secondary)' },
-  { id: 'in-progress', label: 'In Progress', dot: '#7c6aff',  color: 'var(--accent-primary)' },
-  { id: 'done',        label: 'Done',        dot: '#6affdc',  color: 'var(--accent-tertiary)' },
+  { id: 'todo',        label: '> Do',  color: 'var(--text-secondary)' },
+  { id: 'in-progress', label: '> Doing', color: 'var(--accent-primary)' },
+  { id: 'done',        label: '> Done',  color: 'var(--accent-tertiary)' },
 ] as const;
 
 type ColId = 'todo' | 'in-progress' | 'done';
 
 function getTaskColumn(task: Task): ColId {
   if (task.completed) return 'done';
-  if (task.pinned)    return 'in-progress';
+  if (task.wip)       return 'in-progress';
   return 'todo';
 }
 
@@ -80,14 +80,15 @@ export default function KanbanView({ onViewTask }: Props) {
         return toggleTask(task.id, true);
       if (task.completed && to !== 'done')
         return toggleTask(task.id, false);
-      return updateTask(task.id, { pinned: to === 'in-progress', completed: false });
+      // Move between todo ↔ in-progress using dedicated wip field
+      return updateTask(task.id, { wip: to === 'in-progress' });
     },
     onMutate: async ({ task, to }) => {
       await queryClient.cancelQueries({ queryKey: ['tasks'] });
       const previous = queryClient.getQueryData<Task[]>(['tasks']);
       queryClient.setQueryData<Task[]>(['tasks'], old =>
         old?.map(t => t.id === task.id
-          ? { ...t, completed: to === 'done', pinned: to === 'in-progress' }
+          ? { ...t, completed: to === 'done', wip: to === 'in-progress' }
           : t) ?? []
       );
       return { previous };

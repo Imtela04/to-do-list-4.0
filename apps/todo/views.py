@@ -196,6 +196,8 @@ def task_detail(request, task_id):
         task.priority = request.data['priority']
     if 'pinned' in request.data:
         task.pinned = request.data['pinned']
+    if 'wip' in request.data:
+        task.wip = request.data['wip']
     if 'recurrence' in request.data:
         task.recurrence = request.data['recurrence']
 
