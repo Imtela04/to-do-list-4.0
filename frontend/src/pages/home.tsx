@@ -1,4 +1,4 @@
-import { useState, useEffect, ReactNode } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import Greeting from '@/components/layout/greetings';
 import ClockWidget from '@/components/widgets/clock';
@@ -23,10 +23,11 @@ import { useAppStore } from '@/store/useAppStore';
 import MediaHub from '@/components/layout/mediahub';
 import KanbanView from '@/components/tasks/kanbanview';
 type View = 'list' | 'calendar' | 'kanban';
-interface Props {
-  children:                                 ReactNode;
-  enabled?:                                 boolean;
-}
+
+// interface Props {
+//   children:                                 ReactNode;
+//   enabled?:                                 boolean;
+// }
 export function Logo(){
   return(
     <div>

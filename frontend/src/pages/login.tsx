@@ -6,6 +6,7 @@ import { useAppStore } from '@/store/useAppStore';
 import styles from './login.module.css';
 import { Ghost, Loader, LogIn } from 'lucide-react';
 import { Logo } from '@/components/common/logo';
+import LoadingScreen from '@/components/layout/LoadingScreen';
 
 interface LoginForm {
   username: string;
@@ -76,6 +77,8 @@ export default function Login() {
       setGuestLoading(false);
     }
   };
+
+  if (loading || guestLoading) return <LoadingScreen />;
 
   return (
     <div className={styles.layout}>

@@ -1,4 +1,4 @@
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense , lazy} from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
@@ -9,16 +9,15 @@ import OfflineBanner from '@/components/layout/offlinebanner';
 import DashboardSkeleton from '@/components/layout/skeletons/dashboardskeleton';
 import { useDelayedLoading } from '@/hooks/useDelayedLoading';
 import LoadingScreen from './components/layout/LoadingScreen';
-import { lazyMin } from './utils/lazyMin';
 
 //lazy load all pages
-const Landing = lazyMin(() => import('@/pages/landing'));
-const Dashboard = lazyMin(() => import('@/pages/home'));
-const Login     = lazyMin(() => import('@/pages/login'));
-const Register  = lazyMin(() => import('@/pages/register'));
-const ResetRequest = lazyMin(() => import('@/pages/resetrequest'));
-const ResetConfirm = lazyMin(() => import('@/pages/resetconfirm'));
-const AdminDashboard = lazyMin(() => import('@/pages/admin'));
+const Landing = lazy(() => import('@/pages/landing'));
+const Dashboard = lazy(() => import('@/pages/home'));
+const Login     = lazy(() => import('@/pages/login'));
+const Register  = lazy(() => import('@/pages/register'));
+const ResetRequest = lazy(() => import('@/pages/resetrequest'));
+const ResetConfirm = lazy(() => import('@/pages/resetconfirm'));
+const AdminDashboard = lazy(() => import('@/pages/admin'));
 
 import { ThemeProvider } from './context/ThemeContext';
 import { useDataLoader } from '@/hooks/useDataLoader';
