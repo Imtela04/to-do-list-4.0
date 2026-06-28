@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { requestPasswordReset } from '../api/services';
 import styles from './login.module.css';  // reuse login styles
+import LoadingScreen from '@/components/layout/LoadingScreen';
 
 export default function ResetRequest() {
   const [email, setEmail]     = useState('');
@@ -39,6 +40,7 @@ export default function ResetRequest() {
     );
   }
 
+  if (loading) return <LoadingScreen />;
   return (
     <div className={styles.layout}>
       <div className={styles.main}>

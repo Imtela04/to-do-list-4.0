@@ -98,7 +98,7 @@ export default function App() {
       <ToastProvider>
         <OfflineBanner />
         <ErrorHandlerRegistrar />
-        <Suspense fallback={<LoadingScreen />}>
+        <Suspense fallback={null}>
           <Routes key={authKey}>
             <Route path="/" element={localStorage.getItem('authToken') ? <PrivateRoute><Dashboard /></PrivateRoute> : <Landing />} />
             <Route path="/landing" element={<Landing />} />

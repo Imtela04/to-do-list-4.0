@@ -473,7 +473,6 @@ function TasksTab({ stats }: { stats: any }) {
 // ─── Root ─────────────────────────────────────────────────────────────────────
 function SystemTab({ stats }: { stats: any }) {
   const { users, tasks } = stats;
-
   return (
     <>
       <section className={styles.section}>

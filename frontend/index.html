@@ -31,22 +31,19 @@
       --font-mono: 'JetBrains Mono', monospace;
     }
 
-    /* Dark Mode Override (Activates instantly based on system preference) */
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg-primary: #0a0a0f;
-        --accent-primary: #7c6aff;
-        --accent-secondary: #ff6a9e;
-        --accent-tertiary: #6affdc;
-        --bg-card: #16161f;
-        --border-accent: rgba(124, 106, 255, 0.4);
-        --bg-glass: rgba(255, 255, 255, 0.04);
-        --border-subtle: rgba(255, 255, 255, 0.06);
-        --text-primary: #f0eff8;
-        --text-muted: #5a5875;
-      }
+    [data-theme="dark"] {
+      --bg-primary: #0a0a0f;
+      --accent-primary: #7c6aff;
+      --accent-secondary: #ff6a9e;
+      --accent-tertiary: #6affdc;
+      --bg-card: #16161f;
+      --border-accent: rgba(124, 106, 255, 0.4);
+      --bg-glass: rgba(255, 255, 255, 0.04);
+      --border-subtle: rgba(255, 255, 255, 0.06);
+      --text-primary: #f0eff8;
+      --text-muted: #5a5875;
     }
-
+    
     body {
       margin: 0;
       background-color: var(--bg-primary);

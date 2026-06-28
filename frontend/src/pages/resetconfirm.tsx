@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { confirmPasswordReset } from '../api/services';
 import styles from './login.module.css';
+import LoadingScreen from '@/components/layout/LoadingScreen';
 
 export default function ResetConfirm() {
   const { uid, token }          = useParams<{ uid: string; token: string }>();
@@ -47,6 +48,7 @@ export default function ResetConfirm() {
     );
   }
 
+  if (loading) return <LoadingScreen />;
   return (
     <div className={styles.layout}>
       <div className={styles.main}>

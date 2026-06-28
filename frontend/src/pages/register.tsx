@@ -4,7 +4,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { register } from '../api/services';
 import styles from './register.module.css';
 import { Logo } from '@/components/common/logo';
-
+import LoadingScreen from '@/components/layout/LoadingScreen';
 interface RegisterForm {
   username: string;
   email: string;
@@ -33,6 +33,13 @@ export default function Register() {
       setError('Password must be at least 6 characters');
       return;
     }
+
+    if (typeof form.email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      setError('Invalid email');
+      return;
+    }
+
+
     setLoading(true);
     try {
       await register({ username: form.username, email: form.email, password: form.password, confirm: form.confirm });
@@ -45,6 +52,7 @@ export default function Register() {
     }
   };
 
+  if (loading) return <LoadingScreen />;
   return (
     <div className={styles.layout}>
       <Link to='/'><Logo /></Link>
