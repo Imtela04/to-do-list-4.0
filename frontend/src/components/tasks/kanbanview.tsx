@@ -166,7 +166,6 @@ export default function KanbanView({ onViewTask }: Props) {
 
 					{/* Header */}
 					<div className={styles.columnHeader}>
-						<span className={styles.columnDot} style={{ background: col.dot }} />
 						<span className={styles.columnTitle} style={{ color: col.color }}>{col.label}</span>
 						<span className={styles.columnCount}>{columns[col.id].length}</span>
 					</div>

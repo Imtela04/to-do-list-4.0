@@ -5,11 +5,47 @@ const PRIORITY_ORDER: Record<string, number> = {
   critical: 0, high: 1, medium: 2, low: 3,
 };
 
+function matchesSearch(task: Task, query: string): boolean {
+  const q = query.toLowerCase();
+
+  if (task.title.toLowerCase().includes(q)) return true;
+  if (task.description?.toLowerCase().includes(q)) return true;
+  if (task.category?.name.toLowerCase().includes(q)) return true;
+  if (task.priority.toLowerCase().includes(q)) return true;
+  if (task.recurrence?.toLowerCase().includes(q)) return true;
+
+  if (task.subtasks?.some(s => s.title.toLowerCase().includes(q))) return true;
+
+  if (task.attachments?.some(a => a.filename.toLowerCase().includes(q))) return true;
+
+  if (task.deadline) {
+    const d = new Date(task.deadline);
+
+    const long  = d.toLocaleDateString('en-US', { month: 'long',  day: 'numeric', year: 'numeric' }).toLowerCase();
+    const short = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toLowerCase();
+    const numeric = d.toLocaleDateString('en-US'); // e.g. "12/25/2026"
+    const monthName = d.toLocaleDateString('en-US', { month: 'long' }).toLowerCase(); // "december"
+    const weekday = d.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase(); // "friday"
+
+    if (
+      long.includes(q) ||
+      short.includes(q) ||
+      numeric.includes(q) ||
+      monthName.includes(q) ||
+      weekday.includes(q)
+    ) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 export function getFilteredTasks(tasks: Task[], filter: Filter): Task[] {
   return tasks
     .filter(task => {
       const { search, category, priority, status, dateFrom, dateTo, deadlineDay } = filter;
-      if (search && !task.title.toLowerCase().includes(search.toLowerCase())) return false;
+      if (search && !matchesSearch(task, search)) return false;
       if (category === 'uncategorised') { if (task.category) return false; }
       else if (category)               { if (task.category?.id !== category) return false; }
       if (priority && task.priority !== priority) return false;
