@@ -23,6 +23,7 @@ import { useAppStore } from '@/store/useAppStore';
 import MediaHub from '@/components/layout/mediahub';
 import KanbanView from '@/components/tasks/kanbanview';
 import SpeedDial from '@/components/layout/speeddial';
+import AddTask from '@/components/tasks/addtask';
 
 type View = 'list' | 'calendar' | 'kanban';
 export function Logo(){
@@ -85,6 +86,7 @@ export default function Dashboard() {
         onAddTask={() => setAddOpen(true)}
         onQuickNote={() => { setNotesOpen(true); setNoteSignal(s => s + 1); }}
       />
+      <AddTask open={addOpen} setOpen={setAddOpen} />
 
       <GuestBanner />
 
@@ -170,7 +172,6 @@ export default function Dashboard() {
             {view === 'list'     ? <TaskList/> 
             : view === 'calendar' ? <CalendarView onViewTask={handleViewTask} />
             : <KanbanView onViewTask={handleViewTask} />}
-
           </section>
         </main>
 

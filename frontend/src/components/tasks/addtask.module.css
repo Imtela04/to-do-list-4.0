@@ -1,3 +1,18 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(0, 0, 0, 0.25); /* Slight dark tint for focus */
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  
+  /* Flexbox to perfectly center the form */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px; /* Keeps modal off the edges on small screens */
+}
+
 .prioActive {
   background: rgba(124, 106, 255, 0.15);
   border-color: var(--accent-primary);
@@ -8,23 +23,25 @@
   background: var(--bg-card);
   border: 1px solid var(--border-accent);
   border-radius: var(--radius-lg);
-  padding: 18px;
+  padding: 24px; /* Slightly larger padding looks better centered */
   box-shadow: 0 0 40px rgba(124, 106, 255, 0.1);
+  
   display: flex;
   flex-direction: column;
   gap: 16px;
+  
+  /* New positioning constraints moved from the old overlay */
+  position: relative;
+  z-index: 60;
+  width: 100%;
+  max-width: 560px;
+  max-height: 90vh; /* Prevents it from growing taller than the screen */
+  overflow-y: auto; /* Adds scrollbar ONLY if content exceeds 90vh */
+  
+  /* THIS FIXES THE COLLAPSE BUG */
+  height: fit-content; 
 }
 
-.formOverlay {
-  position: fixed;
-  top: 90px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(560px, calc(100vw - 32px));
-  z-index: 60;
-  max-height: calc(100vh - 120px);
-  overflow-y: auto;
-}
 
 .titleInput {
   background: transparent;

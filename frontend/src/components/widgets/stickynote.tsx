@@ -53,9 +53,15 @@ export default function StickyNotes({ autoAddSignal }: Props) {
       .replace(/<p><\/p>/gi, '<br>');
   
   useEffect(() => {
-    if (autoAddSignal) { setAdding(true); setLimitError(null); }
+    if (!autoAddSignal) return;
+    if (adding && addEditorRef.current) {
+      addEditorRef.current.focus();          // already open + adding → just refocus
+    } else {
+      setAdding(true);
+      setLimitError(null);
+    }
   }, [autoAddSignal]);
-
+  
   useEffect(() => {
     if (adding && addEditorRef.current) {
       const draft = loadDraft() as NoteDraft | null;
