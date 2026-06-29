@@ -7,33 +7,20 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate', // Automatically updates the app when you deploy new changes
-      injectRegister: 'auto', // Automatically registers the Service Worker in your index.html
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png'], // Add your static assets here
+      registerType: 'autoUpdate',
+      injectRegister: 'auto',
+      includeAssets: ['favicon.ico', 'favicon.svg', 'favicon-96x96.png', 'apple-touch-icon.png'],
       manifest: {
         name: 'What Do?',
         short_name: 'What Do',
         description: 'An all-in-one productivity app: slack no more.',
-        theme_color: '#000000',
-        background_color: '#000000',
+        theme_color: '#7c6aff',
+        background_color: '#0a0a0f',
         display: 'standalone',
         icons: [
-          {
-            src: '/logo192.png',
-            sizes: '192x192',
-            type: 'image/png',
-          },
-          {
-            src: '/logo512.png',
-            sizes: '512x512',
-            type: 'image/png',
-          },
-          {
-            src: '/logo512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'any maskable'
-          }
+          { src: '/web-app-manifest-192x192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: '/web-app-manifest-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          { src: '/web-app-manifest-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
     }),
