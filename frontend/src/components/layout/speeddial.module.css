@@ -20,7 +20,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  z-index: 4; /* Pushed above the dial plate */
+  z-index: 4;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
   box-shadow:
     0 0 12px rgba(124, 106, 255, 0.3),
@@ -55,6 +55,8 @@
   border: 1px dashed rgba(124, 106, 255, 0.28);
   animation: orb 10s linear infinite;
   pointer-events: none;
+  z-index: 999999999999999;
+
 }
 .hubOpen .orbRing1 {
   border-color: rgba(124, 106, 255, 0.55);
@@ -69,6 +71,7 @@
   border-top-color: rgba(106, 255, 220, 0.28);
   animation: orbReverse 18s linear infinite;
   pointer-events: none;
+  z-index: 999999999999999;
 }
 .hubOpen .orbRing2 {
   border-color: rgba(124, 106, 255, 0.12);
@@ -104,6 +107,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  
 }
 
 .dialPlateOpen {
@@ -117,15 +121,15 @@
 }
 
 
-/* ── Action slots (Rotary Finger Holes) ── */
+/* ── Action slots── */
 .action {
   position: absolute;
   top: 50%;
   left: 50%;
   width: 52px;
   height: 52px;
-  border-radius: 50%; /* Made perfectly round to look like a dial slot */
-  background: var(--bg-secondary);
+  border-radius: 50%; 
+  background: var(--bg-glass);
   border: 1.5px solid var(--c, var(--accent-primary));
   color: var(--c, var(--accent-primary));
   display: flex;
@@ -137,7 +141,6 @@
   z-index: 3;
   opacity: 0;
   pointer-events: none;
-  /* Buttons spin on their own axis as they translate out */
   transform: translate(-50%, -50%) scale(0.3) rotate(-90deg);
   transition:
     opacity 200ms ease,

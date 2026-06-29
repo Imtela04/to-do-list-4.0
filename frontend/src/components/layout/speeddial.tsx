@@ -39,7 +39,7 @@ export default function SpeedDial({ onAddTask, onQuickNote }: Props) {
   // This ensures they fit perfectly along the arc of the dial plate from the bottom-right corner.
   const actions = [
     { angle: 90,  icon: tasksLocked ? <Lock size={13}/> : <Plus size={13}/>,        label: tasksLocked ? `LV${level+1}` : 'TASK',  cv: '--accent-primary',   onClick: () => !tasksLocked && act(onAddTask),         locked: tasksLocked },
-    { angle: 135, icon: notesLocked ? <Lock size={13}/> : <NotebookPen size={13}/>, label: notesLocked ? `LV${level+1}` : 'NOTE',  cv: '--accent-secondary', onClick: () => !notesLocked && act(onQuickNote),       locked: notesLocked },
+    { angle: 135, icon: notesLocked ? <Lock size={13}/> : <NotebookPen size={13}/>, label: notesLocked ? `LV${level+1}` : 'NOTE',  cv: '--accent-warm', onClick: () => !notesLocked && act(onQuickNote),       locked: notesLocked },
     { angle: 180, icon: <Timer size={13}/>,                                          label: 'FOCUS',                                 cv: '--accent-tertiary',  onClick: () => act(() => setPomodoroOpen(true)),        locked: false },
   ];
 
