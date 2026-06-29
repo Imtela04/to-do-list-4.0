@@ -8,6 +8,7 @@ import { registerErrorHandler } from '@/api/client';
 import OfflineBanner from '@/components/layout/offlinebanner';
 import DashboardSkeleton from '@/components/layout/skeletons/dashboardskeleton';
 import { useDelayedLoading } from '@/hooks/useDelayedLoading';
+import InstallBanner from '@/components/layout/installbanner';
 
 //lazy load all pages
 const Landing = lazy(() => import('@/pages/landing'));
@@ -95,7 +96,8 @@ export default function App() {
     <QueryClientProvider client={queryClient}>
     <ThemeProvider>
       <ToastProvider>
-        <OfflineBanner />
+      <OfflineBanner />
+      <InstallBanner />
         <ErrorHandlerRegistrar />
         <Suspense fallback={null}>
           <Routes key={authKey}>
