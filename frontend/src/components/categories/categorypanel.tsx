@@ -5,7 +5,7 @@ import { createCategory, deleteCategory, updateCategory } from '@/api/services';
 import type { Task, Category } from '@/types';
 import type { AxiosResponse } from 'axios';
 import styles from './categorypanel.module.css';
-import { Lock, PenBox, Trash, Ban, Check, FolderOpen } from 'lucide-react';
+import { Lock, PenBox, Trash, Ban, Check, FolderOpen, ChevronRight } from 'lucide-react';
 import { useTasksQuery } from '../../hooks/useTasksQuery';
 import { useCategoriesQuery } from '../../hooks/useCategoriesQuery';
 
@@ -151,7 +151,7 @@ export default function Categories({ onNavigate }: CategoriesProps) {
   return (
     <div className={styles.panel}>
       <div className={styles.header}>
-        <span className={styles.title}>Categories</span>
+        <span className={styles.title}><ChevronRight size={15}/>Categories</span>
         <button
           className={`${styles.addBtn} ${categoriesLocked ? styles.locked : ''}`}
           onClick={() => {

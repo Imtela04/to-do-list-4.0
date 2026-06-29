@@ -9,7 +9,7 @@ import StickyNotes from '@/components/widgets/stickynote';
 import Categories from '@/components/categories/categorypanel';
 import UserNav from '@/components/layout/usernav';
 import styles from './home.module.css';
-import { Menu, X, LayoutList, CalendarDays, Kanban, BellCheck, AlarmClockCheck, FolderOpen } from 'lucide-react';
+import { Menu, X, LayoutList, CalendarDays, Kanban, BellCheck, AlarmClockCheck, ChevronDown, ChevronRight } from 'lucide-react';
 import SessionGuard from '@/components/layout/sessionguard';
 import LevelUpToast from '@/components/layout/leveluptoast';
 import Pomodoro from '../components/widgets/pomodoro';
@@ -46,7 +46,7 @@ export default function Dashboard() {
   const [shortcutsOpen, setShortcutsOpen]  = useState(false);
   const [addOpen, setAddOpen]              = useState(false);
   const isGuest                            = useAppStore(s=>s.isGuest)
-  const [mediaOpen, setMediaOpen]          = useState(false);
+  const [mediaExpanded, setMediaExpanded]  = useState(false);
   const setFocusTask                       = useAppStore(s => s.setFocusTask);
   const [noteSignal, setNoteSignal]        = useState(0);
 
@@ -106,13 +106,21 @@ export default function Dashboard() {
           {!isGuest && (<div className={styles.sideSection}><Heatmap /></div>)}
           <div className={`${styles.sideSection} ${styles.sideSectionGrow}`}>
             <Categories onNavigate={() => setSidebarOpen(false)} />
-            <div className={styles.sideSection}>
-              <button className={styles.mediaHubBtn} onClick={() => setMediaOpen(true)}>
-                <FolderOpen size={15} />
-                <span>Media Hub</span>
-              </button>
-            </div>
           </div>
+          <div className={styles.sideSection}>
+            <button className={styles.mediaHubBtn} onClick={() => setMediaExpanded(o => !o)}>
+              <span><ChevronRight size={15}/>Media Hub</span>
+              <ChevronDown size={13} className={mediaExpanded ? styles.chevronOpen : styles.chevron} />
+            </button>
+            
+            {/* Wrap the component here */}
+            {mediaExpanded && (
+              <div className={styles.mediaHubScroll}>
+                <MediaHub />
+              </div>
+            )}
+          </div>
+
           <div className={styles.sidebarFooter}>
             <UserNav />
             <button
@@ -187,21 +195,6 @@ export default function Dashboard() {
           </div>
           <div className={styles.notesDrawerBody}>
             <StickyNotes autoAddSignal={noteSignal} />
-          </div>
-        </aside>
-
-        {mediaOpen && (
-          <div className={styles.overlay} onClick={() => setMediaOpen(false)} />
-        )}
-        <aside className={`${styles.notesDrawer} ${mediaOpen ? styles.notesDrawerOpen : ''}`}>
-          <div className={styles.notesDrawerHeader}>
-            <span className={styles.notesDrawerTitle}>Media Hub</span>
-            <button className={styles.notesDrawerClose} onClick={() => setMediaOpen(false)}>
-              <X size={16} />
-            </button>
-          </div>
-          <div className={styles.notesDrawerBody}>
-            <MediaHub />
           </div>
         </aside>
 
