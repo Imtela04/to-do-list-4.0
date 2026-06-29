@@ -9,7 +9,7 @@ import StickyNotes from '@/components/widgets/stickynote';
 import Categories from '@/components/categories/categorypanel';
 import UserNav from '@/components/layout/usernav';
 import styles from './home.module.css';
-import { Menu, X, NotebookPen, LayoutList, CalendarDays, Kanban, BellCheck, AlarmClockCheck, FolderOpen } from 'lucide-react';
+import { Menu, X, LayoutList, CalendarDays, Kanban, BellCheck, AlarmClockCheck, FolderOpen } from 'lucide-react';
 import SessionGuard from '@/components/layout/sessionguard';
 import LevelUpToast from '@/components/layout/leveluptoast';
 import Pomodoro from '../components/widgets/pomodoro';
@@ -22,16 +22,13 @@ import GuestBanner from '@/components/layout/guestbanner';
 import { useAppStore } from '@/store/useAppStore';
 import MediaHub from '@/components/layout/mediahub';
 import KanbanView from '@/components/tasks/kanbanview';
-type View = 'list' | 'calendar' | 'kanban';
+import SpeedDial from '@/components/layout/speeddial';
 
-// interface Props {
-//   children:                                 ReactNode;
-//   enabled?:                                 boolean;
-// }
+type View = 'list' | 'calendar' | 'kanban';
 export function Logo(){
   return(
     <div>
-        <div className={styles.logo}><span className={styles.logoText}>what-d<AlarmClockCheck className={styles.logoIcon} /></span></div>
+      <div className={styles.logo}><span className={styles.logoText}>what-d<AlarmClockCheck className={styles.logoIcon} /></span></div>
     </div>
   
   )
@@ -50,7 +47,7 @@ export default function Dashboard() {
   const isGuest                            = useAppStore(s=>s.isGuest)
   const [mediaOpen, setMediaOpen]          = useState(false);
   const setFocusTask                       = useAppStore(s => s.setFocusTask);
-  const pomodoroQueue                      = useAppStore(s => s.pomodoroQueue);
+  const [noteSignal, setNoteSignal]        = useState(0);
 
   const handleViewTask = (taskId: number) => {
     setFocusTask(taskId);
@@ -84,6 +81,11 @@ export default function Dashboard() {
     <SessionGuard enabled={!rememberMe}>
       <LevelUpToast />
       <AlarmModal />
+      <SpeedDial
+        onAddTask={() => setAddOpen(true)}
+        onQuickNote={() => { setNotesOpen(true); setNoteSignal(s => s + 1); }}
+      />
+
       <GuestBanner />
 
       <div className={styles.layout}>
@@ -102,6 +104,12 @@ export default function Dashboard() {
           {!isGuest && (<div className={styles.sideSection}><Heatmap /></div>)}
           <div className={`${styles.sideSection} ${styles.sideSectionGrow}`}>
             <Categories onNavigate={() => setSidebarOpen(false)} />
+            <div className={styles.sideSection}>
+              <button className={styles.mediaHubBtn} onClick={() => setMediaOpen(true)}>
+                <FolderOpen size={15} />
+                <span>Media Hub</span>
+              </button>
+            </div>
           </div>
           <div className={styles.sidebarFooter}>
             <UserNav />
@@ -155,28 +163,11 @@ export default function Dashboard() {
                   <Kanban size={16} />
                 </button>
               </div>
-              <button
-                className={`${styles.pomToggle} ${pomodoroOpen ? styles.viewBtnActive : ''}`}
-                onClick={() => setPomodoroOpen(!pomodoroOpen)}
-                title="Pomodoro timer"
-              >
-                🍅︎
-                {pomodoroQueue.length > 0 && <span className={styles.pomBadge}>{pomodoroQueue.length}</span>}
-              </button>
-
-              <button className={styles.notesToggle} onClick={() => setNotesOpen(o => !o)} title='Sticky Notes'>
-                <NotebookPen size={18} />
-              </button>
-
-              <button className={styles.notesToggle} onClick={() => setMediaOpen(o => !o)} title='Media Hub'>
-                <FolderOpen size={18} />
-              </button>
-
             </div>
           </header>
 
           <section className={styles.tasksSection}>
-            {view === 'list'     ? <TaskList addOpen={addOpen} setAddOpen={setAddOpen} /> 
+            {view === 'list'     ? <TaskList/> 
             : view === 'calendar' ? <CalendarView onViewTask={handleViewTask} />
             : <KanbanView onViewTask={handleViewTask} />}
 
@@ -194,7 +185,7 @@ export default function Dashboard() {
             </button>
           </div>
           <div className={styles.notesDrawerBody}>
-            <StickyNotes />
+            <StickyNotes autoAddSignal={noteSignal} />
           </div>
         </aside>
 

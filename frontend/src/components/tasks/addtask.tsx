@@ -126,7 +126,7 @@ export default function AddTask({ open, setOpen }: AddTaskProps) {
   if (!open) return null;
 
   return (
-    <div className={`${styles.form} animate-scale-in`}>
+    <div className={`${styles.form} ${styles.formOverlay} animate-scale-in`}>
       {hasDraft && (
         <div className={styles.draftBadge}>
           <span><Pickaxe size={13} /> Draft</span>

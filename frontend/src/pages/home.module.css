@@ -367,3 +367,22 @@
 .alarmBtn:hover {
   transform: scale(1.5);
 }
+
+
+.mediaHubBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  background: var(--bg-glass);
+  border: 1px solid var(--border-subtle);
+  transition: all var(--transition-fast);
+}
+.mediaHubBtn:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+}

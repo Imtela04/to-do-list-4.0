@@ -2,11 +2,10 @@ import { useAppStore } from '../../store/useAppStore';
 import { useState, useEffect } from 'react';
 import { useTasksQuery } from '@/hooks/useTasksQuery';
 import TaskCard from './taskcard';
-import AddTask from './addtask';
 import FilterBar from '@/components/layout/filterbar';
 import styles from './tasklist.module.css';
 import { format } from 'date-fns';
-import { Calendar, List, ListCheck, Lock, PencilRuler, Trash, X } from 'lucide-react';
+import { Calendar, List, ListCheck, PencilRuler, Trash, X } from 'lucide-react';
 import { getFilteredTasks } from '@/utils/filterTasks';
 import { reorderTasks } from '@/api/services';
 import { Download } from 'lucide-react';
@@ -25,15 +24,10 @@ import {
 
 const PAGE_SIZE = 5;
 
-interface TaskListProps {
-  addOpen: boolean;
-  setAddOpen: (open: boolean) => void;
-}
 
-export default function TaskList({ addOpen, setAddOpen }: TaskListProps) {
+export default function TaskList() {
   const filter                                = useAppStore(s => s.filter);
   const limits                                = useAppStore(s => s.limits);
-  const level                                 = useAppStore(s => s.level);
   const setFilter                             = useAppStore(s => s.setFilter);
   const [localOrder, setLocalOrder]           = useState<number[]>([]);
   const { data: tasks = [] }                  = useTasksQuery();
@@ -253,14 +247,6 @@ export default function TaskList({ addOpen, setAddOpen }: TaskListProps) {
         </div>
       )}
 
-      <AddTask open={addOpen} setOpen={setAddOpen} />
-      <button
-        className={`${styles.fab} ${tasksLocked ? styles.fabLocked : ''}`}
-        onClick={() => { if (tasksLocked) return; setAddOpen(true); }}
-        title={tasksLocked ? `Reach Level ${level + 1} to add more tasks` : 'Add task'}
-      >
-        {tasksLocked ? <Lock size={20} /> : '+'}
-      </button>
     </div>
   );
 }

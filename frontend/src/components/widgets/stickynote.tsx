@@ -20,7 +20,11 @@ interface NoteDraft {
 type UpdateVars  = { id: number; content: string };
 type MutateCtx   = { previous?: StickyNote[] };
 
-export default function StickyNotes() {
+interface Props {
+  autoAddSignal?: number;
+}
+
+export default function StickyNotes({ autoAddSignal }: Props) {
   const queryClient = useQueryClient();
   const limits      = useAppStore(s => s.limits);
   const counts      = useAppStore(s => s.counts);
@@ -48,6 +52,10 @@ export default function StickyNotes() {
       .replace(/<\/div>/gi, '</p>')
       .replace(/<p><\/p>/gi, '<br>');
   
+  useEffect(() => {
+    if (autoAddSignal) { setAdding(true); setLimitError(null); }
+  }, [autoAddSignal]);
+
   useEffect(() => {
     if (adding && addEditorRef.current) {
       const draft = loadDraft() as NoteDraft | null;
