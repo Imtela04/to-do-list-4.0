@@ -18,7 +18,7 @@ export default function InstallBanner() {
             Tap <Share size={12} className={styles.inlineIcon} /> then "Add to Home Screen"
           </span>
         ) : (
-          <span className={styles.sub}>Add it to your home screen for quick access</span>
+          ''
         )}
       </div>
 
