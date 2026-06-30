@@ -5,7 +5,7 @@ import { createCategory, deleteCategory, updateCategory } from '@/api/services';
 import type { Task, Category } from '@/types';
 import type { AxiosResponse } from 'axios';
 import styles from './categorypanel.module.css';
-import { Lock, PenBox, Trash, Ban, Check, FolderOpen, ChevronRight } from 'lucide-react';
+import { Lock, PenBox, Trash, Ban, Check, FolderOpen } from 'lucide-react';
 import { useTasksQuery } from '../../hooks/useTasksQuery';
 import { useCategoriesQuery } from '../../hooks/useCategoriesQuery';
 
@@ -30,24 +30,24 @@ interface CategoriesProps {
 
 
 export default function Categories({ onNavigate }: CategoriesProps) {
-  const queryClient    = useQueryClient();
-  const limits         = useAppStore(s => s.limits);
-  const level          = useAppStore(s => s.level);
-  const activeCategory = useAppStore(s => s.filter.category);
-  const setFilter      = useAppStore(s => s.setFilter);
+  const queryClient                           = useQueryClient();
+  const limits                                = useAppStore(s => s.limits);
+  const level                                 = useAppStore(s => s.level);
+  const activeCategory                        = useAppStore(s => s.filter.category);
+  const setFilter                             = useAppStore(s => s.setFilter);
 
-  const { data: tasks      = [] } = useTasksQuery();
-  const { data: categories = [] } = useCategoriesQuery();
+  const { data: tasks      = [] }             = useTasksQuery();
+  const { data: categories = [] }             = useCategoriesQuery();
 
-  const [adding, setAdding]         = useState(false);
-  const [name, setName]             = useState('');
-  const [icon, setIcon]             = useState<string>(ICONS[0]);
-  const [limitError, setLimitError] = useState<string | null>(null);
-  const [editingId, setEditingId]   = useState<number | null>(null);
-  const [editingIcon, setEditingIcon] = useState<string>(ICONS[0]);
-  const editEditorRef = useRef<HTMLDivElement | null>(null);
+  const [adding, setAdding]                   = useState(false);
+  const [name, setName]                       = useState('');
+  const [icon, setIcon]                       = useState<string>(ICONS[0]);
+  const [limitError, setLimitError]           = useState<string | null>(null);
+  const [editingId, setEditingId]             = useState<number | null>(null);
+  const [editingIcon, setEditingIcon]         = useState<string>(ICONS[0]);
+  const editEditorRef                         = useRef<HTMLDivElement | null>(null);
 
-  const counts = useAppStore(s=>s.counts);
+  const counts                                = useAppStore(s=>s.counts);
   const categoriesLocked = limits.categories !== null && counts.categories >= limits.categories;
   const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
 
@@ -151,7 +151,6 @@ export default function Categories({ onNavigate }: CategoriesProps) {
   return (
     <div className={styles.panel}>
       <div className={styles.header}>
-        <span className={styles.title}><ChevronRight size={15}/>Categories</span>
         <button
           className={`${styles.addBtn} ${categoriesLocked ? styles.locked : ''}`}
           onClick={() => {

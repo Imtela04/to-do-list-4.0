@@ -301,6 +301,7 @@
   .sidebarOpen  { transform: translateX(0) !important; }
   /* .sidebarClose { display: flex; } */
   .burger       { display: flex; }
+  .sidebarClose { display: flex; }
 
   .header { padding: 20px 16px 14px; }
   .tasksSection { padding: 16px; }
@@ -368,18 +369,20 @@
   transform: scale(1.5);
 }
 
-.mediaHubScroll {
-  max-height: 150px;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border-medium) transparent;
-  margin-top: 4px;
+.sectionList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
-.mediaHubBtn {
+.sectionBlock {
+  flex-shrink: 0;
+}
+
+.sectionToggle {
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: space-between;
   width: 100%;
   padding: 8px 10px;
   border-radius: var(--radius-sm);
@@ -390,11 +393,23 @@
   color: var(--text-secondary);
   text-transform: uppercase;
   letter-spacing: 1px;
-
 }
-.mediaHubBtn:hover {
+.sectionToggle:hover {
   color: var(--accent-primary);
   background: var(--bg-glass-hover);
+}
+.sectionToggle span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sectionContent {
+  max-height: 320px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-medium) transparent;
+  margin-top: 6px;
 }
 
 .chevron {

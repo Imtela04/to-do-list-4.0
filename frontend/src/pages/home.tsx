@@ -36,19 +36,24 @@ export function Logo(){
 }
 export default function Dashboard() {
 
-  const [sidebarOpen, setSidebarOpen]      = useState(false);
-  const [notesOpen, setNotesOpen]          = useState(false);
-  const [view, setView]                    = useState<View>('list');
-  const pomodoroOpen                       = useAppStore(s => s.pomodoroOpen);
-  const setPomodoroOpen                    = useAppStore(s => s.setPomodoroOpen);
-  const location                           = useLocation();
-  const [notifStatus, setNotifStatus]      = useState(Notification.permission);
-  const [shortcutsOpen, setShortcutsOpen]  = useState(false);
-  const [addOpen, setAddOpen]              = useState(false);
-  const isGuest                            = useAppStore(s=>s.isGuest)
-  const [mediaExpanded, setMediaExpanded]  = useState(false);
-  const setFocusTask                       = useAppStore(s => s.setFocusTask);
-  const [noteSignal, setNoteSignal]        = useState(0);
+  const [sidebarOpen, setSidebarOpen]           = useState(false);
+  const [notesOpen, setNotesOpen]               = useState(false);
+  const [view, setView]                         = useState<View>('list');
+  const pomodoroOpen                            = useAppStore(s => s.pomodoroOpen);
+  const setPomodoroOpen                         = useAppStore(s => s.setPomodoroOpen);
+  const location                                = useLocation();
+  const [notifStatus, setNotifStatus]           = useState(Notification.permission);
+  const [shortcutsOpen, setShortcutsOpen]       = useState(false);
+  const [addOpen, setAddOpen]                   = useState(false);
+  const isGuest                                 = useAppStore(s=>s.isGuest)
+  const [mediaExpanded, setMediaExpanded]       = useState(true);
+  const [clockExpanded, setClockExpanded]       = useState(true);
+  const [statsExpanded, setStatsExpanded]       = useState(true);
+  const [heatmapExpanded, setHeatmapExpanded]   = useState(true);
+  const [catExpanded, setCatExpanded]           = useState(true);
+  const setFocusTask                            = useAppStore(s => s.setFocusTask);
+  const [noteSignal, setNoteSignal]             = useState(0);
+
 
   const handleViewTask = (taskId: number) => {
     setFocusTask(taskId);
@@ -101,25 +106,56 @@ export default function Dashboard() {
           <button className={styles.sidebarClose} onClick={() => setSidebarOpen(false)}>
             <X size={16} />
           </button>
-          <div className={styles.sideSection}><ClockWidget /></div>
-          <div className={styles.sideSection}><StatsWidget /></div>
-          {!isGuest && (<div className={styles.sideSection}><Heatmap /></div>)}
-          <div className={`${styles.sideSection} ${styles.sideSectionGrow}`}>
-            <Categories onNavigate={() => setSidebarOpen(false)} />
-          </div>
-          <div className={styles.sideSection}>
-            <button className={styles.mediaHubBtn} onClick={() => setMediaExpanded(o => !o)}>
-              <span><ChevronRight size={15}/>Media Hub</span>
-              <ChevronDown size={13} className={mediaExpanded ? styles.chevronOpen : styles.chevron} />
+
+        <div className={`${styles.sideSection} ${styles.sideSectionGrow} ${styles.sectionList}`}>
+
+          <div className={styles.sectionBlock}>
+            <button className={styles.sectionToggle} onClick={() => setClockExpanded(o => !o)}>
+              <span><ChevronRight size={15}/>Clock</span>
+              <ChevronDown size={13} className={clockExpanded ? styles.chevronOpen : styles.chevron} />
             </button>
-            
-            {/* Wrap the component here */}
-            {mediaExpanded && (
-              <div className={styles.mediaHubScroll}>
-                <MediaHub />
+            {clockExpanded && <div className={styles.sectionContent}><ClockWidget /></div>}
+          </div>
+
+          <div className={styles.sectionBlock}>
+            <button className={styles.sectionToggle} onClick={() => setStatsExpanded(o => !o)}>
+              <span><ChevronRight size={15}/>Stats</span>
+              <ChevronDown size={13} className={statsExpanded ? styles.chevronOpen : styles.chevron} />
+            </button>
+            {statsExpanded && <div className={styles.sectionContent}><StatsWidget /></div>}
+          </div>
+
+          {!isGuest && (
+            <div className={styles.sectionBlock}>
+              <button className={styles.sectionToggle} onClick={() => setHeatmapExpanded(o => !o)}>
+                <span><ChevronRight size={15}/>Activity</span>
+                <ChevronDown size={13} className={heatmapExpanded ? styles.chevronOpen : styles.chevron} />
+              </button>
+              {heatmapExpanded && <div className={styles.sectionContent}><Heatmap /></div>}
+            </div>
+          )}
+
+          <div className={styles.sectionBlock}>
+            <button className={styles.sectionToggle} onClick={() => setCatExpanded(o => !o)}>
+              <span><ChevronRight size={15}/>Categories</span>
+              <ChevronDown size={13} className={catExpanded ? styles.chevronOpen : styles.chevron} />
+            </button>
+            {catExpanded && (
+              <div className={styles.sectionContent}>
+                <Categories onNavigate={() => setSidebarOpen(false)} />
               </div>
             )}
           </div>
+
+          <div className={styles.sectionBlock}>
+            <button className={styles.sectionToggle} onClick={() => setMediaExpanded(o => !o)}>
+              <span><ChevronRight size={15}/>Media Hub</span>
+              <ChevronDown size={13} className={mediaExpanded ? styles.chevronOpen : styles.chevron} />
+            </button>
+            {mediaExpanded && <div className={styles.sectionContent}><MediaHub /></div>}
+          </div>
+
+        </div>
 
           <div className={styles.sidebarFooter}>
             <UserNav />

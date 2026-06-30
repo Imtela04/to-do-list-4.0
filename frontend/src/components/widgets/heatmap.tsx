@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { getHeatmap } from '@/api/services';
 import { createPortal } from 'react-dom';
 import styles from './heatmap.module.css';
-import { ChevronRight } from 'lucide-react';
 
 const DAYS   = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -62,7 +61,6 @@ export default function Heatmap() {
   return (
     <div className={styles.wrap}>
       <div className={styles.header}>
-        <span className={styles.label}><ChevronRight size={15}/>Activity</span>
         <span className={styles.total}>{total} completions</span>
       </div>
 
