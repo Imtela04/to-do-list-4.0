@@ -2,7 +2,7 @@ import { useNoteComposer } from '@/hooks/useNoteComposer';
 import { useAppStore } from '@/store/useAppStore';
 import { Lock } from 'lucide-react';
 import styles from './stickynote.module.css'; // reuse .noteForm, .textarea, .colorRow etc.
-import ModalShell from '../common/moduleshell';
+import ModalShell from '../../common/moduleshell';
 
 export default function QuickNote({ onClose }: { onClose: () => void }) {
   const limits = useAppStore(s => s.limits);

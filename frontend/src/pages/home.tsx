@@ -23,7 +23,9 @@ import MediaHub from '@/components/layout/mediahub';
 import KanbanView from '@/components/tasks/kanbanview';
 import SpeedDial from '@/components/layout/speeddial';
 import AddTask from '@/components/tasks/addtask';
-import QuickNote from '@/components/widgets/quicknote';
+import QuickNote from '@/components/widgets/notes/quicknote';
+import StickyNotes from '@/components/widgets/notes/stickynote';
+import NotesBoard from '@/components/widgets/notes/notesboard';
 
 type View = 'list' | 'calendar' | 'kanban';
 export function Logo(){
@@ -218,17 +220,7 @@ export default function Dashboard() {
           </section>
         </main>
 
-        {notesOpen && (
-          <div className={styles.overlay} onClick={() => setNotesOpen(false)} />
-        )}
-        <aside className={`${styles.notesDrawer} ${notesOpen ? styles.notesDrawerOpen : ''}`}>
-          <div className={styles.notesDrawerHeader}>
-            <span className={styles.notesDrawerTitle}>Sticky Notes</span>
-            <button className={styles.notesDrawerClose} onClick={() => setNotesOpen(false)}>
-              <X size={16} />
-            </button>
-          </div>
-        </aside>
+        {notesOpen && <NotesBoard onClose={() => setNotesOpen(false)} />}
 
         {pomodoroOpen && (
           <>

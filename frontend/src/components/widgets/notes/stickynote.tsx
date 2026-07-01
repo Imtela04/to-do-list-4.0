@@ -1,11 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { AxiosResponse } from 'axios';
-import { useAppStore } from '../../store/useAppStore';
+import { useAppStore } from '../../../store/useAppStore';
 import { updateStickyNote, deleteStickyNote } from '@/api/services';
 import styles from './stickynote.module.css';
 import { PenLine, Trash, PenBox, Lock } from 'lucide-react';
-import { useNotesQuery } from '../../hooks/useNotesQuery';
+import { useNotesQuery } from '../../../hooks/useNotesQuery';
 import type { StickyNote } from '@/types';
 import DOMPurify from 'dompurify';
 import { useNoteComposer } from '@/hooks/useNoteComposer';
@@ -263,7 +263,7 @@ export default function StickyNotes({ autoAddSignal }: Props) {
                 <p className={styles.confirmText}>Delete this note?</p>
                 <div className={styles.confirmActions}>
                   <button className={styles.confirmCancel} onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(null); }}>Cancel</button>
-                  <button className={styles.confirmDelete} onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(null); handleDelete(note.id); }}>Delete</button>
+                  <button className={styles.confirmDelete} onClick={(e) => { e.stopPropagation(); setConfirmDeleteId(null); handleDelete(note.id); }}><Trash size={15}/></button>
                 </div>
               </div>
             )}
