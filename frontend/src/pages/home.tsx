@@ -5,7 +5,6 @@ import ClockWidget from '@/components/widgets/clock';
 import TaskList from '@/components/tasks/tasklist';
 import CalendarView from '@/components/layout/calendarview';
 import StatsWidget from '@/components/widgets/stats';
-import StickyNotes from '@/components/widgets/stickynote';
 import Categories from '@/components/categories/categorypanel';
 import UserNav from '@/components/layout/usernav';
 import styles from './home.module.css';
@@ -24,6 +23,7 @@ import MediaHub from '@/components/layout/mediahub';
 import KanbanView from '@/components/tasks/kanbanview';
 import SpeedDial from '@/components/layout/speeddial';
 import AddTask from '@/components/tasks/addtask';
+import QuickNote from '@/components/widgets/quicknote';
 
 type View = 'list' | 'calendar' | 'kanban';
 export function Logo(){
@@ -52,8 +52,7 @@ export default function Dashboard() {
   const [heatmapExpanded, setHeatmapExpanded]   = useState(true);
   const [catExpanded, setCatExpanded]           = useState(true);
   const setFocusTask                            = useAppStore(s => s.setFocusTask);
-  const [noteSignal, setNoteSignal]             = useState(0);
-
+  const [quickNoteOpen, setQuickNoteOpen]       = useState(false);
 
   const handleViewTask = (taskId: number) => {
     setFocusTask(taskId);
@@ -89,8 +88,9 @@ export default function Dashboard() {
       <AlarmModal />
       <SpeedDial
         onAddTask={() => setAddOpen(true)}
-        onQuickNote={() => { setNotesOpen(true); setNoteSignal(s => s + 1); }}
+        onQuickNote={() => setQuickNoteOpen(true)}
       />
+      {quickNoteOpen && <QuickNote onClose={() => setQuickNoteOpen(false)}/>}
       <AddTask open={addOpen} setOpen={setAddOpen} />
 
       <GuestBanner />
@@ -104,58 +104,57 @@ export default function Dashboard() {
         <aside className={`${styles.sidebar} ${sidebarOpen ? styles.sidebarOpen : ''}`}>
           <Link to="/landing"><Logo/></Link>
           <button className={styles.sidebarClose} onClick={() => setSidebarOpen(false)}>
-            <X size={16} />
-          </button>
+            <X size={14} strokeWidth={1.75} />
+          </button>          
+          <div className={`${styles.sideSection} ${styles.sideSectionGrow} ${styles.sectionList}`}>
 
-        <div className={`${styles.sideSection} ${styles.sideSectionGrow} ${styles.sectionList}`}>
-
-          <div className={styles.sectionBlock}>
-            <button className={styles.sectionToggle} onClick={() => setClockExpanded(o => !o)}>
-              <span><ChevronRight size={15}/>Clock</span>
-              <ChevronDown size={13} className={clockExpanded ? styles.chevronOpen : styles.chevron} />
-            </button>
-            {clockExpanded && <div className={styles.sectionContent}><ClockWidget /></div>}
-          </div>
-
-          <div className={styles.sectionBlock}>
-            <button className={styles.sectionToggle} onClick={() => setStatsExpanded(o => !o)}>
-              <span><ChevronRight size={15}/>Stats</span>
-              <ChevronDown size={13} className={statsExpanded ? styles.chevronOpen : styles.chevron} />
-            </button>
-            {statsExpanded && <div className={styles.sectionContent}><StatsWidget /></div>}
-          </div>
-
-          {!isGuest && (
             <div className={styles.sectionBlock}>
-              <button className={styles.sectionToggle} onClick={() => setHeatmapExpanded(o => !o)}>
-                <span><ChevronRight size={15}/>Activity</span>
-                <ChevronDown size={13} className={heatmapExpanded ? styles.chevronOpen : styles.chevron} />
+              <button className={styles.sectionToggle} onClick={() => setClockExpanded(o => !o)}>
+                <span><ChevronRight size={15}/>Clock</span>
+                <ChevronDown size={13} className={clockExpanded ? styles.chevronOpen : styles.chevron} />
               </button>
-              {heatmapExpanded && <div className={styles.sectionContent}><Heatmap /></div>}
+              {clockExpanded && <div className={styles.sectionContent}><ClockWidget /></div>}
             </div>
-          )}
 
-          <div className={styles.sectionBlock}>
-            <button className={styles.sectionToggle} onClick={() => setCatExpanded(o => !o)}>
-              <span><ChevronRight size={15}/>Categories</span>
-              <ChevronDown size={13} className={catExpanded ? styles.chevronOpen : styles.chevron} />
-            </button>
-            {catExpanded && (
-              <div className={styles.sectionContent}>
-                <Categories onNavigate={() => setSidebarOpen(false)} />
+            <div className={styles.sectionBlock}>
+              <button className={styles.sectionToggle} onClick={() => setStatsExpanded(o => !o)}>
+                <span><ChevronRight size={15}/>Stats</span>
+                <ChevronDown size={13} className={statsExpanded ? styles.chevronOpen : styles.chevron} />
+              </button>
+              {statsExpanded && <div className={styles.sectionContent}><StatsWidget /></div>}
+            </div>
+
+            {!isGuest && (
+              <div className={styles.sectionBlock}>
+                <button className={styles.sectionToggle} onClick={() => setHeatmapExpanded(o => !o)}>
+                  <span><ChevronRight size={15}/>Activity</span>
+                  <ChevronDown size={13} className={heatmapExpanded ? styles.chevronOpen : styles.chevron} />
+                </button>
+                {heatmapExpanded && <div className={styles.sectionContent}><Heatmap /></div>}
               </div>
             )}
-          </div>
 
-          <div className={styles.sectionBlock}>
-            <button className={styles.sectionToggle} onClick={() => setMediaExpanded(o => !o)}>
-              <span><ChevronRight size={15}/>Media Hub</span>
-              <ChevronDown size={13} className={mediaExpanded ? styles.chevronOpen : styles.chevron} />
-            </button>
-            {mediaExpanded && <div className={styles.sectionContent}><MediaHub /></div>}
-          </div>
+            <div className={styles.sectionBlock}>
+              <button className={styles.sectionToggle} onClick={() => setCatExpanded(o => !o)}>
+                <span><ChevronRight size={15}/>Categories</span>
+                <ChevronDown size={13} className={catExpanded ? styles.chevronOpen : styles.chevron} />
+              </button>
+              {catExpanded && (
+                <div className={styles.sectionContent}>
+                  <Categories onNavigate={() => setSidebarOpen(false)} />
+                </div>
+              )}
+            </div>
 
-        </div>
+            <div className={styles.sectionBlock}>
+              <button className={styles.sectionToggle} onClick={() => setMediaExpanded(o => !o)}>
+                <span><ChevronRight size={15}/>Media Hub</span>
+                <ChevronDown size={13} className={mediaExpanded ? styles.chevronOpen : styles.chevron} />
+              </button>
+              {mediaExpanded && <div className={styles.sectionContent}><MediaHub /></div>}
+            </div>
+
+          </div>
 
           <div className={styles.sidebarFooter}>
             <UserNav />
@@ -228,9 +227,6 @@ export default function Dashboard() {
             <button className={styles.notesDrawerClose} onClick={() => setNotesOpen(false)}>
               <X size={16} />
             </button>
-          </div>
-          <div className={styles.notesDrawerBody}>
-            <StickyNotes autoAddSignal={noteSignal} />
           </div>
         </aside>
 

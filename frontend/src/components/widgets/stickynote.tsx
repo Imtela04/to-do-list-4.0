@@ -2,20 +2,14 @@ import { useState, useRef, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { AxiosResponse } from 'axios';
 import { useAppStore } from '../../store/useAppStore';
-import { createStickyNote, updateStickyNote, deleteStickyNote } from '@/api/services';
+import { updateStickyNote, deleteStickyNote } from '@/api/services';
 import styles from './stickynote.module.css';
 import { PenLine, Trash, PenBox, Lock } from 'lucide-react';
-import { useDraft } from '../../hooks/useDraft';
 import { useNotesQuery } from '../../hooks/useNotesQuery';
 import type { StickyNote } from '@/types';
 import DOMPurify from 'dompurify';
-
-const NOTE_COLORS: string[] = ['#7c6aff', '#ff6a9e', '#6affdc', '#ffaa6a', '#6ab4ff', '#c96aff'];
-
-interface NoteDraft {
-  content: string;
-  color:   string;
-}
+import { useNoteComposer } from '@/hooks/useNoteComposer';
+import { normalizeNoteHtml } from '@/utils/normalizeNoteHtml';
 
 type UpdateVars  = { id: number; content: string };
 type MutateCtx   = { previous?: StickyNote[] };
@@ -25,56 +19,53 @@ interface Props {
 }
 
 export default function StickyNotes({ autoAddSignal }: Props) {
-  const queryClient = useQueryClient();
-  const limits      = useAppStore(s => s.limits);
-  const counts      = useAppStore(s => s.counts);
-  const level       = useAppStore(s => s.level);
+  const queryClient                           = useQueryClient();
+  const limits                                = useAppStore(s => s.limits);
+  const counts                                = useAppStore(s => s.counts);
+  const level                                 = useAppStore(s => s.level);
 
-  const { data: stickyNotes = [] } = useNotesQuery();
+  const { data: stickyNotes = [] }            = useNotesQuery();
 
-  const [adding, setAdding]         = useState(false);
-  const [newColor, setNewColor]     = useState(NOTE_COLORS[0]);
-  const [editingId, setEditingId]   = useState<number | null>(null);
-  const [expandedId, setExpandedId] = useState<number | null>(null);
-  const [limitError, setLimitError] = useState<string | null>(null);
-  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);  const addEditorRef  = useRef<HTMLDivElement | null>(null);
-  const editEditorRef = useRef<HTMLDivElement | null>(null);
-  const { save: saveDraft, load: loadDraft, clear: clearDraft } = useDraft('draft_note');
-  const [hasNoteDraft, setHasNoteDraft] = useState(!!loadDraft());
+  const [adding, setAdding]                   = useState(false);
+  const [editingId, setEditingId]             = useState<number | null>(null);
+  const [expandedId, setExpandedId]           = useState<number | null>(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);  
+  const editEditorRef                         = useRef<HTMLDivElement | null>(null);
 
   const notesLocked = limits.notes !== null && counts.notes >= limits.notes;  
-  const notesAtLimit = limits.notes === 0;
+  const notesAtLimit = limits.notes === 0;  
+  
+  const {
+    editorRef: addEditorRef,
+    color: newColor,
+    setColor: setNewColor,
+    limitError,
+    setLimitError,
+    hasDraft: hasNoteDraft,
+    handleInput,
+    handleSubmit: handleAdd,
+    isPending: addPending,
+    NOTE_COLORS,
+    discardDraft,
+    hydrate,
+  } = useNoteComposer(() => setAdding(false));
 
-  const normalizeNoteHtml = (html: string) => 
-    html
-      .replace(/<div><br><\/div>/gi, '<br>')
-      .replace(/<div>/gi, '<p>')
-      .replace(/<\/div>/gi, '</p>')
-      .replace(/<p><\/p>/gi, '<br>');
+  
   
   useEffect(() => {
     if (!autoAddSignal) return;
     if (adding && addEditorRef.current) {
-      addEditorRef.current.focus();          // already open + adding → just refocus
+      addEditorRef.current.focus();
     } else {
       setAdding(true);
       setLimitError(null);
     }
   }, [autoAddSignal]);
-  
+
   useEffect(() => {
-    if (adding && addEditorRef.current) {
-      const draft = loadDraft() as NoteDraft | null;
-      if (draft) {
-        addEditorRef.current.innerHTML = draft.content || '';
-        setNewColor(draft.color || NOTE_COLORS[0]);
-        setHasNoteDraft(true);
-      } else {
-        addEditorRef.current.innerHTML = '';
-        setHasNoteDraft(false);
-      }
-    }
+    if (adding) hydrate();
   }, [adding]);
+
 
   useEffect(() => {
     if (editingId && editEditorRef.current) {
@@ -115,32 +106,6 @@ export default function StickyNotes({ autoAddSignal }: Props) {
       }
     }
   };
-  const handleDelete = (id: number): void => {
-    deleteMutation.mutate(id);
-  };
-  const addMutation = useMutation<
-    AxiosResponse<StickyNote>,
-    Error,
-    { note: string; color: string },
-    MutateCtx
-  >({
-    mutationFn: (payload) => createStickyNote(payload),
-    onSuccess: (res) => {
-      queryClient.setQueryData(['notes'], (old: StickyNote[] | undefined) => [
-        ...(old ?? []),
-        res.data,
-      ]);
-      queryClient.invalidateQueries({ queryKey: ['notes'] });
-      setAdding(false);
-      clearDraft();
-      setHasNoteDraft(false);
-    },
-    onError: (err: any) => {
-      if (err.response?.status === 403 && err.response?.data?.limit_reached) {
-        setLimitError(err.response.data.detail);
-      }
-    },
-  });
 
   const updateMutation = useMutation<
     AxiosResponse<StickyNote>,
@@ -180,14 +145,10 @@ export default function StickyNotes({ autoAddSignal }: Props) {
     onSettled: () => queryClient.invalidateQueries({ queryKey: ['notes'] }),
   });
 
-  const handleAdd = (): void => {
-    const rawContent = addEditorRef.current?.innerHTML || '';
-    const hasContent = rawContent.trim() || rawContent.includes('<img');
-    if (!hasContent) return;
-    setLimitError(null);
-    const normalizedContent = normalizeNoteHtml(rawContent);
-    addMutation.mutate({ note: normalizedContent, color: newColor });
+  const handleDelete = (id: number): void => {
+    deleteMutation.mutate(id);
   };
+
 
   const handleSaveEdit = (note: StickyNote): void => {
     const rawContent = editEditorRef.current?.innerHTML || '';
@@ -199,7 +160,6 @@ export default function StickyNotes({ autoAddSignal }: Props) {
   return (
     <div className={styles.panel}>
       <div className={styles.header}>
-        {/* <span className={styles.title}>STICKY NOTES</span> */}
         {notesLocked || notesAtLimit ? (
           <button
             className={`${styles.addBtn} ${styles.locked}`}
@@ -219,28 +179,14 @@ export default function StickyNotes({ autoAddSignal }: Props) {
       </div>
 
       {adding && (
-        <div
-          className={`${styles.noteForm} animate-scale-in`}
-          style={{ borderLeft: `4px solid ${newColor}` }}
-        >
+        <div className={`${styles.noteForm} animate-scale-in`} style={{ borderLeft: `4px solid ${newColor}` }}>
           {limitError && (
-            <div className={styles.limitBanner}>
-              <Lock size={12} /><span>{limitError}</span>
-            </div>
+            <div className={styles.limitBanner}><Lock size={12} /><span>{limitError}</span></div>
           )}
           {hasNoteDraft && (
             <div className={styles.draftBadge}>
               <span>📝 Draft restored</span>
-              <button
-                className={styles.discardDraft}
-                onClick={() => {
-                  clearDraft();
-                  setHasNoteDraft(false);
-                  if (addEditorRef.current) addEditorRef.current.innerHTML = '';
-                }}
-              >
-                Discard
-              </button>
+              <button className={styles.discardDraft} onClick={discardDraft}>Discard</button>
             </div>
           )}
           <div
@@ -249,29 +195,19 @@ export default function StickyNotes({ autoAddSignal }: Props) {
             contentEditable
             suppressContentEditableWarning
             onPaste={handlePaste}
-            onInput={() => {
-              const content = addEditorRef.current?.innerHTML || '';
-              if (content.trim()) saveDraft({ content, color: newColor });
-              else clearDraft();
-            }}
+            onInput={handleInput}
             data-placeholder="..."
           />
           <div className={styles.colorRow}>
             {NOTE_COLORS.map(c => (
-              <button
-                key={c}
-                className={`${styles.colorDot} ${newColor === c ? styles.colorSelected : ''}`}
-                style={{
-                  background: c,
-                  outline: newColor === c ? '2px solid white' : 'none',
-                  transform: newColor === c ? 'scale(1.25)' : 'scale(1)',
-                }}
-                onClick={() => setNewColor(c)}
-              />
+              <button key={c} className={`${styles.colorDot} ${newColor === c ? styles.colorSelected : ''}`}
+                style={{ background: c }} onClick={() => setNewColor(c)} />
             ))}
             <div style={{ flex: 1 }} />
             <button className={styles.cancelBtn} onClick={() => setAdding(false)}>Cancel</button>
-            <button className={styles.saveBtn} onClick={handleAdd}>Save</button>
+            <button className={styles.saveBtn} onClick={handleAdd} disabled={addPending}>
+              {addPending ? '...' : 'Save'}
+            </button>
           </div>
         </div>
       )}

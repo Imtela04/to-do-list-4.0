@@ -263,17 +263,27 @@
 .panelToggle:hover { color: var(--accent-primary); border-color: var(--accent-primary); }
 
 .sidebarClose {
-  display: none; /* hidden on desktop */
-  margin-left: auto;
+  display: none;
+  position: absolute;
+  top: 22px;
+  right: -13px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-sm);
-  color: var(--text-muted);
+  box-shadow: var(--shadow-sm);
   transition: all var(--transition-fast);
+  z-index: 10;
 }
-.sidebarClose:hover { color: var(--text-primary); background: var(--bg-glass-hover); }
+.sidebarClose:hover {
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+  transform: scale(1.08);
+}
 
 .overlay {
   display: block;
