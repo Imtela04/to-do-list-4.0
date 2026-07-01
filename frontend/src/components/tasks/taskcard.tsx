@@ -101,7 +101,7 @@ export default function TaskCard({
   const pomodoroQueue                                                             = useAppStore(s => s.pomodoroQueue);
   const addToPomodoroQueue                                                        = useAppStore(s => s.addToPomodoroQueue);
   const removeFromPomodoroQueue                                                   = useAppStore(s => s.removeFromPomodoroQueue);
-  const setPomodoroOpen                                                           = useAppStore(s => s.setPomodoroOpen);
+const setView                                                                     = useAppStore(s => s.setView);
   const inPomodoroQueue                                                           = pomodoroQueue.includes(task.id);
   useEffect(() => {
     if (focusTaskId !== task.id) return;
@@ -250,7 +250,7 @@ export default function TaskCard({
   const handlePomodoro = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (inPomodoroQueue) removeFromPomodoroQueue(task.id);
-    else { addToPomodoroQueue(task.id); setPomodoroOpen(true); }
+    else { addToPomodoroQueue(task.id); setView('pomodoro'); }
   };
   const handleMoveToNextDay = (e: React.MouseEvent) => {
     e.stopPropagation();

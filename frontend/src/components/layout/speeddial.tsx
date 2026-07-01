@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { Plus, NotebookPen, Lock, Timer } from 'lucide-react';
+import { Plus, NotebookPen, Lock } from 'lucide-react';
 import { useAppStore } from '@/store/useAppStore';
 import styles from './speeddial.module.css';
 
@@ -19,7 +19,6 @@ export default function SpeedDial({ onAddTask, onQuickNote }: Props) {
   const limits              = useAppStore(s => s.limits);
   const counts              = useAppStore(s => s.counts);
   const level               = useAppStore(s => s.level);
-  const setPomodoroOpen     = useAppStore(s => s.setPomodoroOpen);
 
   const tasksLocked = limits.tasks !== null && counts.tasks >= limits.tasks;
   const notesLocked = limits.notes !== null && counts.notes >= limits.notes;
@@ -38,9 +37,8 @@ export default function SpeedDial({ onAddTask, onQuickNote }: Props) {
   // Adjusted angles to 90 (Top), 135 (Top-Left), 180 (Left) 
   // This ensures they fit perfectly along the arc of the dial plate from the bottom-right corner.
   const actions = [
-    { angle: 90,  icon: tasksLocked ? <Lock size={13}/> : <Plus size={13}/>,        label: tasksLocked ? `LV${level+1}` : 'TASK',  cv: '--accent-primary',   onClick: () => !tasksLocked && act(onAddTask),         locked: tasksLocked },
-    { angle: 135, icon: notesLocked ? <Lock size={13}/> : <NotebookPen size={13}/>, label: notesLocked ? `LV${level+1}` : 'NOTE',  cv: '--accent-warm', onClick: () => !notesLocked && act(onQuickNote),       locked: notesLocked },
-    { angle: 180, icon: <Timer size={13}/>,                                          label: 'FOCUS',                                 cv: '--accent-tertiary',  onClick: () => act(() => setPomodoroOpen(true)),        locked: false },
+    { angle: 100,  icon: tasksLocked ? <Lock size={13}/> : <Plus size={13}/>,        label: tasksLocked ? `LV${level+1}` : 'TASK',  cv: '--accent-primary',   onClick: () => !tasksLocked && act(onAddTask),         locked: tasksLocked },
+    { angle: 160, icon: notesLocked ? <Lock size={13}/> : <NotebookPen size={13}/>, label: notesLocked ? `LV${level+1}` : 'NOTE',  cv: '--accent-warm', onClick: () => !notesLocked && act(onQuickNote),       locked: notesLocked },
   ];
 
   // Scaled up the ticks to fit the new 280x280 dial plate

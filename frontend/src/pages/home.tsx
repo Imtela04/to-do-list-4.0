@@ -8,10 +8,10 @@ import StatsWidget from '@/components/widgets/stats';
 import Categories from '@/components/categories/categorypanel';
 import UserNav from '@/components/layout/usernav';
 import styles from './home.module.css';
-import { Menu, X, LayoutList, CalendarDays, Kanban, BellCheck, AlarmClockCheck, ChevronDown, ChevronRight } from 'lucide-react';
+import { Menu, X, LayoutList, CalendarDays, Kanban, BellCheck, AlarmClockCheck, ChevronDown, ChevronRight, Timer } from 'lucide-react';
 import SessionGuard from '@/components/layout/sessionguard';
 import LevelUpToast from '@/components/layout/leveluptoast';
-import Pomodoro from '../components/widgets/pomodoro';
+import Pomodoro from '../components/widgets/pomodoro/pomodoro';
 import { BellOff } from 'lucide-react';
 import AlarmModal from '@/components/layout/alarmmodal';
 import { useKeyboardShortcuts } from '@/hooks/useKeyboardShortcuts';
@@ -24,10 +24,10 @@ import KanbanView from '@/components/tasks/kanbanview';
 import SpeedDial from '@/components/layout/speeddial';
 import AddTask from '@/components/tasks/addtask';
 import QuickNote from '@/components/widgets/notes/quicknote';
-import StickyNotes from '@/components/widgets/notes/stickynote';
 import NotesBoard from '@/components/widgets/notes/notesboard';
+import { usePomodoroEngine } from '@/hooks/usePomodoroEngine';
+import PomodoroPill from '@/components/widgets/pomodoro/pomodoropill';
 
-type View = 'list' | 'calendar' | 'kanban';
 export function Logo(){
   return(
     <div>
@@ -40,7 +40,9 @@ export default function Dashboard() {
 
   const [sidebarOpen, setSidebarOpen]           = useState(false);
   const [notesOpen, setNotesOpen]               = useState(false);
-  const [view, setView]                         = useState<View>('list');
+  const view                                    = useAppStore(s => s.view);
+  const setView                                 = useAppStore(s => s.setView);
+  const lastView                                = useAppStore(s => s.lastView);
   const pomodoroOpen                            = useAppStore(s => s.pomodoroOpen);
   const setPomodoroOpen                         = useAppStore(s => s.setPomodoroOpen);
   const location                                = useLocation();
@@ -56,6 +58,8 @@ export default function Dashboard() {
   const setFocusTask                            = useAppStore(s => s.setFocusTask);
   const [quickNoteOpen, setQuickNoteOpen]       = useState(false);
 
+  usePomodoroEngine();
+
   const handleViewTask = (taskId: number) => {
     setFocusTask(taskId);
     setView('list');
@@ -64,9 +68,14 @@ export default function Dashboard() {
   useKeyboardShortcuts({
     onNewTask:       () => setAddOpen(true),
     onToggleNotes:   () => setNotesOpen(o => !o),
-    onTogglePomodoro: () => setPomodoroOpen(o => !o),
-    onToggleView: () => setView(v => v === 'list' ? 'calendar' : v === 'calendar' ? 'kanban' : 'list'),
-  });
+    onTogglePomodoro: () => setView(view === 'pomodoro' ? lastView : 'pomodoro'),
+    onToggleView: () => setView(
+      view === 'list'     ? 'calendar' :
+      view === 'calendar' ? 'kanban'   :
+      view === 'kanban'   ? 'pomodoro' :
+      'list'
+    ),
+});
 
   useEffect(() => {
     const handler = () => setShortcutsOpen(true);
@@ -88,6 +97,7 @@ export default function Dashboard() {
     <SessionGuard enabled={!rememberMe}>
       <LevelUpToast />
       <AlarmModal />
+      <PomodoroPill onOpen={() => setView('pomodoro')} />
       <SpeedDial
         onAddTask={() => setAddOpen(true)}
         onQuickNote={() => setQuickNoteOpen(true)}
@@ -209,15 +219,25 @@ export default function Dashboard() {
                 >
                   <Kanban size={16} />
                 </button>
+                <button
+                  className={`${styles.viewBtn} ${view === 'pomodoro' ? styles.viewBtnActive : ''}`}
+                  onClick={() => setView('pomodoro')}
+                  title="Pomodoro view"
+                >
+                  <Timer size={16} />
+                </button>
+
               </div>
             </div>
           </header>
 
           <section className={styles.tasksSection}>
-            {view === 'list'     ? <TaskList/> 
+            {view === 'list'     ? <TaskList/>
             : view === 'calendar' ? <CalendarView onViewTask={handleViewTask} />
-            : <KanbanView onViewTask={handleViewTask} />}
+            : view === 'kanban'   ? <KanbanView onViewTask={handleViewTask} />
+            : <Pomodoro />}
           </section>
+
         </main>
 
         {notesOpen && <NotesBoard onClose={() => setNotesOpen(false)} />}
@@ -226,7 +246,7 @@ export default function Dashboard() {
           <>
             <div className={styles.overlay} onClick={() => setPomodoroOpen(false)} />
             <aside className={`${styles.notesDrawer} ${styles.pomodoroDrawer} ${pomodoroOpen ? styles.notesDrawerOpen : ''}`}>
-              <Pomodoro onClose={() => setPomodoroOpen(false)} />
+              <Pomodoro/>
             </aside>
           </>
         )}

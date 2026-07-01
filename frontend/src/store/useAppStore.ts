@@ -42,22 +42,35 @@ interface AppState {
   focusTaskId:     number | null;
   pomodoroQueue:   number[];
   pomodoroOpen:    boolean;
+  pomodoro:        {
+                    modeIndex: number;
+                    timeLeft:  number;
+                    running:   boolean;
+                    sessions:  number;
+                    xpToast:   string | null;
+                  }; 
+  view: 'list' | 'calendar' | 'kanban' | 'pomodoro';
+  lastView: 'list' | 'calendar' | 'kanban';
 }
 
 
 interface AppActions {
-  setFilter:        (payload: Partial<Filter>) => void;
-  setProfile:       (data: Profile) => void;
-  updateXp:         (payload: XpResult) => void;
-  pomodoroComplete: (payload: PomodoroResult) => void;
-  clearLevelUp:     () => void;
-  setGreeting:      (greeting: string) => void;
-  resetState:       () => void;
-  setFocusTask:     (id: number|null) => void;
+  setFilter:               (payload: Partial<Filter>) => void;
+  setProfile:              (data: Profile) => void;
+  updateXp:                (payload: XpResult) => void;
+  pomodoroComplete:        (payload: PomodoroResult) => void;
+  clearLevelUp:            () => void;
+  setGreeting:             (greeting: string) => void;
+  resetState:              () => void;
+  setFocusTask:            (id: number|null) => void;
   addToPomodoroQueue:      (taskId: number) => void;
   removeFromPomodoroQueue: (taskId: number) => void;
   clearPomodoroQueue:      () => void;
   setPomodoroOpen:         (open: boolean) => void;
+  setPomodoroTimer:        (partial: Partial<AppState['pomodoro']>) => void;
+  tickPomodoro:            () => void;
+  setView:                 (view: AppState['view']) => void;
+
 }
 
 type AppStore = AppState & AppActions;
@@ -97,6 +110,10 @@ const DEFAULT_STATE: AppState = {
   focusTaskId:     null,
   pomodoroQueue:   [],
   pomodoroOpen:    false,
+  pomodoro:        { modeIndex: 0, timeLeft: 25 * 60, running: false, sessions: 0, xpToast: null },
+  view:            'list',
+  lastView: 'list',
+
 
 };
 
@@ -123,7 +140,13 @@ export const useAppStore = create<AppStore>((set) => ({
     isStaff:         data.is_staff ?? false,
     email:           data.email ?? '',
     isGuest:         data.is_guest ?? false,
+
   }),
+
+  setView: (view) => set(s => ({
+    view,
+    lastView: view === 'pomodoro' ? s.lastView : view,
+  })),
 
   updateXp: (payload) => set(s => ({
     xp:           payload.total_xp,
@@ -138,6 +161,14 @@ export const useAppStore = create<AppStore>((set) => ({
     pomodoros_today: payload.pomodoros_today,
     levelUpEvent:    payload.leveled_up ? { newLevel: payload.new_level ?? null } : s.levelUpEvent,
   })),
+
+  setPomodoroTimer: (partial) => set(s => ({ 
+    pomodoro:        { ...s.pomodoro, ...partial } 
+  })),
+  tickPomodoro:     () => set(s => ({ 
+    pomodoro:        { ...s.pomodoro, timeLeft: Math.max(0, s.pomodoro.timeLeft - 1) } 
+  })),
+
 
   clearLevelUp: () => set({ levelUpEvent: null }),
 
