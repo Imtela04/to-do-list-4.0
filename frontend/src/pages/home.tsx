@@ -27,6 +27,7 @@ import NotesBoard from '@/components/widgets/notes/notesboard';
 import { usePomodoroEngine } from '@/hooks/usePomodoroEngine';
 import PomodoroPill from '@/components/widgets/pomodoro/pomodoropill';
 import Addterminalhub from '@/components/layout/addterminalhub';
+import { useEscapeKey } from '@/hooks/useEscapeKey';
 
 export function Logo(){
   return(
@@ -58,6 +59,7 @@ export default function Dashboard() {
   const setFocusTask                            = useAppStore(s => s.setFocusTask);
   const [quickNoteOpen, setQuickNoteOpen]       = useState(false);
 
+  useEscapeKey(() => setSidebarOpen(false), sidebarOpen);
   usePomodoroEngine();
 
   const handleViewTask = (taskId: number) => {

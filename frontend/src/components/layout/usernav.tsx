@@ -9,6 +9,7 @@ import DeleteAccountModal from './deleteaccountModal';
 import styles from './usernav.module.css';
 import { updateEmail } from '@/api/services';
 import { useQueryClient } from '@tanstack/react-query';
+import { useEscapeKey } from '@/hooks/useEscapeKey';
 
 const COLOR_PICKERS = [
   { variable: '--accent-primary',   label: 'Primary Accent' },
@@ -67,6 +68,7 @@ export default function UserNav() {
     }
   };
 
+  useEscapeKey(() => { setOpen(false); setOpenPicker(null); }, open);
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent): void => {

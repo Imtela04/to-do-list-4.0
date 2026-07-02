@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAppStore } from '@/store/useAppStore';
 import styles from './addterminalhub.module.css';
+import { useEscapeKey } from '@/hooks/useEscapeKey';
 
 interface Props { onAddTask: () => void; onQuickNote: () => void; }
 
@@ -13,7 +14,7 @@ export default function  Addterminalhub({ onAddTask, onQuickNote }: Props) {
 
   const tasksLocked = limits.tasks !== null && counts.tasks >= limits.tasks;
   const notesLocked = limits.notes !== null && counts.notes >= limits.notes;
-
+  useEscapeKey(() => setOpen(false), open);
   useEffect(() => {
     if (!open) return;
     const h = (e: MouseEvent) => {

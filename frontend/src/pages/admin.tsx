@@ -16,7 +16,7 @@ import { useNavigate } from 'react-router-dom';
 import styles from './admin.module.css';
 import DOMPurify from 'dompurify';
 import SessionGuard from '@/components/layout/sessionguard';
-
+import { useEscapeKey } from '@/hooks/useEscapeKey';
 
 // ─── Shared stat card ────────────────────────────────────────────────────────
 
@@ -135,6 +135,8 @@ function UsersTab({ stats }: { stats: any }) {
   const [selected, setSelected]         = useState<Set<number>>(new Set());
   const [bulkLoading, setBulkLoading]   = useState(false);
 
+  useEscapeKey(() => setEditingUser(null), !!editingUser);
+  useEscapeKey(() => { setDrillUser(null); setDrillData(null); }, !!drillUser);
   const filtered = userList.filter(u => {
     const matchSearch = u.username.toLowerCase().includes(search.toLowerCase()) ||
       u.email?.toLowerCase().includes(search.toLowerCase());

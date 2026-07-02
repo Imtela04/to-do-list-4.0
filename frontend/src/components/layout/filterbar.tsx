@@ -5,6 +5,7 @@ import type { Filter } from '@/store/useAppStore';
 import styles from './filterbar.module.css';
 import { ArrowUpDown, CalendarArrowDown, CalendarArrowUp, CircleAlert, CalendarClock, ArrowDownAZ, SlidersHorizontal } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
+import { useEscapeKey } from '@/hooks/useEscapeKey';
 
 interface SortOption {
   value: Filter['sort'];
@@ -37,6 +38,8 @@ export default function FilterBar() {
   const filtersBtnRef = useRef<HTMLButtonElement>(null);
   const sortRef       = useRef<HTMLDivElement>(null);
   const filtersRef    = useRef<HTMLDivElement>(null);
+  useEscapeKey(() => setSortOpen(false), sortOpen);
+  useEscapeKey(() => setFiltersOpen(false), filtersOpen);
 
   useEffect(() => {
     if (!sortOpen) return;
@@ -52,6 +55,15 @@ export default function FilterBar() {
       const rect = filtersBtnRef.current.getBoundingClientRect();
       setFiltersPos({ top: rect.bottom + 6, right: window.innerWidth - rect.right });
     }
+  }, [filtersOpen]);
+
+  useEffect(() => {
+    if (!filtersOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (!filtersRef.current?.contains(e.target as Node)) setFiltersOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
   }, [filtersOpen]);
 
   const currentSort      = SORT_OPTIONS.find(o => o.value === filter.sort);
@@ -70,13 +82,9 @@ export default function FilterBar() {
     <div className={styles.bar}>
       <div className={styles.topRow}>
         <div className={styles.searchWrap}>
-          <svg className={styles.searchIcon} viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.5">
-            <circle cx="6.5" cy="6.5" r="4.5" />
-            <path d="M10 10l3.5 3.5" strokeLinecap="round" />
-          </svg>
           <input
             className={styles.search}
-            placeholder="Search..."
+            placeholder="> search"
             value={filter.search}
             onChange={e => set('search', e.target.value)}
             onKeyDown={e => {
