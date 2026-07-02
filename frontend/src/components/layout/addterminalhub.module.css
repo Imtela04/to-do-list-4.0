@@ -1,0 +1,113 @@
+.wrap {
+  position: fixed;
+  bottom: 28px;
+  right: 36px;
+  z-index: 55;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 10px;
+}
+
+/* ── Hub ── */
+.hub {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-card);
+  border: 1px solid var(--accent-primary);
+  color: var(--accent-primary);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+}
+
+.hub:hover {
+  border-color: var(--accent-tertiary);
+  box-shadow: 0 0 16px rgba(var(--accent-primary-rgb), 0.35), 0 4px 20px rgba(0, 0, 0, 0.45);
+}
+
+.hubOpen {
+  border-color: var(--accent-tertiary);
+  color: var(--accent-tertiary);
+  box-shadow: 0 0 20px rgba(var(--accent-primary-rgb), 0.5), 0 4px 20px rgba(0, 0, 0, 0.45);
+}
+
+.hubPrompt {
+  font-weight: 700;
+}
+
+.hubCursor {
+  width: 8px;
+  height: 14px;
+  background: currentColor;
+  animation: dialCursorBlink 1s step-end infinite;
+}
+
+@keyframes dialCursorBlink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0; }
+}
+
+/* ── Terminal panel ── */
+.terminalPanel {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px;
+  min-width: 180px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  animation: terminalSlideUp 180ms cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+@keyframes terminalSlideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.terminalRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-body);
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  text-transform: lowercase;
+  letter-spacing: 0.3px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.terminalRow:hover {
+  background: var(--bg-glass-hover);
+  color: var(--accent-primary);
+}
+
+.terminalPrompt {
+  color: var(--accent-primary);
+  font-weight: 700;
+}
+
+.terminalLabel {
+  flex: 1;
+}
+
+.terminalRowLocked {
+  opacity: 0.45;
+  cursor: not-allowed;
+  color: var(--text-muted);
+}
+
+.terminalRowLocked:hover {
+  background: transparent;
+  color: var(--text-muted);
+}

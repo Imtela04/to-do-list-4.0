@@ -21,12 +21,12 @@ import GuestBanner from '@/components/layout/guestbanner';
 import { useAppStore } from '@/store/useAppStore';
 import MediaHub from '@/components/layout/mediahub';
 import KanbanView from '@/components/tasks/kanbanview';
-import SpeedDial from '@/components/layout/speeddial';
 import AddTask from '@/components/tasks/addtask';
 import QuickNote from '@/components/widgets/notes/quicknote';
 import NotesBoard from '@/components/widgets/notes/notesboard';
 import { usePomodoroEngine } from '@/hooks/usePomodoroEngine';
 import PomodoroPill from '@/components/widgets/pomodoro/pomodoropill';
+import Addterminalhub from '@/components/layout/addterminalhub';
 
 export function Logo(){
   return(
@@ -98,7 +98,7 @@ export default function Dashboard() {
       <LevelUpToast />
       <AlarmModal />
       <PomodoroPill onOpen={() => setView('pomodoro')} />
-      <SpeedDial
+      < Addterminalhub
         onAddTask={() => setAddOpen(true)}
         onQuickNote={() => setQuickNoteOpen(true)}
       />

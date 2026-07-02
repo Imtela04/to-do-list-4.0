@@ -1,4 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+@font-face {
+  font-family: 'Departure Mono';
+  src: url('/fonts/departure-mono/DepartureMono-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
 
 /* ── light (default) ── */
 :root, [data-theme="light"] {
@@ -27,9 +34,9 @@
   --priority-high: #ff6a9e;
   --priority-critical: #ff4444;
   --danger: #ff4444;
-  --font-display: var(--font-body);
-  --font-body: var(--font-mono);
+  --font-body: 'JetBrains Mono', monospace;
   --font-mono: 'JetBrains Mono', monospace;
+  --font-display: 'Departure Mono', var(--font-mono);
   --radius-sm: 8px;
   --radius-md: 14px;
   --radius-lg: 20px;

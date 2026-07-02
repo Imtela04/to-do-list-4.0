@@ -11,9 +11,6 @@ import type { Task, TaskPayload, XpResult } from '@/types';
 const MONTHS = ['January','February','March','April','May','June',
   'July','August','September','October','November','December'];
 const DAYS_SHORT = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-const PRIORITY_COLORS: Record<string, string> = {
-  low: '#6ab4ff', medium: '#6affdc', high: '#ffaa6a', critical: '#ff6a6a',
-};
 
 interface SelectedDay {
   year:  number;
@@ -171,7 +168,12 @@ export default function CalendarView({ onViewTask }: CalendarViewProps) {
                     <span className={styles.dayNum}>{day}</span>
                     <div className={styles.pills}>
                       {active.slice(0, 3).map(t => (
-                        <span key={t.id} className={styles.pill} style={{ background: PRIORITY_COLORS[t.priority] ?? 'var(--accent-primary)' }} title={t.title}>
+                        <span
+                          key={t.id}
+                          className={styles.pill}
+                          data-priority={t.priority}
+                          title={t.title}
+                        >
                           {t.title}{t.attachments.length>0 ? <Paperclip size={8}/>: ''}
                         </span>
                       ))}
@@ -212,7 +214,7 @@ export default function CalendarView({ onViewTask }: CalendarViewProps) {
                     <Paperclip size={10} /> {task.attachments.length}
                   </button>
                 )}
-                {task.priority && <span className={styles.panelPrio} style={{ background: PRIORITY_COLORS[task.priority] }} />}
+                {task.priority && <span className={styles.panelPrio} data-priority={task.priority} />}
                 <button className={styles.panelDelete} onClick={() => deleteMutation.mutate(task.id)}><X size={11} /></button>
               </div>
             ))}
