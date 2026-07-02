@@ -2,11 +2,9 @@
  
 
 /* ─────────────────────────────────────────────
-   Root overrides (extend your existing tokens)
+Root overrides (extend your existing tokens)
 ───────────────────────────────────────────── */
 :root {
-  --font-display: monospace;
-  --font-body:    monospace;
   --bg-deep:      #07070d;
   --glass:        rgba(255, 255, 255, 0.03);
   --glass-border: rgba(255, 255, 255, 0.07);
