@@ -8,7 +8,7 @@ import StatsWidget from '@/components/widgets/stats';
 import Categories from '@/components/categories/categorypanel';
 import UserNav from '@/components/layout/usernav';
 import styles from './home.module.css';
-import { Menu, X, LayoutList, CalendarDays, Kanban, BellCheck, AlarmClockCheck, ChevronDown, ChevronRight, Timer } from 'lucide-react';
+import { Menu, X, LayoutList, CalendarDays, Kanban, BellCheck, AlarmClockCheck, ChevronDown, ChevronRight, Timer, Keyboard } from 'lucide-react';
 import SessionGuard from '@/components/layout/sessionguard';
 import LevelUpToast from '@/components/layout/leveluptoast';
 import Pomodoro from '../components/widgets/pomodoro/pomodoro';
@@ -170,19 +170,28 @@ export default function Dashboard() {
 
           <div className={styles.sidebarFooter}>
             <UserNav />
-            <button
-              className={styles.alarmBtn}
-              onClick={requestNotifs}
-              disabled={notifStatus === 'denied'}
-              title={
-                notifStatus === 'granted' ? 'Notifications Enabled'
-                : notifStatus === 'denied' ? 'Blocked — check browser settings'
-                : 'Enable deadline notifications'
-              }
-              style={{ opacity: notifStatus === 'denied' ? 0.4 : 1 }}
-            >
-              {notifStatus === 'denied' ? <BellOff size={18} /> : <BellCheck size={18} />}
-            </button>
+            <div className={styles.footerActions}>
+              <button
+                className={styles.shortcutsBtn}
+                onClick={() => setShortcutsOpen(true)}
+                title="Keyboard Shortcuts"
+              >
+                <Keyboard size={16} />
+              </button>
+              <button
+                className={styles.alarmBtn}
+                onClick={requestNotifs}
+                disabled={notifStatus === 'denied'}
+                title={
+                  notifStatus === 'granted' ? 'Notifications Enabled'
+                  : notifStatus === 'denied' ? 'Blocked — check browser settings'
+                  : 'Enable deadline notifications'
+                }
+                style={{ opacity: notifStatus === 'denied' ? 0.4 : 1 }}
+              >
+                {notifStatus === 'denied' ? <BellOff size={18} /> : <BellCheck size={18} />}
+              </button>
+            </div>
           </div>
 
         </aside>

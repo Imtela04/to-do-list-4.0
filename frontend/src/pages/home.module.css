@@ -323,10 +323,43 @@
   border-top: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
   gap: 12px;
   flex-shrink: 0;
 }
+
+.footerActions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+
+.alarmBtn,
+.shortcutsBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+.alarmBtn:hover,
+.shortcutsBtn:hover {
+  color: var(--accent-primary);
+  border-color: var(--accent-primary);
+}
+.shortcutsKbd {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: inherit;
+}
+
+
 
 /* ── View toggle (add to home.module.css) ── */
 .viewToggle {
@@ -363,20 +396,6 @@
 .pomodoroDrawer {
   width: 280px; /* slightly narrower than notes drawer */
   padding: 16px;
-}
-
-.alarmBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  color: var(--priority-medium);
-  ;
-}
-
-.alarmBtn:hover {
-  transform: scale(1.5);
 }
 
 .sectionList {
