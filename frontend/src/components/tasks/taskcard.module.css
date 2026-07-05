@@ -108,6 +108,7 @@
   font-size: 0.7rem;
   color: var(--text-muted);
   font-family: var(--font-mono);
+  
 }
 
 .overdue { color: var(--danger, #ff6a6a); }

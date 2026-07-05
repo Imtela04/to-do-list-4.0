@@ -9,6 +9,8 @@
   align-items: center;
   gap: 6px;
   width: 100%;
+  flex-wrap: wrap;
+  row-gap: 8px; 
 }
 
 .searchWrap {
@@ -16,6 +18,8 @@
   display: flex;
   align-items: center;
   width: 140px;
+  min-width: 0;
+  flex: 1 1 120px;
   transition: width var(--transition-fast);
 }
 
@@ -75,6 +79,7 @@
   cursor: pointer;
   transition: all var(--transition-fast);
   white-space: nowrap;
+  flex-shrink: 0;
 }
 .sortTrigger:hover, .todayBtn:hover,
 .sortTriggerOpen {
@@ -116,7 +121,7 @@
 .sortOptionActive { color: var(--accent-primary); background: rgba(124, 106, 255, 0.1); }
 
 /* Filters trigger */
-.filtersWrap {
+.sortWrap, .filtersWrap {
   flex-shrink: 0;
 }
 

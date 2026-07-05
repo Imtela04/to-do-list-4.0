@@ -69,8 +69,8 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  flex: 1;
-  min-width: 120px;
+  flex: 1 1 140px;
+  min-width: 100px;
 }
 
 .label {
@@ -84,6 +84,7 @@
 .priorities {
   display: flex;
   gap: 4px;
+  flex-wrap: wrap;
 }
 
 .prioBtn {
