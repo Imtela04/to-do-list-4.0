@@ -50,6 +50,17 @@
   --heat-2: rgba(var(--accent-primary-rgb), 0.45);
   --heat-3: rgba(var(--accent-primary-rgb), 0.70);
   --heat-4: var(--accent-primary);
+  --z-dropdown: 100;
+  --z-drawer: 500;
+  --z-banner: 1000;
+  --z-fixed-widget: 1500;
+  --z-overlay: 2000;
+  --z-modal: 2500;
+  --z-critical-modal: 3000;
+  --z-toast: 3500;
+  --z-tooltip: 4000;
+  --z-local-raise: 1;
+
 
 }
 

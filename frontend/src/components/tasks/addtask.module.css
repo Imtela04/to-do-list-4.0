@@ -1,7 +1,7 @@
 .backdrop {
   position: fixed;
   inset: 0;
-  z-index: 50;
+  z-index: var(--z-overlay);
   background: rgba(0, 0, 0, 0.25); /* Slight dark tint for focus */
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -32,7 +32,7 @@
   
   /* New positioning constraints moved from the old overlay */
   position: relative;
-  z-index: 60;
+  z-index: var(--z-modal);
   width: 100%;
   max-width: 560px;
   max-height: 90vh; /* Prevents it from growing taller than the screen */
@@ -200,7 +200,7 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  z-index: 100;
+  z-index: var(--z-dropdown);
   min-width: 130px;
   box-shadow: var(--shadow-md);
 }

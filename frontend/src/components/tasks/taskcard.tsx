@@ -14,6 +14,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical } from 'lucide-react';
 import Attachments from './attachments';
+import { useBrailleSpinner } from '@/hooks/useBrailleSpinner';
 
 const PRIORITY_MAP: Record<string, { color: string; label: string }> = {
   low:      { color: 'var(--priority-low)',      label: 'Low'      },
@@ -122,6 +123,8 @@ const setView                                                                   
   const completedCount                                                           = subtasks.filter(s => s.completed).length;
   const hasSubtasks                                                              = subtasks.length > 0;
   const allDone                                                                  = hasSubtasks && completedCount === subtasks.length;  
+  const isDoing                                                                  = hasSubtasks && completedCount > 0 && !task.completed;
+  const spinnerFrame                                                             = useBrailleSpinner(isDoing);
   const priority                                                                 = PRIORITY_MAP[task.priority] ?? PRIORITY_MAP.low;
   const dueDate                                                                  = task.deadline ? new Date(task.deadline) : null;
   const isDueToday                                                               = dueDate ? isToday(dueDate) : false;
@@ -345,11 +348,18 @@ const setView                                                                   
             {isSelected && <Check size={10} strokeWidth={3} />}
           </button>
           ) : (
-            <button className={styles.toggle} onClick={handleToggle} title={task.completed ? 'Mark incomplete' : 'Mark complete'}>
-              {task.completed
-                ? <Check size={12} strokeWidth={3} />
-                : <span className={styles.activeDot} />}
-            </button>
+          <button
+            className={`${styles.toggle} ${isDoing ? styles.toggleDoing : ''}`}
+            onClick={handleToggle}
+            title={task.completed ? 'Mark incomplete' : isDoing ? 'In progress' : 'Mark complete'}
+          >
+            {task.completed
+              ? `[✓]`
+              : isDoing
+                ? <span className={styles.brailleSpinner}>{spinnerFrame}</span>
+                : `[_]`}
+          </button>
+
           )
         }
       {/* Main content */}
