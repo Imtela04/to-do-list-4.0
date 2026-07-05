@@ -27,9 +27,12 @@ type ColId = 'todo' | 'in-progress' | 'done';
 
 function getTaskColumn(task: Task): ColId {
   if (task.completed) return 'done';
-  if (task.wip)       return 'in-progress';
+  const subtasks  = task.subtasks ?? [];
+  const isDoing   = subtasks.some(s => s.completed) && !task.completed;
+  if (task.wip || isDoing) return 'in-progress';
   return 'todo';
 }
+
 
 // ── Droppable column wrapper ──────────────────────────────────
 function DroppableColumn({ id, isOver, children }: { id: ColId; isOver: boolean; children: React.ReactNode }) {
