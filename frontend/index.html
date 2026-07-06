@@ -96,8 +96,17 @@
     .cursor { width: 10px; height: 24px; background-color: var(--accent-primary); margin-left: 4px; display: inline-block; animation: cursorBlink 1s step-end infinite; }
 
     /* Progress bar */
-    .progress-track { width: 16rem; height: 6px; background-color: var(--bg-glass); border-radius: 99px; overflow: hidden; position: relative; margin-top: 2rem; border: 1px solid var(--border-subtle); z-index: 10; }
-    .progress-bar { position: absolute; top: 0; height: 100%; border-radius: 99px; background: linear-gradient(to right, var(--accent-secondary), var(--accent-primary), var(--accent-tertiary)); animation: progressSlide 2s ease-in-out infinite alternate; }
+    .progress-track {
+      width: 16rem; height: 6px; background-color: var(--bg-glass);
+      background-image: repeating-linear-gradient(90deg, var(--border-subtle) 0px, var(--border-subtle) 8px, transparent 8px, transparent 12px);
+      border-radius: 4px; overflow: hidden; position: relative; margin-top: 2rem;
+      border: 1px solid var(--border-subtle); z-index: 10;
+    }
+    .progress-bar {
+      position: absolute; top: 0; height: 100%; border-radius: 4px;
+      background-image: repeating-linear-gradient(90deg, var(--accent-primary) 0px, var(--accent-primary) 8px, transparent 8px, transparent 12px);
+      animation: progressSlide 1.4s steps(12) infinite alternate;
+    }
     .processing { margin-top: 0.75rem; font-size: 0.75rem; color: var(--text-muted); letter-spacing: 0.1em; text-transform: uppercase; }
 
     /* Animations */
@@ -122,11 +131,11 @@
       </div>
 
       <div class="text-container">
-        <div class="loading-text"><span class="arrow">&gt;</span> Booting systems <span class="cursor"></span></div>
+      <div class="loading-text"><span class="arrow">&gt;</span> booting what-do.exe <span class="cursor"></span></div>
       </div>
 
       <div class="progress-track"><div class="progress-bar"></div></div>
-      <div class="processing">Processing Data</div>
+      <div class="processing">running</div>
     </div>
   </div>
   
