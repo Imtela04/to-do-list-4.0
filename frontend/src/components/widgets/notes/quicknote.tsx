@@ -1,10 +1,12 @@
 import { useNoteComposer } from '@/hooks/useNoteComposer';
 import { useAppStore } from '@/store/useAppStore';
-import { Lock } from 'lucide-react';
+import { Lock, LayoutDashboard } from 'lucide-react';
 import styles from './stickynote.module.css'; // reuse .noteForm, .textarea, .colorRow etc.
 import ModalShell from '../../common/moduleshell';
+import { useEffect } from 'react';
 
-export default function QuickNote({ onClose }: { onClose: () => void }) {
+export default function QuickNote({ onClose, onOpenBoard }: { onClose: () => void; onOpenBoard: () => void }) {
+
   const limits = useAppStore(s => s.limits);
   const counts = useAppStore(s => s.counts);
   const level  = useAppStore(s => s.level);
@@ -13,6 +15,10 @@ export default function QuickNote({ onClose }: { onClose: () => void }) {
   const { editorRef, color, setColor, limitError, hasDraft, handleInput, handleSubmit, isPending, NOTE_COLORS }
     = useNoteComposer(onClose);
 
+  useEffect(() => {
+    editorRef.current?.focus();
+  }, []);
+  
   if (notesLocked) {
     return (
       <ModalShell onClose={onClose} maxWidth={360}>
@@ -23,6 +29,11 @@ export default function QuickNote({ onClose }: { onClose: () => void }) {
 
   return (
     <ModalShell onClose={onClose} maxWidth={420}>
+      <div className={styles.quickNoteHeader}>
+        <button className={styles.noteBtn} onClick={onOpenBoard} title="Open notes board">
+          <LayoutDashboard size={14} />
+        </button>
+      </div>
       <div className={styles.noteForm} style={{ border: 'none', padding: 0, borderLeft: `4px solid ${color}`, paddingLeft: 12 }}>
         {limitError && <div className={styles.limitBanner}><Lock size={12} /><span>{limitError}</span></div>}
         {hasDraft && <div className={styles.draftBadge}><span>📝 Draft restored</span></div>}
@@ -33,7 +44,6 @@ export default function QuickNote({ onClose }: { onClose: () => void }) {
           suppressContentEditableWarning
           onInput={handleInput}
           data-placeholder="Quick note..."
-          autoFocus
         />
         <div className={styles.colorRow}>
           {NOTE_COLORS.map(c => (

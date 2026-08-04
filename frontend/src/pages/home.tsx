@@ -68,8 +68,9 @@ export default function Dashboard() {
   };
 
   useKeyboardShortcuts({
-    onNewTask:       () => setAddOpen(true),
-    onToggleNotes:   () => setNotesOpen(o => !o),
+    onNewTask:        () => setAddOpen(true),
+    onToggleNotes:    () => setNotesOpen(o => !o),
+    onQuickNote:      () => setQuickNoteOpen(true),   // add this
     onTogglePomodoro: () => setView(view === 'pomodoro' ? lastView : 'pomodoro'),
     onToggleView: () => setView(
       view === 'list'     ? 'calendar' :
@@ -104,7 +105,12 @@ export default function Dashboard() {
         onAddTask={() => setAddOpen(true)}
         onQuickNote={() => setQuickNoteOpen(true)}
       />
-      {quickNoteOpen && <QuickNote onClose={() => setQuickNoteOpen(false)}/>}
+      {quickNoteOpen && (
+        <QuickNote
+          onClose={() => setQuickNoteOpen(false)}
+          onOpenBoard={() => { setQuickNoteOpen(false); setNotesOpen(true); }}
+        />
+      )}
       <AddTask open={addOpen} setOpen={setAddOpen} />
 
       <GuestBanner />

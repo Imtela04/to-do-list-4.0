@@ -203,3 +203,11 @@
 @media (hover: none) {
   .cardActions { opacity: 1; }
 }
+
+.searchWrap {
+  position: relative;
+  flex: 1;
+  min-width: 0;   /* add this line */
+  display: flex;
+  align-items: center;
+}

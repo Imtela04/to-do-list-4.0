@@ -3,10 +3,10 @@ import { useFocusTrap } from '@/hooks/useFocusTrap';
 import styles from './shortcutsmodal.module.css';
 
 const SHORTCUTS = [
-  { key: 'N',   desc: 'New task' },
-  { key: 'P',   desc: 'Toggle Pomodoro' },
-  { key: 'M',   desc: 'Toggle sticky notes' },
-  { key: 'V',   desc: 'Toggle list / calendar view' },
+  { key: 'N',       desc: 'New task' },
+  { key: 'M',       desc: 'Quick add note' },
+  { key: 'Shift+M', desc: 'Sticky notes board' },
+  { key: 'V',       desc: 'Toggle views' },
   { key: '1',   desc: 'Show all tasks' },
   { key: '2',   desc: 'Show active tasks' },
   { key: '3',   desc: 'Show completed tasks' },

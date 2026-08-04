@@ -332,3 +332,8 @@
   .note:hover { border-color: var(--border-subtle); }
 
 }
+.quickNoteHeader {
+  display: flex;
+  justify-content: flex-start;   /* was flex-end */
+  margin-bottom: 4px;
+}

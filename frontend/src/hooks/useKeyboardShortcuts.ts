@@ -4,14 +4,14 @@ import { useAppStore } from '@/store/useAppStore';
 interface ShortcutHandlers {
   onNewTask: () => void;
   onToggleNotes: () => void;
-  onTogglePomodoro: () => void;
+  onQuickNote: () => void;
   onToggleView: () => void;
 }
 
 export function useKeyboardShortcuts({
   onNewTask,
   onToggleNotes,
-  onTogglePomodoro,
+  onQuickNote,
   onToggleView,
 }: ShortcutHandlers) {
   const setFilter = useAppStore(s => s.setFilter);
@@ -32,11 +32,15 @@ export function useKeyboardShortcuts({
 
     if (isTyping) return;
 
+    if (e.key.toLowerCase() === 'm') {
+      e.preventDefault();
+      e.shiftKey ? onToggleNotes() : onQuickNote();
+      return;
+    }
+
     switch (e.key) {
       case 'n': e.preventDefault(); onNewTask(); break;
-      case 'p': e.preventDefault(); onTogglePomodoro(); break;
       case 'v': e.preventDefault(); onToggleView(); break;
-      case 'm': e.preventDefault(); onToggleNotes(); break;
       case '1': setFilter({ status: 'all' }); break;
       case '2': setFilter({ status: 'active' }); break;
       case '3': setFilter({ status: 'completed' }); break;
@@ -47,7 +51,7 @@ export function useKeyboardShortcuts({
 
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [onNewTask, onToggleNotes, onTogglePomodoro, onToggleView, setFilter]);
+  }, [onNewTask, onToggleNotes, onQuickNote, onToggleView, setFilter]);
 }
 
 function showShortcutsHelp() {
