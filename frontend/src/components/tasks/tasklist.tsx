@@ -106,8 +106,6 @@ export default function TaskList() {
 
   useEffect(() => { setPage(1); }, [filter]);
 
-  const counts = useAppStore(s => s.counts);
-  const tasksLocked = limits.tasks !== null && counts.tasks >= limits.tasks;
   const pageItems = Array.from({ length: totalPages }, (_, i) => i + 1)
     .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
     .reduce<(number | '...')[]>((acc, p, idx, arr) => {
@@ -116,24 +114,29 @@ export default function TaskList() {
       return acc;
     }, []);
 
-    const handleExportCsv = () => {
-    const headers = ['Title', 'Description', 'Priority', 'Status', 'Category', 'Deadline', 'Created'];
+  const csvEscape = (val: unknown): string => {
+    const str = String(val ?? '');
+    return `"${str.replace(/"/g, '""')}"`;
+  };
+
+  const handleExportCsv = () => {
+    const headers = ['Title', 'Description', 'Priority', 'Status', 'Category', 'Deadline', 'Created', 'Subtasks'];
     const rows = filteredTasks.map(t => [
-      `"${t.title.replace(/"/g, '""')}"`,
-      t.description,
-      t.priority,
-      t.completed ? 'completed' : 'active',
-      t.category ? t.category.name : '',
-      t.deadline ? new Date(t.deadline).toLocaleDateString() : 'null',
-      new Date(t.created_at).toLocaleDateString(),
+      csvEscape(t.title),
+      csvEscape(t.description),
+      csvEscape(t.priority),
+      csvEscape(t.completed ? 'completed' : 'active'),
+      csvEscape(t.category ? t.category.name : ''),
+      csvEscape(t.deadline ? new Date(t.deadline).toLocaleDateString() : 'null'),
+      csvEscape(new Date(t.created_at).toLocaleDateString()),
+      csvEscape((t.subtasks ?? []).map(s => `${s.completed ? '[x]' : '[ ]'} ${s.title}`).join('; ')),
     ]);
-    const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+    const csv = [headers.map(csvEscape), ...rows].map(r => r.join(',')).join('\n');
     const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
     const a = Object.assign(document.createElement('a'), { href: url, download: 'tasks.csv' });
     a.click();
     URL.revokeObjectURL(url);
   };
-
   return (
     <div className={styles.container}>
       <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>

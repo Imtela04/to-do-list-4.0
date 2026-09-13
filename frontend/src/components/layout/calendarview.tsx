@@ -1,8 +1,12 @@
 import { useState } from 'react';
+import {
+  DndContext, DragOverlay, useDraggable, useDroppable, PointerSensor,
+  useSensor, useSensors, type DragEndEvent,
+} from '@dnd-kit/core';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { AxiosResponse } from 'axios';
 import { useAppStore } from '../../store/useAppStore';
-import { createTask, deleteTask, toggleTask } from '@/api/services';
+import { createTask, deleteTask, toggleTask, updateTask } from '@/api/services';
 import { ChevronLeft, ChevronRight, Plus, X, Check, Lock, Paperclip } from 'lucide-react';
 import styles from './calendarview.module.css';
 import { useTasksQuery } from '@/hooks/useTasksQuery';
@@ -18,6 +22,37 @@ interface SelectedDay {
   day:   number;
 }
 
+function DroppableDay({ id, className, onClick, children }: {
+  id: string; className: string; onClick: () => void; children: React.ReactNode;
+}) {
+  const { setNodeRef, isOver } = useDroppable({ id });
+  return (
+    <div
+      ref={setNodeRef}
+      className={`${className} ${isOver ? styles.cellDropOver : ''}`}
+      onClick={onClick}
+    >
+      {children}
+    </div>
+  );
+}
+
+function DraggablePill({ task, priority, ...props }: { task: Task; priority: string } & React.HTMLAttributes<HTMLSpanElement>) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: task.id });
+  return (
+    <span
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      className={`${styles.pill} ${isDragging ? styles.pillDragging : ''}`}
+      data-priority={priority}
+      title={task.title}
+      {...props}
+    >
+      {task.title}{task.attachments.length > 0 ? <Paperclip size={8}/> : ''}
+    </span>
+  );
+}
 interface CalendarViewProps {
   onViewTask?: (taskId: number) => void;
 }
@@ -55,9 +90,27 @@ export default function CalendarView({ onViewTask }: CalendarViewProps) {
     tasksByDay[day].push(t);
   });
 
-   const selectedTasks                          = selectedDay ? (tasksByDay[selectedDay.day] ?? []) : [];
+  const selectedTasks                          = selectedDay ? (tasksByDay[selectedDay.day] ?? []) : [];
+  
+  const [draggingTask, setDraggingTask] = useState<Task | null>(null);
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
-
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    setDraggingTask(null);
+    if (!over) return;
+    const task = tasks.find(t => t.id === active.id);
+    if (!task) return;
+    const [y, m, d] = String(over.id).split('-').map(Number);
+    const newDeadline = new Date(y, m, d, 23, 59, 0, 0);
+    // preserve time-of-day if task had one set
+    if (task.deadline) {
+      const old = new Date(task.deadline);
+      const isTimed = !(old.getHours() === 23 && old.getMinutes() === 59);
+      if (isTimed) newDeadline.setHours(old.getHours(), old.getMinutes(), 0, 0);
+    }
+    updateDeadlineMutation.mutate({ id: task.id, deadline: newDeadline.toISOString() });
+  };
   const addMutation= useMutation<AxiosResponse<Task>, Error, TaskPayload, MutateCtx>({
     mutationFn: (payload) => createTask(payload),
     onSuccess: (res) => {
@@ -116,6 +169,20 @@ export default function CalendarView({ onViewTask }: CalendarViewProps) {
     },
   });
 
+  const updateDeadlineMutation = useMutation<AxiosResponse<Task>, Error, { id: number; deadline: string }, MutateCtx>({
+    mutationFn: ({ id, deadline }) => updateTask(id, { deadline }),
+    onMutate: async ({ id, deadline }) => {
+      await queryClient.cancelQueries({ queryKey: ['tasks'] });
+      const previous = queryClient.getQueryData<Task[]>(['tasks']);
+      queryClient.setQueryData(['tasks'], (old: Task[] | undefined) =>
+        old?.map(t => t.id === id ? { ...t, deadline } : t) ?? []
+      );
+      return { previous };
+    },
+    onError: (_err, _vars, ctx) => queryClient.setQueryData(['tasks'], ctx?.previous),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ['tasks'] }),
+  });
+
   const handleDayClick = (day: number | null): void => {
     if (!day) return;
     if (selectedDay?.day === day && selectedDay?.month === month && selectedDay?.year === year) {
@@ -152,40 +219,44 @@ export default function CalendarView({ onViewTask }: CalendarViewProps) {
         <div className={styles.dayNames}>
           {DAYS_SHORT.map(d => <div key={d} className={styles.dayName}>{d}</div>)}
         </div>
-        <div className={styles.cells}>
-          {calCells.map((day, i) => {
-            const dayTasks = day ? (tasksByDay[day] ?? []) : [];
-            const active   = dayTasks.filter(t => !t.completed);
-            const done     = dayTasks.filter(t => t.completed);
-            return (
-              <div
-                key={i}
-                className={`${styles.cell} ${!day ? styles.empty : ''} ${day && isToday(day) ? styles.today : ''} ${day && isSelected(day) ? styles.selected : ''} ${day && dayTasks.length > 0 ? styles.hasTasks : ''}`}
-                onClick={() => handleDayClick(day)}
-              >
-                {day && (
-                  <>
-                    <span className={styles.dayNum}>{day}</span>
-                    <div className={styles.pills}>
-                      {active.slice(0, 3).map(t => (
-                        <span
-                          key={t.id}
-                          className={styles.pill}
-                          data-priority={t.priority}
-                          title={t.title}
-                        >
-                          {t.title}{t.attachments.length>0 ? <Paperclip size={8}/>: ''}
-                        </span>
-                      ))}
-                      {active.length > 3 && <span className={styles.pillMore}>+{active.length - 3}</span>}
-                      {done.length > 0 && active.length === 0 && <span className={styles.pillDone}>✓ {done.length}</span>}
-                    </div>
-                  </>
-                )}
-              </div>
-            );
-          })}
-        </div>
+        <DndContext sensors={sensors} onDragStart={({active}) => setDraggingTask(tasks.find(t => t.id === active.id) ?? null)} onDragEnd={handleDragEnd}>
+          <div className={styles.cells}>
+            {calCells.map((day, i) => {
+              const dayTasks = day ? (tasksByDay[day] ?? []) : [];
+              const active   = dayTasks.filter(t => !t.completed);
+              const done     = dayTasks.filter(t => t.completed);
+              const cellId   = day ? `${year}-${month}-${day}` : `empty-${i}`;
+              return (
+                <DroppableDay
+                  key={i}
+                  id={cellId}
+                  className={`${styles.cell} ${!day ? styles.empty : ''} ${day && isToday(day) ? styles.today : ''} ${day && isSelected(day) ? styles.selected : ''} ${day && dayTasks.length > 0 ? styles.hasTasks : ''}`}
+                  onClick={() => handleDayClick(day)}
+                >
+                  {day && (
+                    <>
+                      <span className={styles.dayNum}>{day}</span>
+                      <div className={styles.pills}>
+                        {active.slice(0, 3).map(t => (
+                          <DraggablePill key={t.id} task={t} priority={t.priority} />
+                        ))}
+                        {active.length > 3 && <span className={styles.pillMore}>+{active.length - 3}</span>}
+                        {done.length > 0 && active.length === 0 && <span className={styles.pillDone}>✓ {done.length}</span>}
+                      </div>
+                    </>
+                  )}
+                </DroppableDay>
+              );
+            })}
+          </div>
+          <DragOverlay dropAnimation={null}>
+            {draggingTask && (
+              <span className={`${styles.pill} ${styles.pillOverlay}`} data-priority={draggingTask.priority}>
+                {draggingTask.title}
+              </span>
+            )}
+          </DragOverlay>
+        </DndContext>
       </div>
 
       {selectedDay && (
