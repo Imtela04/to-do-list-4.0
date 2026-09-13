@@ -259,3 +259,29 @@
 	text-align: left;
 	min-width: 180px;
 }
+
+.popStack {
+	position: relative;
+	height: 0;
+}
+
+.popPoint {
+	position: absolute;
+	left: 8px;
+	bottom: 4px;
+	color: var(--accent-tertiary);
+	font-weight: 700;
+	font-size: 0.72rem;
+	animation: popFloat 1.2s ease-out forwards;
+	pointer-events: none;
+}
+
+@keyframes popFloat {
+	0%   { opacity: 0; transform: translateY(4px) scale(0.9); }
+	15%  { opacity: 1; transform: translateY(0) scale(1.1); }
+	100% { opacity: 0; transform: translateY(-18px) scale(1); }
+}
+
+.bootLog div {
+	color: var(--text-muted);
+}

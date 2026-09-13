@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styles from './loadingScreen.module.css';
 
-const BOOT_LOG = ['[ok] auth token', '[ok] task cache', '[ok] xp ledger', '[..] rendering'];
+const BOOT_LOG = ['auth token', 'task cache', 'xp ledger', 'rendering'];
 
 const WITTY_MESSAGES: string[] = [
     "initializing task queue",
@@ -29,6 +29,8 @@ const LoadingScreen: React.FC = () => {
 		const [displayedText, setDisplayedText] = useState<string>("");
 		const [isVisible, setIsVisible] = useState<boolean>(false);
 		const [logIndex, setLogIndex] = useState(0);
+		const [pops, setPops] = useState<{ id: number; value: number }[]>([]);
+		const popIdRef = useRef(0);
 		useEffect(() => {
 			const id = setInterval(() => setLogIndex(i => Math.min(i + 1, BOOT_LOG.length - 1)), 300);
 			return () => clearInterval(id);
@@ -45,6 +47,11 @@ const LoadingScreen: React.FC = () => {
 			const messageDuration = 4000; // Time spent on each message
 			const interval = setInterval(() => {
 				setMessageIndex((prev) => (prev + 1) % WITTY_MESSAGES.length);
+				const id = popIdRef.current++;
+				setPops((p) => [...p, { id, value: 5 }]);
+				setTimeout(() => {
+					setPops((p) => p.filter((pop) => pop.id !== id));
+				}, 1200);
 			}, messageDuration);
 			return () => clearInterval(interval);
 		}, []);
@@ -80,7 +87,11 @@ const LoadingScreen: React.FC = () => {
 
 				{/* Typewriter Text Container */}
 				<div className={styles.bootLog}>
-					{BOOT_LOG.slice(0, logIndex + 1).map((line, i) => <div key={i}>{line}</div>)}
+					{BOOT_LOG.slice(0, logIndex + 1).map((line, i) => (
+						<div key={i}>
+							{i < logIndex ? '[✓]' : '[..]'} {line}
+						</div>
+					))}
 				</div>
 				<div className={styles.textContainer}>
 					<h2 className={styles.heading}>
@@ -99,7 +110,12 @@ const LoadingScreen: React.FC = () => {
 				</div>
 					<div className={styles.processingText}>
 						<div className={`${styles.spinner} icon-loader`}></div>
-						+{Math.min(messageIndex * 5 + 5, 100)}% synced
+						<span>{Math.min(messageIndex * 5 + 5, 100)}% synced</span>
+						<div className={styles.popStack}>
+							{pops.map((pop) => (
+								<span key={pop.id} className={styles.popPoint}>+{pop.value}%</span>
+							))}
+						</div>
 					</div>
 			</div>
 		);
