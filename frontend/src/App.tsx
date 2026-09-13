@@ -9,6 +9,7 @@ import OfflineBanner from '@/components/layout/offlinebanner';
 import DashboardSkeleton from '@/components/layout/skeletons/dashboardskeleton';
 import { useDelayedLoading } from '@/hooks/useDelayedLoading';
 import InstallBanner from '@/components/layout/installbanner';
+import LoadingScreen from '@/components/layout/LoadingScreen';
 
 //lazy load all pages
 const Landing = lazy(() => import('@/pages/landing'));
@@ -99,7 +100,7 @@ export default function App() {
       <OfflineBanner />
       <InstallBanner />
         <ErrorHandlerRegistrar />
-        <Suspense fallback={null}>
+        <Suspense fallback={<LoadingScreen />}>
           <Routes key={authKey}>
             <Route path="/" element={localStorage.getItem('authToken') ? <PrivateRoute><Dashboard /></PrivateRoute> : <Landing />} />
             <Route path="/landing" element={<Landing />} />

@@ -92,7 +92,10 @@ const LoadingScreen: React.FC = () => {
 
 				{/* Creative Progress Track */}
 				<div className={styles.progressTrack}>
-					<div className={styles.progressBar}></div>
+					<div
+						className={styles.progressBar}
+						style={{ width: `${Math.min(messageIndex * 5 + 5, 100)}%` }}
+					></div>
 				</div>
 					<div className={styles.processingText}>
 						<div className={`${styles.spinner} icon-loader`}></div>

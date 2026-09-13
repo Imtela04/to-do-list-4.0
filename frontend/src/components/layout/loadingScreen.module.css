@@ -183,7 +183,13 @@
 			transparent 8px,
 			transparent 12px
     );
-    animation: progressSlide 1.4s steps(12) infinite alternate;
+    width: 0%;
+    transition: width 3.8s linear;
+}
+
+@keyframes progressSlide {
+	0%   { width: 0%; }
+	100% { width: 100%; }
 }
 
 .processingText {
