@@ -13,7 +13,14 @@ const WITTY_MESSAGES: string[] = [
     "restoring sticky notes",
     "calculating overdue penalties",
     "optimizing task flow",
-
+    "dusting off the category tabs",
+    "reheating yesterday's momentum",
+    "counting completed tasks",
+    "aligning deadlines to reality",
+    "polishing the progress bar",
+    "negotiating with procrastination",
+    "warming up the braille spinner",
+    "reticulating subtasks",
 ];
 
 const LoadingScreen: React.FC = () => {

@@ -2,7 +2,7 @@
 
 ### 🔵 Doing (1)
 
-#### improving ui — `7/11`
+#### improving ui — `8/11`
 Tags: `what-do`, `High`
 
 - [x] fix sidepanel
@@ -12,8 +12,8 @@ Tags: `what-do`, `High`
 - [x] add close (and close shortcut) to everything
 - [x] browse for better monospace fonts
 - [x] draggability in kanban mode and calendar — calendar moves should auto-update dates when a task is dragged between dates
+- [x] subtask font color
 - [ ] (optional) resizable side panels
-- [ ] subtask font color
 - [ ] change messages on loading screen
 - [ ] settings page?
 
