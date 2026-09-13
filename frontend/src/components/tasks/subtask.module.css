@@ -38,7 +38,7 @@
 .subtaskLabel {
   flex: 1;
   font-size: 0.8rem;
-  color: var(--text-primary);
+  color: var(--text-secondary);
   line-height: 1.4;
 }
 
