@@ -43,9 +43,18 @@ No subtasks yet. Requires data model change: StickyNote/NotePayload need a task 
 - [x] fix column mismatch (escape all fields, not just title)
 - [x] add subtask list in csv
 
+#### loading screen overhaul
+- [x] replaced witty message copy (fresh set, same tone)
+- [x] fixed progress bar to actually fill (was a decorative infinite-loop animation with no real width tracking)
+- [x] fixed blank-screen flash on route transitions (Suspense fallback was `null`; now shows LoadingScreen)
+- [x] fixed duplicate LoadingScreen flicker after login (Login no longer resets `loading` before navigate)
+- [x] added game-style "+5%" floating point animation on each message cycle
+- [x] boot log now shows `[..]` → `[✓]` progression per line instead of static `[ok]`/`[..]` prefixes
+
 ## Notes for Agents
 
 - All tasks above are tagged `what-do` in the source board; keep that tag/label convention when creating or referencing tasks in code (e.g. seed data, fixtures, issue templates).
 - Progress fractions (`x/y`) reflect subtask checklist completion, not code coverage or test status — don't conflate the two.
 - "improving ui" is the active work item; prioritize UI/UX-related changes (sidepanel behavior, shortcuts, fonts, drag-and-drop, loading states, settings page) over backlog items unless directed otherwise.
 - Settings page work should absorb theme customisation controls currently living in the usernav drawer (theme toggle, custom colors, email, delete account) rather than duplicating a separate surface.
+- Loading screen (`LoadingScreen.tsx`) is now used both for auth-flow waits (login/register/reset) and as the `Suspense` fallback for lazy-loaded route chunks in `App.tsx` — any future edits to its styling/behavior affect both contexts.

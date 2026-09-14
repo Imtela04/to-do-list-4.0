@@ -8,7 +8,9 @@ import styles from './addtask.module.css';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { Pickaxe, Trash, Lock } from 'lucide-react';
+import { useTasksQuery } from '@/hooks/useTasksQuery';
 import { useAppStore } from '@/store/useAppStore';
+import type { Task } from '@/types';
 import ModalShell from '../common/moduleshell';
 
 const PRIORITIES = ['low', 'medium', 'high', 'critical'] as const;
@@ -25,6 +27,7 @@ interface TaskForm {
   recurrence: string;
 }
 
+type TaskDraft = TaskForm & { subtasks: string[] };
 interface AddTaskProps {
   open:    boolean;
   setOpen: (open: boolean) => void;
@@ -34,36 +37,70 @@ export default function AddTask({ open, setOpen }: AddTaskProps) {
   const queryClient = useQueryClient();
   
   const { data: categories = [] }                  = useCategoriesQuery();
-  const { save, load, clear }                      = useDraft<TaskForm>(DRAFT_KEY);
+  const { save, load, clear }                      = useDraft<TaskDraft>(DRAFT_KEY);
   const [form, setForm]                            = useState<TaskForm>({title: '', description: '', priority: '', category: '', due_date: null, due_time: null, timed: false, recurrence: '', });
   const [hasDraft, setHasDraft]                    = useState(!!load());
   const [limitError, setLimitError]                = useState<string | null>(null);
   const [pendingSubtasks, setPendingSubtasks]      = useState<string[]>([]);
   const [subtaskInput, setSubtaskInput]            = useState('');
   const isGuest                                    = useAppStore(s=>s.isGuest);
+  const { data: tasks = [] }                       = useTasksQuery();
+  const setFocusTask                               = useAppStore(s => s.setFocusTask);
+  const [duplicateTask, setDuplicateTask]          = useState<Task | null>(null);
 
+  const checkDuplicate = (): void => {
+    const match = tasks.find(
+      t => t.title.trim().toLowerCase() === form.title.trim().toLowerCase()
+    );
+    setDuplicateTask(form.title.trim() && match ? match : null);
+  };
   const SUBTASK_LIMIT = 10;
 
   useEffect(() => {
     if (open) {
       setLimitError(null);
-      setPendingSubtasks([]);
       setSubtaskInput('');
       const draft = load();
       if (draft) {
-        setForm({ ...draft, due_date: draft.due_date ? new Date(draft.due_date) : null });
+        const { subtasks, ...formFields } = draft;
+        setForm({ ...formFields, due_date: formFields.due_date ? new Date(formFields.due_date) : null });
+        setPendingSubtasks(subtasks ?? []);
+        setHasDraft(true);
       } else {
         setForm({ title: '', description: '', priority: '', category: '', due_date: null, due_time: null, timed: false, recurrence: '' });
+        setPendingSubtasks([]);
       }
     }
   }, [open]);
 
+  const persistDraft = (formData: TaskForm, subtasks: string[]): void => {
+    const isEmpty = !formData.title && !formData.description && !formData.priority &&
+      !formData.category && !formData.due_date && subtasks.length === 0;
+    if (isEmpty) { clear(); setHasDraft(false); }
+    else { save({ ...formData, due_date: formData.due_date ?? null, subtasks }); setHasDraft(true); }
+  };
+
   const set = <K extends keyof TaskForm>(key: K, val: TaskForm[K]): void => {
+    if (key === 'title') setDuplicateTask(null); // add this line
     setForm(f => {
       const updated = { ...f, [key]: val };
-      const isEmpty = !updated.title && !updated.description && !updated.priority && !updated.category && !updated.due_date;
-      if (isEmpty) { clear(); setHasDraft(false); }
-      else { save({ ...updated, due_date: updated.due_date ?? null }); setHasDraft(true); }
+      persistDraft(updated, pendingSubtasks);
+      return updated;
+    });
+  };
+
+  const addPendingSubtask = (title: string): void => {
+    setPendingSubtasks(prev => {
+      const updated = [...prev, title];
+      persistDraft(form, updated);
+      return updated;
+    });
+  };
+
+  const removePendingSubtask = (index: number): void => {
+    setPendingSubtasks(prev => {
+      const updated = prev.filter((_, j) => j !== index);
+      persistDraft(form, updated);
       return updated;
     });
   };
@@ -147,8 +184,20 @@ export default function AddTask({ open, setOpen }: AddTaskProps) {
         placeholder="What do?"
         value={form.title}
         onChange={e => set('title', e.target.value)}
+        onBlur={checkDuplicate}
         onKeyDown={e => { if (e.key === 'Enter') handleSubmit(); if (e.key === 'Escape') handleCancel(); }}
       />
+      {duplicateTask && (
+        <div className={styles.duplicateWarning}>
+          <span>A task named "{duplicateTask.title}" already exists</span>
+          <button
+            className={styles.duplicateViewBtn}
+            onClick={() => { setFocusTask(duplicateTask.id); setOpen(false); }}
+          >
+            View existing
+          </button>
+        </div>
+      )}
       <textarea
         className={styles.titleInput}
         placeholder="Description (optional)"
@@ -246,7 +295,7 @@ export default function AddTask({ open, setOpen }: AddTaskProps) {
               <span className={styles.subtaskLabel}>{title}</span>
               <button
                 className={styles.subtaskDel}
-                onClick={() => setPendingSubtasks(prev => prev.filter((_, j) => j !== i))}
+                onClick={() => removePendingSubtask(i)}
               >×</button>
             </div>
           ))}
@@ -258,13 +307,14 @@ export default function AddTask({ open, setOpen }: AddTaskProps) {
               placeholder="Add subtask"
               value={subtaskInput}
               onChange={e => setSubtaskInput(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter' && subtaskInput.trim()) {
-                  setPendingSubtasks(prev => [...prev, subtaskInput.trim()]);
-                  setSubtaskInput('');
-                }
-                if (e.key === 'Escape') setSubtaskInput('');
-              }}
+             onKeyDown={e => {
+              if (e.key === 'Enter' && subtaskInput.trim()) {
+                addPendingSubtask(subtaskInput.trim());
+                setSubtaskInput('');
+              }
+              if (e.key === 'Escape') setSubtaskInput('');
+            }}
+
             />
           </div>
         )}

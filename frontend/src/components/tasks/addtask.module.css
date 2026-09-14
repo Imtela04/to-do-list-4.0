@@ -287,3 +287,27 @@
 .subtaskInput  { flex: 1; background: rgba(255,255,255,0.04); border: 1px dashed rgba(255,255,255,0.1); border-radius: 8px; padding: 5px 10px; font-size: 0.8rem; color: var(--text-primary); outline: none; width: 100%; }
 .subtaskInput:focus { border-color: rgba(124,106,255,0.4); }
 .subtaskAddRow { display: flex; align-items: center; }
+.duplicateWarning {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 10px;
+  font-size: 0.75rem;
+  color: var(--accent-warm);
+  background: rgba(255, 170, 106, 0.08);
+  border: 1px solid rgba(255, 170, 106, 0.2);
+  border-radius: var(--radius-sm);
+}
+
+.duplicateViewBtn {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent-primary);
+  flex-shrink: 0;
+  text-decoration: underline;
+  transition: color var(--transition-fast);
+}
+.duplicateViewBtn:hover {
+  color: var(--accent-tertiary);
+}
