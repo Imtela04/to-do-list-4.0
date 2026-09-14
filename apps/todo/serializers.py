@@ -14,11 +14,16 @@ class SubtaskSerializer(serializers.ModelSerializer):
 
 class StickyNoteSerializer(serializers.ModelSerializer):
     owner = UserPublicSerializer(read_only=True)
+    task  = serializers.SerializerMethodField()
+
     class Meta:
         model  = StickyNotes
-        fields = ['id', 'note', 'color', 'owner']
+        fields = ['id', 'note', 'color', 'owner', 'task']
 
-
+    def get_task(self, obj):
+        if not obj.task:
+            return None
+        return {'id': obj.task.id, 'title': obj.task.title}
 class AttachmentSerializer(serializers.ModelSerializer):
     url = serializers.SerializerMethodField()
 

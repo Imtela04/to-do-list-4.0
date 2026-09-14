@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search, PenBox, Trash, X } from 'lucide-react';
+import { Search, PenBox, Trash, X, LinkIcon } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import { useNotesQuery } from '@/hooks/useNotesQuery';
 import { updateStickyNote, deleteStickyNote } from '@/api/services';
@@ -81,6 +81,14 @@ export default function NotesBoard({ onClose }: { onClose: () => void }) {
           {filtered.map((note: StickyNote) => (
             <div key={note.id} className={styles.card} style={{ '--note-color': note.color } as React.CSSProperties}>
               <div className={styles.cardAccent} />
+              {note.task && (
+                <button
+                  className={styles.taskLinkBadge}
+                  onClick={(e) => { e.stopPropagation(); /* import + call setFocusTask/setView here too */ }}
+                >
+                  <LinkIcon size={9} /> {note.task.title}
+                </button>
+              )}
               {editingId === note.id ? (
                 <div
                   ref={editRef}

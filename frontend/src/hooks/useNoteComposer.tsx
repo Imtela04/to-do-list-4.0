@@ -6,24 +6,26 @@ import type { StickyNote } from '@/types';
 import { normalizeNoteHtml } from '@/utils/normalizeNoteHtml';
 
 const NOTE_COLORS = ['#7c6aff', '#ff6a9e', '#6affdc', '#ffaa6a', '#6ab4ff', '#c96aff'];
-
-export function useNoteComposer(onSaved: () => void) {
+export function useNoteComposer(onSaved: () => void, initialTaskId: number | null = null) {
   const queryClient = useQueryClient();
   const editorRef = useRef<HTMLDivElement | null>(null);
   const [color, setColor] = useState(NOTE_COLORS[0]);
+  const [linkedTaskId, setLinkedTaskId] = useState<number | null>(initialTaskId);
   const [limitError, setLimitError] = useState<string | null>(null);
   const { save, load, clear } = useDraft('draft_note');
   const [hasDraft, setHasDraft] = useState(!!load());
 
   const addMutation = useMutation({
-    mutationFn: (payload: { note: string; color: string }) => createStickyNote(payload),
+    mutationFn: (payload: { note: string; color: string; task_id?: number | null }) => createStickyNote(payload),
     onSuccess: (res) => {
       queryClient.setQueryData(['notes'], (old: StickyNote[] | undefined) => [...(old ?? []), res.data]);
       queryClient.invalidateQueries({ queryKey: ['notes'] });
       clear();
       setHasDraft(false);
+      setLinkedTaskId(null);
       onSaved();
     },
+
     onError: (err: any) => {
       if (err.response?.status === 403 && err.response?.data?.limit_reached) {
         setLimitError(err.response.data.detail);
@@ -37,12 +39,14 @@ export function useNoteComposer(onSaved: () => void) {
     else { clear(); setHasDraft(false); }
   };
 
-	const handleSubmit = () => {
-		const raw = editorRef.current?.innerHTML || '';
-		if (!raw.trim() && !raw.includes('<img')) return;
-		setLimitError(null);
-		addMutation.mutate({ note: normalizeNoteHtml(raw), color });
-	};
+
+  const handleSubmit = () => {
+    const raw = editorRef.current?.innerHTML || '';
+    if (!raw.trim() && !raw.includes('<img')) return;
+    setLimitError(null);
+    addMutation.mutate({ note: normalizeNoteHtml(raw), color, task_id: linkedTaskId });
+  };
+
 
 	const discardDraft = () => {
 		clear();
@@ -61,6 +65,9 @@ export function useNoteComposer(onSaved: () => void) {
 
   
 
-  return { 
-		editorRef, color, setColor, limitError, setLimitError, hasDraft, hydrate, handleInput, handleSubmit, isPending: addMutation.isPending, NOTE_COLORS, discardDraft};
+    return {
+    editorRef, color, setColor, limitError, setLimitError, hasDraft, hydrate,
+    handleInput, handleSubmit, isPending: addMutation.isPending, NOTE_COLORS, discardDraft,
+    linkedTaskId, setLinkedTaskId,
+  };
 }

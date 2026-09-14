@@ -14,7 +14,7 @@ Tags: `what-do`, `High`
 - [x] draggability in kanban mode and calendar — calendar moves should auto-update dates when a task is dragged between dates
 - [x] subtask font color
 - [ ] (optional) resizable side panels
-- [ ] change messages on loading screen
+- [x] change messages on loading screen
 - [ ] settings page?
 
 ### ⚪ To Do (5)
@@ -31,11 +31,11 @@ No subtasks yet. Note: `pendingSubtasks` state in AddTask exists but isn't persi
 No subtasks yet. Needs repro steps — keyboard handler logic looks correct on inspection (isTyping guard covers inputs/contentEditable).
 
 #### link notes to tasks feature
-No subtasks yet. Requires data model change: StickyNote/NotePayload need a task reference field.
-
+[x]No subtasks yet. Requires data model change: StickyNote/NotePayload need a task reference field.
+wire an "Add Note" quick-action into TaskCard itself (pre-linking to that task, opening QuickNote directly)
 #### add error message for 'task already exists' — `0/2`
-- [ ] error toast upon name completion instead of after trying to save
-- [ ] expand existing task with same name (or give an option to, or something — idk)
+- [x] error toast upon name completion instead of after trying to save
+- [x] expand existing task with same name (or give an option to, or something — idk)
 
 ### ✅ Done
 

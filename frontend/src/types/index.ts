@@ -33,6 +33,8 @@ export interface StickyNote {
   id:    number;
   note:  string;
   color: string;
+  task:  { id: number; title: string } | null;
+
 }
 
 export interface Limits {
@@ -118,6 +120,7 @@ export interface CategoryPayload {
 export interface NotePayload {
   note:  string;
   color: string;
+  task_id?: number | null;
 }
 
 export interface ThemePayload {

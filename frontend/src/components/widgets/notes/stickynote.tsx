@@ -1,10 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { AxiosResponse } from 'axios';
-import { useAppStore } from '../../../store/useAppStore';
+import { useTasksQuery } from '@/hooks/useTasksQuery';
+import { useAppStore } from '../../../store/useAppStore'; // already imported — just add setFocusTask/setView below
 import { updateStickyNote, deleteStickyNote } from '@/api/services';
 import styles from './stickynote.module.css';
-import { PenLine, Trash, PenBox, Lock } from 'lucide-react';
+import { PenLine, Trash, PenBox, Lock, LinkIcon  } from 'lucide-react';
 import { useNotesQuery } from '../../../hooks/useNotesQuery';
 import type { StickyNote } from '@/types';
 import DOMPurify from 'dompurify';
@@ -25,7 +26,9 @@ export default function StickyNotes({ autoAddSignal }: Props) {
   const level                                 = useAppStore(s => s.level);
 
   const { data: stickyNotes = [] }            = useNotesQuery();
-
+  const { data: tasks = [] }                  = useTasksQuery();
+  const setFocusTask                          = useAppStore(s => s.setFocusTask);
+  const setView                               = useAppStore(s => s.setView);
   const [adding, setAdding]                   = useState(false);
   const [editingId, setEditingId]             = useState<number | null>(null);
   const [expandedId, setExpandedId]           = useState<number | null>(null);
@@ -48,6 +51,8 @@ export default function StickyNotes({ autoAddSignal }: Props) {
     NOTE_COLORS,
     discardDraft,
     hydrate,
+    linkedTaskId,
+    setLinkedTaskId,
   } = useNoteComposer(() => setAdding(false));
 
   
@@ -198,6 +203,16 @@ export default function StickyNotes({ autoAddSignal }: Props) {
             onInput={handleInput}
             data-placeholder="..."
           />
+          <select
+            className={styles.taskLinkSelect}
+            value={linkedTaskId ?? ''}
+            onChange={e => setLinkedTaskId(e.target.value ? parseInt(e.target.value) : null)}
+          >
+            <option value="">No linked task</option>
+            {tasks.filter(t => !t.completed).map(t => (
+              <option key={t.id} value={t.id}>{t.title}</option>
+            ))}
+          </select>
           <div className={styles.colorRow}>
             {NOTE_COLORS.map(c => (
               <button key={c} className={`${styles.colorDot} ${newColor === c ? styles.colorSelected : ''}`}
@@ -227,6 +242,14 @@ export default function StickyNotes({ autoAddSignal }: Props) {
             }}
           >
             <div className={styles.noteAccent} />
+            {note.task && (
+              <button
+                className={styles.taskLinkBadge}
+                onClick={(e) => { e.stopPropagation(); setFocusTask(note.task!.id); setView('list'); }}
+              >
+                <LinkIcon size={9} /> {note.task.title}
+              </button>
+            )}
             {editingId === note.id ? (
               <div
                 ref={editEditorRef}
@@ -237,6 +260,7 @@ export default function StickyNotes({ autoAddSignal }: Props) {
                 onClick={e => e.stopPropagation()}
               />
             ) : (
+              
               <p className={styles.noteText} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(note.note) }} />
             )}
             <div className={styles.noteActions}>

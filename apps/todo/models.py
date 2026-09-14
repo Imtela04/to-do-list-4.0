@@ -83,6 +83,7 @@ class StickyNotes(models.Model):
     is_onboarding = models.BooleanField(default=False)
     owner         = models.ForeignKey(User, on_delete=models.CASCADE, related_name='sticky_notes')
     created_at    = models.DateTimeField(auto_now_add=True)
+    task          = models.ForeignKey(Todo, on_delete=models.SET_NULL, null=True, blank=True, related_name='notes')  # add this line
 
     def __str__(self):
         return self.note or ''

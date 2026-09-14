@@ -211,3 +211,33 @@
   display: flex;
   align-items: center;
 }
+.taskLinkSelect {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-medium);
+  border-radius: var(--radius-sm);
+  padding: 5px 8px;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  outline: none;
+  cursor: pointer;
+  width: 100%;
+}
+.taskLinkSelect:focus { border-color: var(--accent-primary); }
+
+.taskLinkBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  align-self: flex-start;
+  font-size: 0.62rem;
+  color: var(--accent-primary);
+  background: rgba(124, 106, 255, 0.08);
+  border: 1px solid rgba(124, 106, 255, 0.2);
+  border-radius: var(--radius-full);
+  padding: 1px 7px;
+  margin-bottom: 4px;
+  transition: all var(--transition-fast);
+}
+.taskLinkBadge:hover {
+  background: rgba(124, 106, 255, 0.15);
+}

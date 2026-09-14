@@ -299,6 +299,12 @@ def notes(request):
     content = request.data.get('note', '').strip()
     if not content:
         return Response({'detail': 'Content is required'}, status=status.HTTP_400_BAD_REQUEST)
+    task_id = request.data.get('task_id')
+    task = None
+    if task_id:
+        task = Todo.objects.filter(id=task_id, owner=request.user).first()
+        if not task:
+            return Response({'detail': 'Invalid task'}, status=status.HTTP_400_BAD_REQUEST)
 
     profile = get_profile(request.user)
     allowed, message = check_limit(profile, 'notes')
@@ -312,7 +318,7 @@ def notes(request):
         protocols=['http', 'https', 'data'],
         strip=True,
     )
-    note = StickyNotes.objects.create(note=clean_content, owner=request.user)
+    note = StickyNotes.objects.create(note=clean_content, owner=request.user, task=task)
     log(request, 'note_create')
     return Response(StickyNoteSerializer(note).data, status=status.HTTP_201_CREATED)
 
@@ -338,6 +344,16 @@ def note_detail(request, pk):
         strip=True,
     )
     note.color = request.data.get('color', note.color)
+    if 'task_id' in request.data:
+        task_id = request.data['task_id']
+    if task_id:
+        task = Todo.objects.filter(id=task_id, owner=request.user).first()
+        if not task:
+            return Response({'detail': 'Invalid task'}, status=status.HTTP_400_BAD_REQUEST)
+        note.task = task
+    else:
+        note.task = None
+
     note.save()
     return Response(StickyNoteSerializer(note).data)
 

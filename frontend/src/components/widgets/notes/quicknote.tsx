@@ -4,6 +4,7 @@ import { Lock, LayoutDashboard } from 'lucide-react';
 import styles from './stickynote.module.css'; // reuse .noteForm, .textarea, .colorRow etc.
 import ModalShell from '../../common/moduleshell';
 import { useEffect } from 'react';
+import { useTasksQuery } from '@/hooks/useTasksQuery';
 
 export default function QuickNote({ onClose, onOpenBoard }: { onClose: () => void; onOpenBoard: () => void }) {
 
@@ -11,8 +12,9 @@ export default function QuickNote({ onClose, onOpenBoard }: { onClose: () => voi
   const counts = useAppStore(s => s.counts);
   const level  = useAppStore(s => s.level);
   const notesLocked = limits.notes !== null && counts.notes >= limits.notes;
+  const { data: tasks = [] }                  = useTasksQuery();
 
-  const { editorRef, color, setColor, limitError, hasDraft, handleInput, handleSubmit, isPending, NOTE_COLORS }
+  const { editorRef, color, setColor, limitError, hasDraft, handleInput, handleSubmit, isPending, NOTE_COLORS, linkedTaskId, setLinkedTaskId }
     = useNoteComposer(onClose);
 
   useEffect(() => {
@@ -45,6 +47,16 @@ export default function QuickNote({ onClose, onOpenBoard }: { onClose: () => voi
           onInput={handleInput}
           data-placeholder="Quick note..."
         />
+        <select
+          className={styles.taskLinkSelect}
+          value={linkedTaskId ?? ''}
+          onChange={e => setLinkedTaskId(e.target.value ? parseInt(e.target.value) : null)}
+        >
+          <option value="">No linked task</option>
+          {tasks.filter(t => !t.completed).map(t => (
+            <option key={t.id} value={t.id}>{t.title}</option>
+          ))}
+        </select>
         <div className={styles.colorRow}>
           {NOTE_COLORS.map(c => (
             <button key={c} className={`${styles.colorDot} ${color === c ? styles.colorSelected : ''}`}
